@@ -16,10 +16,10 @@ export type Database = {
           id: string
           is_enabled: boolean
           scope: string
+          tenant_id: string | null
           tool_category: string
           tool_name: string
           updated_at: string
-          user_id: string
         }
         Insert: {
           api_key: string
@@ -27,10 +27,10 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           scope?: string
+          tenant_id?: string | null
           tool_category: string
           tool_name: string
           updated_at?: string
-          user_id: string
         }
         Update: {
           api_key?: string
@@ -38,14 +38,22 @@ export type Database = {
           id?: string
           is_enabled?: boolean
           scope?: string
+          tenant_id?: string | null
           tool_category?: string
           tool_name?: string
           updated_at?: string
-          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "api_key_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      code_issues: {
+      issues: {
         Row: {
           analysis_id: string
           created_at: string
@@ -57,7 +65,9 @@ export type Database = {
           issue_category: string
           issue_type: string
           line_number: number | null
+          project_id: string | null
           suggested_fix: string | null
+          tenant_id: string | null
           title: string
         }
         Insert: {
@@ -71,7 +81,9 @@ export type Database = {
           issue_category: string
           issue_type: string
           line_number?: number | null
+          project_id?: string | null
           suggested_fix?: string | null
+          tenant_id?: string | null
           title: string
         }
         Update: {
@@ -85,7 +97,9 @@ export type Database = {
           issue_category?: string
           issue_type?: string
           line_number?: number | null
+          project_id?: string | null
           suggested_fix?: string | null
+          tenant_id?: string | null
           title?: string
         }
         Relationships: [
@@ -94,6 +108,61 @@ export type Database = {
             columns: ["analysis_id"]
             isOneToOne: false
             referencedRelation: "repository_analyses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          bubble_app_id: string | null
+          created_at: string
+          id: string
+          name: string
+          platform_type: Database["public"]["Enums"]["project_platform_type"]
+          repository_url: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          bubble_app_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          platform_type: Database["public"]["Enums"]["project_platform_type"]
+          repository_url?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          bubble_app_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          platform_type?: Database["public"]["Enums"]["project_platform_type"]
+          repository_url?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -105,12 +174,10 @@ export type Database = {
           created_at: string
           critical_issues: number | null
           id: string
-          repo_full_name: string
-          repo_name: string
-          repo_url: string
+          project_id: string | null
           suggestions: number | null
+          tenant_id: string | null
           total_files: number | null
-          user_id: string
           warnings: number | null
         }
         Insert: {
@@ -119,12 +186,10 @@ export type Database = {
           created_at?: string
           critical_issues?: number | null
           id?: string
-          repo_full_name: string
-          repo_name: string
-          repo_url: string
+          project_id?: string | null
           suggestions?: number | null
+          tenant_id?: string | null
           total_files?: number | null
-          user_id: string
           warnings?: number | null
         }
         Update: {
@@ -133,13 +198,56 @@ export type Database = {
           created_at?: string
           critical_issues?: number | null
           id?: string
-          repo_full_name?: string
-          repo_name?: string
-          repo_url?: string
+          project_id?: string | null
           suggestions?: number | null
+          tenant_id?: string | null
           total_files?: number | null
-          user_id?: string
           warnings?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repository_analyses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repository_analyses_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          custom_domain: string | null
+          id: string
+          name: string
+          pricing_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_domain?: string | null
+          id?: string
+          name: string
+          pricing_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_domain?: string | null
+          id?: string
+          name?: string
+          pricing_tier?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -172,6 +280,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -182,6 +294,12 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      project_platform_type:
+        | "lovable"
+        | "bubble"
+        | "webflow"
+        | "flutterflow"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -298,6 +416,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      project_platform_type: [
+        "lovable",
+        "bubble",
+        "webflow",
+        "flutterflow",
+        "other",
+      ],
     },
   },
 } as const
