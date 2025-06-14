@@ -1,17 +1,44 @@
 
 import React from 'react';
 import Logo from '@/components/Logo';
-import { Button } from '@/components/ui/button'; // Assuming shadcn/ui button is available
+import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const navigate = useNavigate();
+  const { session, signOut } = useAuth();
 
   const navLinks = [
     { href: "#features", label: "Features" },
     { href: "#pricing", label: "Pricing" },
     { href: "#contact", label: "Contact" },
   ];
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const AuthButtons: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
+    const buttonBaseClasses = isMobile ? "w-full" : "";
+    if (session) {
+      return (
+        <>
+          <Button variant="outline" className={buttonBaseClasses} onClick={() => navigate('/dashboard')}>Dashboard</Button>
+          <Button className={buttonBaseClasses} onClick={handleLogout}>Logout</Button>
+        </>
+      );
+    }
+    return (
+      <>
+        <Button variant="outline" className={`${buttonBaseClasses} text-brand border-brand hover:bg-brand-light hover:text-brand`} onClick={() => navigate('/auth')}>Login</Button>
+        <Button className={`${buttonBaseClasses} bg-brand text-brand-foreground hover:bg-brand/90`} onClick={() => navigate('/auth')}>Sign Up</Button>
+      </>
+    );
+  };
 
   return (
     <header className="py-4 sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
@@ -27,8 +54,7 @@ const Header = () => {
               {link.label}
             </a>
           ))}
-          <Button variant="outline" className="text-brand border-brand hover:bg-brand-light hover:text-brand">Login</Button>
-          <Button className="bg-brand text-brand-foreground hover:bg-brand/90">Sign Up</Button>
+          <AuthButtons />
         </nav>
         <div className="md:hidden">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -49,8 +75,7 @@ const Header = () => {
                 {link.label}
               </a>
             ))}
-            <Button variant="outline" className="w-full text-brand border-brand hover:bg-brand-light hover:text-brand">Login</Button>
-            <Button className="w-full bg-brand text-brand-foreground hover:bg-brand/90">Sign Up</Button>
+            <AuthButtons isMobile />
           </nav>
         </div>
       )}
