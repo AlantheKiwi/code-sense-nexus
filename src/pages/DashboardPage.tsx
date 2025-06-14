@@ -1,14 +1,16 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderKanban, History, PlusCircle, ExternalLink, FileCode } from "lucide-react";
+import { FolderKanban, History, PlusCircle, ExternalLink, FileCode, Sparkles } from "lucide-react";
 import { useProjectsData } from '@/hooks/useProjectsData';
 import { AddProjectDialog } from '@/components/projects/AddProjectDialog';
 import { Bar, BarChart, CartesianGrid, XAxis, Cell } from "recharts";
 import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { toast } from "sonner";
 
 const chartData = [
   { severity: "Critical", issues: 3, fill: "var(--color-critical)" },
@@ -151,6 +153,39 @@ const DashboardPage = () => {
                             </Bar>
                         </BarChart>
                     </ChartContainer>
+                </CardContent>
+            </Card>
+
+            {/* AI Insights Card */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg font-medium">AI Insights</CardTitle>
+                    <Sparkles className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4 text-sm">
+                        <div>
+                            <p className="font-semibold text-primary">Proactive Alert</p>
+                            <p className="text-muted-foreground">
+                                Project "ClientHub" shows a 75% probability of performance degradation in the next sprint based on recent commit complexity.
+                            </p>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-primary">Automated Suggestion</p>
+                            <p className="text-muted-foreground">
+                                Generate an automated fix for 3 high-frequency, low-severity errors in "DataSync". 
+                            </p>
+                            <Button variant="link" size="sm" className="p-0 h-auto -mt-1" onClick={() => toast.info("Automated fix generation is coming soon!")}>
+                                Generate Fix with AI
+                            </Button>
+                        </div>
+                         <div>
+                            <p className="font-semibold text-primary">Business Opportunity</p>
+                            <p className="text-muted-foreground">
+                               "Innovate Corp" is a good candidate for your "Performance Optimization" package.
+                            </p>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
 
