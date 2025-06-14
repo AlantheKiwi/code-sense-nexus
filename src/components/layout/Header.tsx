@@ -46,6 +46,7 @@ const Header = () => {
 
   return (
     <header className="navbar">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <div className="nav-container">
         <Logo />
         <div role="navigation" className="nav-links hidden md:flex items-center">
@@ -63,6 +64,7 @@ const Header = () => {
         <div className="md:hidden">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             <Menu className="h-6 w-6" />
+            <span className="sr-only">Open main menu</span>
           </Button>
         </div>
       </div>
