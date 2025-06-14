@@ -4,41 +4,81 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FolderKanban, History, PlusCircle } from "lucide-react";
 
 const DashboardPage = () => {
-  const { user, partner, signOut, isLoading } = useAuth();
+  const { user, partner, isLoading } = useAuth();
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-muted/40">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">
             {partner ? `${partner.company_name} Dashboard` : 'Dashboard'}
           </h1>
-          {user && (
-            <Button onClick={signOut} variant="outline">
-              Sign Out
-            </Button>
-          )}
         </div>
-        {user ? (
-          <>
-            <p className="mb-2">Welcome, {user.email}!</p>
-            {partner ? (
-              <p>This is the dashboard for {partner.company_name} (ID: {partner.id}, Slug: {partner.slug}). More features coming soon.</p>
-            ) : (
-              <p>Your partner account details are being set up or you might be a different user type.</p>
-            )}
-          </>
-        ) : (
-          <p>You are not logged in.</p>
-        )}
-        {/* Placeholder for future dashboard content */}
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Welcome/Info Card */}
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle>Welcome, {user?.email || 'Partner'}!</CardTitle>
+                    <CardDescription>
+                        {partner 
+                            ? `You are managing projects for ${partner.company_name}.`
+                            : "Your partner account is ready. Let's get started!"
+                        }
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p>This is your central hub for managing projects, analyzing code, and optimizing performance for your clients.</p>
+                </CardContent>
+            </Card>
+
+            {/* Projects Card */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg font-medium">Your Projects</CardTitle>
+                    <FolderKanban className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">You have no projects yet.</p>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Project
+                    </Button>
+                </CardContent>
+            </Card>
+
+            {/* Activity Feed Card */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg font-medium">Recent Activity</CardTitle>
+                    <History className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">No recent activity to display.</p>
+                    {/* Placeholder for activity items */}
+                </CardContent>
+            </Card>
+
+            {/* Quick Actions Card */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col space-y-2">
+                    <Button variant="outline">Analyze a Lovable App</Button>
+                    <Button variant="outline">Optimize a Bubble Workflow</Button>
+                    <Button variant="outline">Invite a Team Member</Button>
+                </CardContent>
+            </Card>
+        </div>
       </main>
       <Footer />
     </div>
