@@ -1,0 +1,10 @@
+
+{
+  "appId": "app.lovable.5d0a83c3a7bb4dc5aeb3fe21589a2dc9",
+  "appName": "code-sense-nexus",
+  "webDir": "dist",
+  "server": {
+    "url": "https://5d0a83c3-a7bb-4dc5-aeb3-fe21589a2dc9.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  }
+}
