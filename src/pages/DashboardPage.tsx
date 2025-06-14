@@ -11,6 +11,12 @@ import { AddProjectDialog } from '@/components/projects/AddProjectDialog';
 import { Bar, BarChart, CartesianGrid, XAxis, Cell } from "recharts";
 import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const chartData = [
   { severity: "Critical", issues: 3, fill: "var(--color-critical)" },
@@ -207,15 +213,38 @@ const DashboardPage = () => {
                     <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col space-y-2">
-                    <Button variant="outline" onClick={() => toast.info("ESLint analysis feature is coming soon!")}>
-                        <Code className="mr-2 h-4 w-4" /> Run ESLint Analysis
-                    </Button>
-                    <Button variant="outline" onClick={() => toast.info("Snyk security scan feature is coming soon!")}>
-                        <Bug className="mr-2 h-4 w-4" /> Scan with Snyk
-                    </Button>
-                    <Button variant="outline" onClick={() => toast.info("Lighthouse audit feature is coming soon!")}>
-                        <TestTube className="mr-2 h-4 w-4" /> Audit with Lighthouse
-                    </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" onClick={() => toast.info("ESLint analysis feature is coming soon!")}>
+                            <Code className="mr-2 h-4 w-4" /> Run ESLint Analysis
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Analyze your code for syntax errors and style issues.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" onClick={() => toast.info("Snyk security scan feature is coming soon!")}>
+                            <Bug className="mr-2 h-4 w-4" /> Scan with Snyk
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Scans your project dependencies for known security vulnerabilities.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" onClick={() => toast.info("Lighthouse audit feature is coming soon!")}>
+                            <TestTube className="mr-2 h-4 w-4" /> Audit with Lighthouse
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Audits your application for performance, accessibility, and SEO.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </CardContent>
             </Card>
         </div>

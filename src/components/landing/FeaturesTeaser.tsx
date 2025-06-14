@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Zap, Puzzle, ShieldCheck } from 'lucide-react';
+import { Zap, FileCode, ShieldCheck } from 'lucide-react';
 
 const features = [
   {
@@ -10,9 +10,9 @@ const features = [
     description: 'Analyze React/TypeScript, troubleshoot Supabase, and optimize AI prompts seamlessly.',
   },
   {
-    icon: <Puzzle className="h-8 w-8 text-brand mb-4" />,
-    title: 'Bubble.io Insights',
-    description: 'Optimize workflows, enhance database performance, and understand workload units.',
+    icon: <FileCode className="h-8 w-8 text-brand mb-4" />,
+    title: 'Deep Component Analysis',
+    description: 'Go beyond the surface. Analyze component architecture, reusability, and performance bottlenecks in your AI-generated code.',
   },
   {
     icon: <ShieldCheck className="h-8 w-8 text-brand mb-4" />,
