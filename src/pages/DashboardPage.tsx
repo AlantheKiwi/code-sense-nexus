@@ -5,10 +5,14 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderKanban, History, PlusCircle } from "lucide-react";
+import { FolderKanban, History, PlusCircle, ExternalLink } from "lucide-react";
+import { useProjectsData } from '@/hooks/useProjectsData';
 
 const DashboardPage = () => {
-  const { user, partner, isLoading } = useAuth();
+  const { user, partner, isLoading: isAuthLoading } = useAuth();
+  const { data: projects, isLoading: areProjectsLoading } = useProjectsData(partner?.id);
+
+  const isLoading = isAuthLoading || areProjectsLoading;
 
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
@@ -48,10 +52,42 @@ const DashboardPage = () => {
                     <FolderKanban className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">You have no projects yet.</p>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Project
-                    </Button>
+                    {projects && projects.length > 0 ? (
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                {projects.map((project) => (
+                                    <div key={project.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted">
+                                        <div>
+                                            <p className="font-semibold">{project.name}</p>
+                                            {project.github_url && (
+                                                <a 
+                                                    href={project.github_url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="text-sm text-brand hover:underline flex items-center"
+                                                >
+                                                    View on GitHub <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                                                </a>
+                                            )}
+                                        </div>
+                                        <Button variant="outline" size="sm">
+                                            Analyze
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                            <Button className="w-full mt-2">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add New Project
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-sm text-muted-foreground mb-4">You have no projects yet.</p>
+                            <Button>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add New Project
+                            </Button>
+                        </>
+                    )}
                 </CardContent>
             </Card>
 
