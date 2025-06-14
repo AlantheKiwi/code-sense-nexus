@@ -1,4 +1,3 @@
-
 /* #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -190,4 +189,150 @@
 }
 
 /* NAVIGATION STYLES */
-/* ... keep existing code ... */
+.navbar {
+  background-color: var(--background);
+  color: var(--foreground);
+  padding: var(--space-md) 0;
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: center;
+}
+
+.nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: var(--accent-500);
+}
+
+.nav-buttons {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 1200px) {
+  .hero-content, .nav-container {
+    padding: 0 var(--space-md);
+  }
+}
+
+@media (max-width: 768px) {
+  /* Mobile Navigation */
+  .nav-links {
+    display: none;
+  }
+  
+  /* Mobile Hero */
+  .hero-section, .hero {
+    padding: 80px 0 !important;
+    min-height: 70vh;
+  }
+  
+  .hero-title, .hero h1 {
+    font-size: 2.5rem !important;
+    margin-bottom: var(--space-md) !important;
+  }
+  
+  .hero-subtitle, .hero h2 {
+    font-size: 1rem !important;
+  }
+  
+  .hero-description, .hero p {
+    font-size: 1rem !important;
+    margin-bottom: var(--space-xl) !important;
+  }
+  
+  .hero-buttons, .hero-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+  }
+  
+  .hero-buttons .btn, .hero-actions .btn {
+    width: 100% !important;
+    max-width: 280px !important;
+  }
+  
+  /* Mobile Typography */
+  h1 { font-size: 2rem !important; }
+  h2 { font-size: 1.5rem !important; }
+  h3 { font-size: 1.25rem !important; }
+}
+
+@media (max-width: 480px) {
+  .hero-content {
+    padding: 0 var(--space-sm);
+  }
+  
+  .hero-title, .hero h1 {
+    font-size: 2rem !important;
+  }
+  
+  .hero-buttons .btn, .hero-actions .btn {
+    padding: var(--space-sm) var(--space-lg) !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .nav-container {
+    padding: 0 var(--space-sm);
+  }
+  
+  .logo {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .hero-section, .hero {
+    background: #000000 !important;
+  }
+  
+  .hero-title, .hero h1, .hero-subtitle, .hero h2, .hero-description, .hero p {
+    color: #ffffff !important;
+    text-shadow: none !important;
+  }
+  
+  .btn-primary {
+    background-color: #0000ff !important;
+    border: 2px solid #ffffff !important;
+  }
+  
+  .btn-secondary {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #000000 !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
