@@ -38,8 +38,8 @@ const Header = () => {
     }
     return (
       <div className={containerClasses}>
-        <Button variant="outline" className={`${buttonBaseClasses} btn-login`} onClick={() => navigate('/auth')}>Login</Button>
-        <Button className={`${buttonBaseClasses} btn-signup`} onClick={() => navigate('/auth')}>Sign Up</Button>
+        <Button className={`${buttonBaseClasses} btn-login`} onClick={() => navigate('/auth')}>Login</Button>
+        <Button variant="outline" className={`${buttonBaseClasses} btn-signup`} onClick={() => navigate('/auth')}>Sign Up</Button>
       </div>
     );
   };

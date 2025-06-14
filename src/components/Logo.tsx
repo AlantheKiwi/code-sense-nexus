@@ -4,7 +4,7 @@ import { Zap } from 'lucide-react'; // Example icon
 
 const Logo = () => {
   return (
-    <a href="/" className="logo flex items-center space-x-2">
+    <a href="/" className="logo flex items-center space-x-2 text-brand">
       <Zap className="h-7 w-7" />
       <span>CodeSense</span>
     </a>
