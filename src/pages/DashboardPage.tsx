@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderKanban, History, PlusCircle, ExternalLink, FileCode, Sparkles, Code, Bug, TestTube } from "lucide-react";
+import { FolderKanban, History, PlusCircle, ExternalLink, FileCode, Sparkles, Code, Bug, TestTube, Github, CheckCircle2, AlertCircle, Rocket } from "lucide-react";
 import { useProjectsData } from '@/hooks/useProjectsData';
 import { AddProjectDialog } from '@/components/projects/AddProjectDialog';
 import { Bar, BarChart, CartesianGrid, XAxis, Cell } from "recharts";
@@ -51,6 +50,33 @@ const DashboardPage = () => {
   const { user, partner, isLoading: isAuthLoading } = useAuth();
   const { data: projects, isLoading: areProjectsLoading } = useProjectsData(partner?.id);
   const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
+
+  const recentActivities = [
+    {
+      id: 1,
+      icon: <Github className="h-5 w-5 text-muted-foreground" />,
+      description: 'Commit "feat: add new dashboard cards" analyzed.',
+      time: '15m ago',
+    },
+    {
+      id: 2,
+      icon: <CheckCircle2 className="h-5 w-5 text-green-500" />,
+      description: 'PR #42 approved with a health score of 92%.',
+      time: '1h ago',
+    },
+    {
+      id: 3,
+      icon: <AlertCircle className="h-5 w-5 text-yellow-500" />,
+      description: 'Complexity of DashboardPage.tsx increased by 25%.',
+      time: '3h ago',
+    },
+    {
+      id: 4,
+      icon: <Rocket className="h-5 w-5 text-brand" />,
+      description: 'Project "DataSync" successfully deployed to Vercel.',
+      time: 'Yesterday',
+    },
+  ];
 
   const isLoading = isAuthLoading || areProjectsLoading;
 
@@ -202,8 +228,21 @@ const DashboardPage = () => {
                     <History className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <p className="text-sm text-muted-foreground">No recent activity to display.</p>
-                    {/* Placeholder for activity items */}
+                    {recentActivities.length > 0 ? (
+                        <div className="space-y-6">
+                            {recentActivities.map((activity) => (
+                                <div key={activity.id} className="flex items-start space-x-4">
+                                    <div className="flex-shrink-0 mt-0.5">{activity.icon}</div>
+                                    <div>
+                                        <p className="text-sm text-primary leading-tight">{activity.description}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">No recent activity to display.</p>
+                    )}
                 </CardContent>
             </Card>
 
