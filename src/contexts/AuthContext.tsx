@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +42,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
+          // Fetch partner data on auth state change, e.g., after login or token refresh
+          // The trigger handles partner creation, this just fetches it.
           await fetchPartnerData(session.user.id);
         } else {
           setPartner(null); // Clear partner data on logout
@@ -62,14 +63,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       .eq('user_id', userId)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116: 0 rows
+    if (error && error.code !== 'PGRST116') { // PGRST116: 0 rows (no matching row)
       console.error('Error fetching partner data:', error);
       toast.error("Error fetching partner data: " + error.message);
     } else if (data) {
       console.log("Partner data fetched:", data);
       setPartner(data);
     } else {
-      console.log("No partner record found for user, this might be a client or an admin, or partner record creation is pending.");
+      console.log("No partner record found for user. This might be a client user, an admin, or a partner whose record creation is pending/failed at DB trigger level.");
       setPartner(null);
     }
   };
@@ -98,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      // Partner data will be fetched by onAuthStateChange
+      // Partner data will be fetched by onAuthStateChange after successful login
       toast.success("Signed in successfully!");
     } catch (error: any) {
       console.error("Error signing in:", error);
@@ -111,62 +112,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUpWithEmailPassword = async (email: string, password: string, companyName: string) => {
     setIsLoading(true);
     try {
+      // Pass companyName and a flag in options.data for the trigger to use
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin + '/', 
+          emailRedirectTo: window.location.origin + '/',
+          data: { 
+            company_name: companyName,
+            is_partner_signup: true // Flag for the trigger
+          }
         },
       });
 
       if (signUpError) throw signUpError;
-      toast.info("Confirmation email sent. Please check your inbox to verify your account.");
 
-      // If signUp is successful and returns a user, attempt to create a partner record.
-      // Note: Email confirmation might be required before a session is fully active.
-      // Supabase by default sends a confirmation email. User needs to confirm before they can log in.
-      // We'll create the partner record once the user is confirmed and logs in for the first time,
-      // OR we can attempt to create it now if authData.user is available.
-      // For simplicity, let's create it now if user object exists.
-      // A robust solution would use a trigger or handle this after email confirmation.
-
-      if (authData.user) {
-        // Generate a simple slug from company name
-        const slug = companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const { error: partnerError } = await supabase
-          .from('partners')
-          .insert({ 
-            user_id: authData.user.id, 
-            company_name: companyName,
-            slug: `${slug}-${authData.user.id.substring(0, 4)}`, // ensure some uniqueness for slug
-            // subscription_tier and branding_config will use DB defaults
-          });
-
-        if (partnerError) {
-          // If partner creation failed, we should inform the user.
-          // Potentially delete the auth user if partner creation is critical and failed. (More complex)
-          console.error('Error creating partner record:', partnerError);
-          toast.error(`Account created, but failed to set up partner details: ${partnerError.message}. Please contact support.`);
-        } else {
-          toast.success("Partner account initiated! Please check your email to confirm your account.");
-          // Fetch partner data immediately if needed, or let onAuthStateChange handle it
-          await fetchPartnerData(authData.user.id);
-        }
-      } else if (!authData.session) {
-         // This case means email confirmation is pending.
-         // The partner record will be created when the user first successfully logs in after confirmation.
-         // We can modify onAuthStateChange or signIn to handle this "first login" scenario.
-         // For now, let's assume the trigger or a post-confirmation step handles this.
-         // The current logic in onAuthStateChange will try to fetch partner data.
-         // If it's not there, it might be created by a trigger or a later step.
-         // For now, rely on the user confirming email, then logging in.
-         // The partner creation attempt above might not have a full session yet.
+      // If Supabase requires email confirmation (default), authData.user will exist but authData.session might be null.
+      // The trigger `on_auth_user_created_create_partner_profile` will handle partner record creation.
+      if (authData.user?.identities?.length === 0) {
+        // This can indicate an issue like user already exists but is unconfirmed, or other signup issue.
+        // Supabase might return a user object with an empty identities array if "Allow new users to sign up" is disabled.
+        // However, if signUpError is null, it usually means the initial step was accepted by Supabase.
+        toast.warning("Sign up process initiated. If you don't receive a confirmation email, your email might already be registered or there could be an issue.");
+      } else if (authData.user) {
+         // Successfully initiated sign up. Email confirmation might be required.
+         // Partner record is created by the DB trigger.
+        toast.info("Confirmation email sent! Please check your inbox to verify your account and complete sign up.");
+      } else {
+        // This case (no signUpError, no authData.user) should be rare if "Allow new users to sign up" is enabled.
+        // It might indicate that email confirmation is pending and Supabase doesn't return the user object yet.
+        toast.info("Sign up request submitted. Please check your email for a confirmation link if required.");
       }
-
+      
+      // No need to call fetchPartnerData here; onAuthStateChange will handle it after user confirms and logs in.
 
     } catch (error: any) {
       console.error("Error signing up:", error);
-      toast.error(`Sign up failed: ${error.message}`);
+      // Check for specific errors, e.g., user already registered
+      if (error.message && error.message.toLowerCase().includes("user already registered")) {
+        toast.error("Sign up failed: This email is already registered. Try signing in or use a different email.");
+      } else {
+        toast.error(`Sign up failed: ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
     }
