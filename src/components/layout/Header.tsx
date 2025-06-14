@@ -3,7 +3,7 @@ import React from 'react';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
@@ -12,9 +12,11 @@ const Header = () => {
   const { session, signOut } = useAuth();
 
   const navLinks = [
-    { href: "#features", label: "Features" },
-    { href: "#pricing", label: "Pricing" },
-    { href: "#contact", label: "Contact" },
+    { to: "/how-it-works", label: "How It Works" },
+    { to: "/demo", label: "Demo" },
+    { to: "/useful-prompts", label: "Prompts" },
+    { to: "/pricing", label: "Pricing" },
+    { to: "/contact", label: "Contact" },
   ];
 
   const handleLogout = async () => {
@@ -46,13 +48,13 @@ const Header = () => {
         <Logo />
         <nav className="hidden md:flex space-x-6 items-center">
           {navLinks.map((link) => (
-            <a
+            <Link
               key={link.label}
-              href={link.href}
+              to={link.to}
               className="text-foreground/70 hover:text-brand transition-colors"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
           <AuthButtons />
         </nav>
@@ -66,14 +68,14 @@ const Header = () => {
         <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b pb-4">
           <nav className="container mx-auto px-4 flex flex-col space-y-3 pt-3">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.label}
-                href={link.href}
+                to={link.to}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="text-foreground/70 hover:text-brand transition-colors py-2"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
             <AuthButtons isMobile />
           </nav>
