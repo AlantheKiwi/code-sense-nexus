@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
@@ -7,10 +7,12 @@ import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderKanban, History, PlusCircle, ExternalLink } from "lucide-react";
 import { useProjectsData } from '@/hooks/useProjectsData';
+import { AddProjectDialog } from '@/components/projects/AddProjectDialog';
 
 const DashboardPage = () => {
   const { user, partner, isLoading: isAuthLoading } = useAuth();
   const { data: projects, isLoading: areProjectsLoading } = useProjectsData(partner?.id);
+  const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
 
   const isLoading = isAuthLoading || areProjectsLoading;
 
@@ -76,14 +78,14 @@ const DashboardPage = () => {
                                     </div>
                                 ))}
                             </div>
-                            <Button className="w-full mt-2">
+                            <Button className="w-full mt-2" onClick={() => setIsAddProjectDialogOpen(true)}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Project
                             </Button>
                         </div>
                     ) : (
                         <>
                             <p className="text-sm text-muted-foreground mb-4">You have no projects yet.</p>
-                            <Button>
+                            <Button onClick={() => setIsAddProjectDialogOpen(true)}>
                                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Project
                             </Button>
                         </>
@@ -117,6 +119,13 @@ const DashboardPage = () => {
         </div>
       </main>
       <Footer />
+      {partner && (
+        <AddProjectDialog 
+            partnerId={partner.id}
+            isOpen={isAddProjectDialogOpen}
+            onOpenChange={setIsAddProjectDialogOpen}
+        />
+      )}
     </div>
   );
 };
