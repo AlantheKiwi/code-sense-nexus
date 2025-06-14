@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -52,7 +51,7 @@ const HowItWorksPage = () => {
               But here's the entrepreneur's dilemma: <span className="font-semibold text-foreground">Speed vs. Quality</span>. While Lovable excels at rapid prototyping and idea execution, the faster you build, the more critical it becomes to ensure your code is production-ready, maintainable, and scalable. This is where CodeSense becomes indispensable.
             </p>
             <div className="grid md:grid-cols-2 gap-8 text-left">
-              <Card className="bg-card/50 border-primary-matrix/20">
+              <Card className="bg-card/50 border-primary-matrix/20 transition-all duration-300 hover:shadow-lg hover:shadow-primary-matrix/20 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="text-primary-matrix flex items-center gap-2">
                     <Rocket /> Lovable's Mission
@@ -62,7 +61,7 @@ const HowItWorksPage = () => {
                   <p>Transform ideas into applications</p>
                 </CardContent>
               </Card>
-              <Card className="bg-card/50 border-primary-electric/20">
+              <Card className="bg-card/50 border-primary-electric/20 transition-all duration-300 hover:shadow-lg hover:shadow-primary-electric/20 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="text-primary-electric flex items-center gap-2">
                     <Shield /> CodeSense's Mission
@@ -168,7 +167,7 @@ const HowItWorksPage = () => {
             <h2 className="text-3xl font-bold mb-6">The Smart Entrepreneur's Development Strategy</h2>
             <p className="text-muted-foreground mb-12">Successful entrepreneurs understand a fundamental truth: the fastest path to market isn't always the safest path to success.</p>
             <div className="space-y-8 text-left">
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-lg hover:border-primary-matrix/50 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="text-lg"><span className="font-bold text-primary-matrix">Phase 1:</span> Idea to MVP (Lovable)</CardTitle>
                 </CardHeader>
@@ -176,7 +175,7 @@ const HowItWorksPage = () => {
                   <p className="text-muted-foreground">You have a brilliant idea and need to validate it quickly. Lovable lets you build a functional prototype in days, test with real users, and iterate based on feedback. No six-month development cycles. No expensive development teams. Just pure speed.</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-lg hover:border-primary-electric/50 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="text-lg"><span className="font-bold text-primary-electric">Phase 2:</span> MVP to Market (CodeSense)</CardTitle>
                 </CardHeader>
@@ -191,7 +190,7 @@ const HowItWorksPage = () => {
                   </ul>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="transition-all duration-300 hover:shadow-lg hover:border-primary-neural/50 hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="text-lg"><span className="font-bold text-primary-neural">Phase 3:</span> Market to Success (Lovable + CodeSense)</CardTitle>
                 </CardHeader>
@@ -210,27 +209,27 @@ const HowItWorksPage = () => {
             </p>
             <h3 className="text-xl font-semibold mb-8 text-center">The Hidden Costs of Unvetted Code:</h3>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg">
+              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1">
                 <UserMinus className="h-10 w-10 text-destructive mb-4" />
                 <h4 className="font-semibold mb-2">Customer Churn</h4>
                 <p className="text-sm text-muted-foreground">53% of users abandon apps that take longer than 3 seconds to load</p>
               </div>
-              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg">
+              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1">
                 <ShieldAlert className="h-10 w-10 text-destructive mb-4" />
                 <h4 className="font-semibold mb-2">Security Breaches</h4>
                 <p className="text-sm text-muted-foreground">Average cost of a data breach: $4.45 million</p>
               </div>
-              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg">
+              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1">
                 <TrendingDown className="h-10 w-10 text-destructive mb-4" />
                 <h4 className="font-semibold mb-2">Technical Debt</h4>
                 <p className="text-sm text-muted-foreground">Bad code becomes 5x more expensive to fix after launch</p>
               </div>
-              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg sm:col-start-1 lg:col-start-auto">
+              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg sm:col-start-1 lg:col-start-auto transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1">
                 <Clock className="h-10 w-10 text-destructive mb-4" />
                 <h4 className="font-semibold mb-2">Development Slowdown</h4>
                 <p className="text-sm text-muted-foreground">Teams spend 60% of time debugging vs. building new features</p>
               </div>
-              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg">
+              <div className="flex flex-col items-center text-center p-6 border border-destructive/20 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1">
                 <Trophy className="h-10 w-10 text-destructive mb-4" />
                 <h4 className="font-semibold mb-2">Competitive Disadvantage</h4>
                 <p className="text-sm text-muted-foreground">Competitors with better code quality ship features faster</p>
@@ -268,7 +267,7 @@ const HowItWorksPage = () => {
                 <p className="text-muted-foreground">100x better chance of building a sustainable business</p>
               </div>
             </div>
-            <Card className="mt-12 p-6 text-left">
+            <Card className="mt-12 p-6 text-left transition-all duration-300 hover:shadow-lg">
               <p className="font-semibold mb-4">Companies using both rapid development AND quality assurance tools report:</p>
               <ul className="grid sm:grid-cols-2 gap-4">
                 <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-accent-success flex-shrink-0" />40% faster time-to-market</li>
@@ -289,7 +288,7 @@ const HowItWorksPage = () => {
                 { title: "Optimize and Iterate", description: "Use CodeSense insights to guide your next Lovable prompts. Build new features with confidence in your foundation.", step: 3 },
                 { title: "Scale with Certainty", description: "Launch knowing your code can handle growth. Continue rapid development without accumulating technical debt.", step: 4 },
               ].map(item => (
-                <Card key={item.step} className="text-center">
+                <Card key={item.step} className="text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-primary-electric/50">
                   <CardHeader>
                     <div className="mx-auto h-12 w-12 rounded-full bg-primary-electric/20 flex items-center justify-center text-primary-electric font-bold text-xl mb-4">{item.step}</div>
                     <CardTitle>{item.title}</CardTitle>
@@ -309,7 +308,7 @@ const HowItWorksPage = () => {
               The no-code market is exploding. By 2025, 65% of all applications will be built with no-code tools. This creates an unprecedented opportunity - but also unprecedented competition. Your advantage isn't just building fast - it's building fast AND building right.
             </p>
             <div className="grid md:grid-cols-2 gap-8">
-              <Card className="p-6 border-destructive/30">
+              <Card className="p-6 border-destructive/30 transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1">
                 <h4 className="font-semibold text-destructive mb-4">Your competitors struggle with:</h4>
                 <ul className="space-y-2 text-muted-foreground">
                   <li className="flex gap-2 items-start"><span>❌</span> Apps that break under user load</li>
@@ -318,7 +317,7 @@ const HowItWorksPage = () => {
                   <li className="flex gap-2 items-start"><span>❌</span> Code that becomes impossible to maintain</li>
                 </ul>
               </Card>
-              <Card className="p-6 border-accent-success/30">
+              <Card className="p-6 border-accent-success/30 transition-all duration-300 hover:shadow-lg hover:shadow-accent-success/20 hover:-translate-y-1">
                 <h4 className="font-semibold text-accent-success mb-4">You'll have:</h4>
                 <ul className="space-y-2 text-muted-foreground">
                   <li className="flex gap-2 items-start"><span>✅</span> Rock-solid applications that scale with your success</li>
@@ -333,7 +332,7 @@ const HowItWorksPage = () => {
 
           {/* 10. Trust Building Elements */}
           <section className="text-center">
-            <Card className="p-8 bg-card/50">
+            <Card className="p-8 bg-card/50 transition-all duration-300 hover:shadow-xl">
               <blockquote className="text-xl italic">
                 "Lovable helped me build my MVP in two weeks. CodeSense helped me scale it to 10,000 users without a single crash. Together, they're unstoppable."
               </blockquote>
