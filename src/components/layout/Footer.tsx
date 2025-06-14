@@ -18,8 +18,10 @@ const Footer = () => {
     { name: 'Useful Prompts', href: '/useful-prompts' },
   ];
 
-  const legalLinks = [
+  const resourceLinks = [
     { name: 'Help Center', href: '/help' },
+    { name: 'Success Stats', href: '/stats' },
+    { name: 'Best Practices', href: '/best-practices' },
     { name: 'Privacy Policy', href: '/privacy' },
     { name: 'Terms of Service', href: '/terms' },
   ];
@@ -55,7 +57,7 @@ const Footer = () => {
               <div>
                 <h4 className="font-semibold mb-2">Resources</h4>
                 <ul className="space-y-1">
-                  {legalLinks.map(link => (
+                  {resourceLinks.map(link => (
                     <li key={link.name}><Link to={link.href} className="text-muted-foreground hover:text-brand">{link.name}</Link></li>
                   ))}
                 </ul>
