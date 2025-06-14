@@ -1,13 +1,43 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderKanban, History, PlusCircle, ExternalLink } from "lucide-react";
+import { FolderKanban, History, PlusCircle, ExternalLink, FileCode } from "lucide-react";
 import { useProjectsData } from '@/hooks/useProjectsData';
 import { AddProjectDialog } from '@/components/projects/AddProjectDialog';
+import { Bar, BarChart, CartesianGrid, XAxis, Cell } from "recharts";
+import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+
+const chartData = [
+  { severity: "Critical", issues: 3, fill: "var(--color-critical)" },
+  { severity: "High", issues: 8, fill: "var(--color-high)" },
+  { severity: "Medium", issues: 12, fill: "var(--color-medium)" },
+  { severity: "Low", issues: 25, fill: "var(--color-low)" },
+];
+
+const chartConfig = {
+  issues: {
+    label: "Issues",
+  },
+  critical: {
+    label: "Critical",
+    color: "hsl(var(--destructive))",
+  },
+  high: {
+    label: "High",
+    color: "#fb923c", // orange-400
+  },
+  medium: {
+    label: "Medium",
+    color: "#facc15", // yellow-400
+  },
+  low: {
+    label: "Low",
+    color: "hsl(var(--muted-foreground))",
+  },
+} satisfies ChartConfig;
 
 const DashboardPage = () => {
   const { user, partner, isLoading: isAuthLoading } = useAuth();
@@ -90,6 +120,37 @@ const DashboardPage = () => {
                             </Button>
                         </>
                     )}
+                </CardContent>
+            </Card>
+
+            {/* Analysis Overview Card */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg font-medium">Analysis Overview</CardTitle>
+                    <FileCode className="h-5 w-5 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                        <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 0, left: 0, bottom: 0 }}>
+                            <CartesianGrid vertical={false} />
+                            <XAxis
+                                dataKey="severity"
+                                tickLine={false}
+                                tickMargin={10}
+                                axisLine={false}
+                                stroke="hsl(var(--muted-foreground))"
+                            />
+                            <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent indicator="dot" />}
+                            />
+                            <Bar dataKey="issues" radius={4}>
+                                {chartData.map((entry) => (
+                                    <Cell key={entry.severity} fill={entry.fill} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ChartContainer>
                 </CardContent>
             </Card>
 
