@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -96,7 +97,7 @@ const DashboardPage = () => {
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Welcome/Info Card */}
-            <Card className="lg:col-span-3">
+            <Card className="lg:col-span-3 bg-card/80 backdrop-blur-sm border-border/20">
                 <CardHeader>
                     <CardTitle>Welcome, {user?.email || 'Partner'}!</CardTitle>
                     <CardDescription>
@@ -112,7 +113,7 @@ const DashboardPage = () => {
             </Card>
 
             {/* Projects Card */}
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-medium">Your Projects</CardTitle>
                     <FolderKanban className="h-5 w-5 text-muted-foreground" />
@@ -158,7 +159,7 @@ const DashboardPage = () => {
             </Card>
 
             {/* Analysis Overview Card */}
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-medium">Analysis Overview</CardTitle>
                     <FileCode className="h-5 w-5 text-muted-foreground" />
@@ -189,7 +190,7 @@ const DashboardPage = () => {
             </Card>
 
             {/* AI Insights Card */}
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-medium">AI Insights</CardTitle>
                     <Sparkles className="h-5 w-5 text-muted-foreground" />
@@ -222,7 +223,7 @@ const DashboardPage = () => {
             </Card>
 
             {/* Activity Feed Card */}
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-medium">Recent Activity</CardTitle>
                     <History className="h-5 w-5 text-muted-foreground" />
@@ -247,7 +248,7 @@ const DashboardPage = () => {
             </Card>
 
             {/* Quick Actions Card */}
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/20">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
                 </CardHeader>
