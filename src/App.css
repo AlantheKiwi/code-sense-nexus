@@ -457,3 +457,39 @@ input:focus, textarea:focus, select:focus {
     color: black !important;
   }
 }
+
+/* Navigation Layout Fix */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-center {
+  display: flex;
+  gap: 32px;
+  margin: 0 auto;
+}
+
+.nav-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-dashboard, .btn-logout {
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+}

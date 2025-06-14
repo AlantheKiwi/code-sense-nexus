@@ -26,13 +26,13 @@ const Header = () => {
 
   const AuthButtons: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
     const buttonBaseClasses = isMobile ? "w-full" : "";
-    const containerClasses = isMobile ? "flex flex-col space-y-2" : "nav-buttons";
+    const containerClasses = isMobile ? "flex flex-col space-y-2" : "nav-right";
 
     if (session) {
       return (
         <div className={containerClasses}>
-          <Button variant="outline" className={buttonBaseClasses} onClick={() => navigate('/dashboard')}>Dashboard</Button>
-          <Button className={`${buttonBaseClasses} btn-login`} onClick={handleLogout}>Logout</Button>
+          <Button variant="outline" className={`${buttonBaseClasses} btn-dashboard`} onClick={() => navigate('/dashboard')}>Dashboard</Button>
+          <Button className={`${buttonBaseClasses} btn-logout`} onClick={handleLogout}>Logout</Button>
         </div>
       );
     }
@@ -47,9 +47,12 @@ const Header = () => {
   return (
     <header className="navbar">
       <a href="#main-content" className="skip-link">Skip to main content</a>
-      <div className="nav-container">
-        <Logo />
-        <div role="navigation" className="nav-links hidden md:flex items-center">
+      <div className="header">
+        <div className="nav-left">
+          <Logo />
+        </div>
+        
+        <div role="navigation" className="nav-center hidden md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.label}
@@ -59,8 +62,12 @@ const Header = () => {
               {link.label}
             </Link>
           ))}
+        </div>
+
+        <div className="hidden md:flex">
           <AuthButtons />
         </div>
+
         <div className="md:hidden">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             <Menu className="h-6 w-6" />
