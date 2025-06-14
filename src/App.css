@@ -1,4 +1,3 @@
-
 /* #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -68,3 +67,33 @@
   transform: translateX(100%);
 }
 
+/* EMERGENCY VISIBILITY FIXES */
+
+/* Set a dark, readable default text color for the site, to contrast with the light grey background. */
+body {
+  color: #1e293b;
+}
+
+/* Ensure all elements inherit the body color by default, unless overridden by more specific styles. */
+* {
+  color: inherit;
+}
+
+/* Apply a dark gradient background to the hero section and ensure text within it is light. */
+.hero-section {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Style h1 within the hero section */
+.hero-section h1 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+/* Style p within the hero section */
+.hero-section p {
+  color: #e2e8f0 !important;
+  font-weight: 500 !important;
+}

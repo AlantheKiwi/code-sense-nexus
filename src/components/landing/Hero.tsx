@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
-    <section className="py-20 md:py-32 bg-background relative overflow-hidden">
+    <section className="hero-section py-20 md:py-32 bg-background relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-cyber opacity-80" />
       <div className="container mx-auto px-4 text-center relative">
         <h1 className="text-4xl md:text-6xl font-extrabold mb-6 text-white">
