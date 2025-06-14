@@ -97,3 +97,96 @@ body {
   color: #e2e8f0 !important;
   font-weight: 500 !important;
 }
+
+/* NAVIGATION STYLES */
+.navbar, nav, [class*="nav"] {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--primary-200);
+  padding: var(--space-md) 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.nav-container, .navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Logo */
+.logo, .navbar-brand, [class*="logo"] {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: var(--accent-500) !important;
+  text-decoration: none !important;
+  font-family: var(--font-heading);
+}
+
+/* Navigation Links */
+.nav-links, .navbar-nav {
+  display: flex;
+  gap: var(--space-xl);
+  align-items: center;
+  list-style: none;
+}
+
+.nav-links a, .navbar-nav a, .nav-link {
+  color: var(--text-secondary) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  font-size: 0.95rem !important;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.nav-links a:hover, .navbar-nav a:hover, .nav-link:hover {
+  color: var(--accent-500) !important;
+  background-color: var(--primary-50);
+}
+
+/* Navigation Buttons */
+.nav-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.btn-login, [class*="login"] {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+  border: 1px solid var(--primary-300) !important;
+  padding: var(--space-sm) var(--space-lg) !important;
+  border-radius: var(--radius-md) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease;
+}
+
+.btn-login:hover, [class*="login"]:hover {
+  background-color: var(--primary-50) !important;
+  border-color: var(--primary-400) !important;
+}
+
+.btn-signup, [class*="signup"], [class*="sign-up"] {
+  background-color: var(--accent-500) !important;
+  color: var(--text-inverse) !important;
+  border: none !important;
+  padding: var(--space-sm) var(--space-lg) !important;
+  border-radius: var(--radius-md) !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease;
+}
+
+.btn-signup:hover, [class*="signup"]:hover, [class*="sign-up"]:hover {
+  background-color: var(--accent-600) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
