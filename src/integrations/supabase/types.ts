@@ -43,12 +43,42 @@ export type Database = {
           tool_name?: string
           updated_at?: string
         }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          created_at: string | null
+          id: string
+          invited_by: string | null
+          partner_id: string
+          role: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          partner_id: string
+          role?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          partner_id?: string
+          role?: string
+          updated_at?: string | null
+          user_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "api_key_configs_tenant_id_fkey"
-            columns: ["tenant_id"]
+            foreignKeyName: "clients_partner_id_fkey"
+            columns: ["partner_id"]
             isOneToOne: false
-            referencedRelation: "tenants"
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -110,59 +140,85 @@ export type Database = {
             referencedRelation: "repository_analyses"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "issues_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "issues_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
         ]
+      }
+      partners: {
+        Row: {
+          branding_config: Json | null
+          company_name: string
+          created_at: string | null
+          id: string
+          slug: string
+          subscription_tier: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          branding_config?: Json | null
+          company_name: string
+          created_at?: string | null
+          id?: string
+          slug: string
+          subscription_tier?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          branding_config?: Json | null
+          company_name?: string
+          created_at?: string | null
+          id?: string
+          slug?: string
+          subscription_tier?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       projects: {
         Row: {
-          bubble_app_id: string | null
-          created_at: string
+          client_id: string | null
+          created_at: string | null
+          github_url: string | null
           id: string
           name: string
-          platform_type: Database["public"]["Enums"]["project_platform_type"]
-          repository_url: string | null
-          tenant_id: string
-          updated_at: string
+          partner_id: string
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
-          bubble_app_id?: string | null
-          created_at?: string
+          client_id?: string | null
+          created_at?: string | null
+          github_url?: string | null
           id?: string
           name: string
-          platform_type: Database["public"]["Enums"]["project_platform_type"]
-          repository_url?: string | null
-          tenant_id: string
-          updated_at?: string
+          partner_id: string
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
-          bubble_app_id?: string | null
-          created_at?: string
+          client_id?: string | null
+          created_at?: string | null
+          github_url?: string | null
           id?: string
           name?: string
-          platform_type?: Database["public"]["Enums"]["project_platform_type"]
-          repository_url?: string | null
-          tenant_id?: string
-          updated_at?: string
+          partner_id?: string
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "projects_tenant_id_fkey"
-            columns: ["tenant_id"]
+            foreignKeyName: "projects_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "tenants"
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -204,51 +260,6 @@ export type Database = {
           total_files?: number | null
           warnings?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "repository_analyses_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "repository_analyses_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tenants: {
-        Row: {
-          created_at: string
-          custom_domain: string | null
-          id: string
-          name: string
-          pricing_tier: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          custom_domain?: string | null
-          id?: string
-          name: string
-          pricing_tier?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          custom_domain?: string | null
-          id?: string
-          name?: string
-          pricing_tier?: string | null
-          updated_at?: string
-          user_id?: string
-        }
         Relationships: []
       }
       user_roles: {
@@ -280,7 +291,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_my_tenant_id: {
+      get_my_partner_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
