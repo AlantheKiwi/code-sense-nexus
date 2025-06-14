@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
-import { Label } from '@/components/ui/label'; // Import Label
+import { Label } from '@/components/ui/label';
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +13,8 @@ const AuthPage = () => {
   const [companyName, setCompanyName] = useState(''); // For sign-up
   const { signInWithEmailPassword, signUpWithEmailPassword, signInWithEmail, isLoading, session } = useAuth();
   const navigate = useNavigate();
-  const [authMode, setAuthMode] = useState<'signIn' | 'signUp'>('signIn'); // 'signIn', 'signUp', 'magicLink'
+  // Corrected the type for authMode to include 'magicLink'
+  const [authMode, setAuthMode] = useState<'signIn' | 'signUp' | 'magicLink'>('signIn');
 
   React.useEffect(() => {
     if (session) {
@@ -57,9 +57,9 @@ const AuthPage = () => {
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="signin" onClick={() => setAuthMode('signIn')}>Sign In</TabsTrigger>
-              <TabsTrigger value="signup" onClick={() => setAuthMode('signUp')}>Sign Up</TabsTrigger>
-              <TabsTrigger value="magiclink" onClick={() => setAuthMode('magicLink')}>Magic Link</TabsTrigger>
+              <TabsTrigger value="signin" onClick={() => { setEmail(''); setPassword(''); setCompanyName(''); setAuthMode('signIn'); }}>Sign In</TabsTrigger>
+              <TabsTrigger value="signup" onClick={() => { setEmail(''); setPassword(''); setCompanyName(''); setAuthMode('signUp'); }}>Sign Up</TabsTrigger>
+              <TabsTrigger value="magiclink" onClick={() => { setEmail(''); setPassword(''); setCompanyName(''); setAuthMode('magicLink'); }}>Magic Link</TabsTrigger>
             </TabsList>
             <TabsContent value="signin">
               <form onSubmit={handleSignInSubmit} className="space-y-4 mt-4">
@@ -92,7 +92,7 @@ const AuthPage = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Signing In...' : 'Sign In'}
+                  {isLoading && authMode === 'signIn' ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
             </TabsContent>
@@ -140,7 +140,7 @@ const AuthPage = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Signing Up...' : 'Sign Up'}
+                  {isLoading && authMode === 'signUp' ? 'Signing Up...' : 'Sign Up'}
                 </Button>
               </form>
             </TabsContent>
@@ -161,7 +161,7 @@ const AuthPage = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Sending link...' : 'Send Magic Link'}
+                  {isLoading && authMode === 'magicLink' ? 'Sending link...' : 'Send Magic Link'}
                 </Button>
               </form>
             </TabsContent>
