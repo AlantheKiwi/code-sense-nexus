@@ -77,8 +77,9 @@ export const AddProjectDialog: React.FC<AddProjectDialogProps> = ({ partnerId, i
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     mutate({
-      ...values,
+      name: values.name,
       partner_id: partnerId,
+      github_url: values.github_url || null,
     });
   }
 
