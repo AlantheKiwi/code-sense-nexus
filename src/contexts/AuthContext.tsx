@@ -10,7 +10,7 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   partner: Partner | null;
-  isLoading: boolean;
+  isLoading: boolean; // This is the main initial loading state
   signInWithEmail: (email: string) => Promise<void>;
   signInWithEmailPassword: (email: string, password: string) => Promise<void>;
   signUpWithEmailPassword: (email: string, password: string, companyName: string) => Promise<void>;
@@ -23,58 +23,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [partner, setPartner] = useState<Tables<'partners'> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // True by default, set to false after initial load
 
   useEffect(() => {
-    const checkInitialSession = async () => {
-      try {
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error("Error getting initial session:", sessionError);
-          // Avoid toasting here unless it's critical, as it might be transient.
-        }
+    setIsLoading(true); // Set true at the start of the effect
+    let didUnsubscribe = false; // Flag to prevent state updates after unmount
 
-        setSession(initialSession);
-        setUser(initialSession?.user ?? null);
+    console.log("AuthContext: useEffect initiated for session check.");
 
-        if (initialSession?.user) {
-          await fetchPartnerData(initialSession.user.id);
-        }
-      } catch (e) {
-        console.error("Exception in checkInitialSession:", e);
-        // Potentially toast an error if this fails catastrophically
-      } finally {
-        setIsLoading(false);
+    // Initial check for session
+    supabase.auth.getSession().then(async ({ data: { session: initialSession }, error: sessionError }) => {
+      if (didUnsubscribe) return;
+      console.log("AuthContext: supabase.auth.getSession() resolved.");
+
+      if (sessionError) {
+        console.error("AuthContext: Error getting initial session:", sessionError.message);
       }
-    };
+      
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
 
-    checkInitialSession();
+      if (initialSession?.user) {
+        console.log("AuthContext: User found in initial session, fetching partner data.");
+        await fetchPartnerData(initialSession.user.id);
+      } else {
+        console.log("AuthContext: No user in initial session.");
+        setPartner(null);
+      }
+    }).catch((e: any) => {
+      if (didUnsubscribe) return;
+      console.error("AuthContext: Exception in initial session check or associated fetchPartnerData:", e.message);
+      toast.error("Error initializing authentication state.");
+      setPartner(null); 
+    }).finally(() => {
+      if (didUnsubscribe) return;
+      setIsLoading(false); // Crucial: Set loading false after initial attempt
+      console.log("AuthContext: Initial session processing complete. isLoading is now false.");
+    });
 
+    // Auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
-        try {
-          setIsLoading(true);
-          setSession(newSession);
-          setUser(newSession?.user ?? null);
-          if (newSession?.user) {
-            await fetchPartnerData(newSession.user.id);
-          } else {
-            setPartner(null);
-          }
-        } catch (error) {
-          console.error("Error in onAuthStateChange handler:", error);
-          toast.error("An error occurred while updating authentication state.");
-        } finally {
-          setIsLoading(false);
+        if (didUnsubscribe) return;
+        
+        console.log("AuthContext: onAuthStateChange triggered. Event:", _event, "New session:", !!newSession);
+        
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+
+        if (newSession?.user) {
+          console.log("AuthContext: User found via onAuthStateChange, fetching partner data.");
+          await fetchPartnerData(newSession.user.id); 
+        } else {
+          console.log("AuthContext: No user via onAuthStateChange (e.g., logout).");
+          setPartner(null);
         }
       }
     );
 
     return () => {
-      subscription.unsubscribe();
+      didUnsubscribe = true;
+      console.log("AuthContext: Unsubscribing from onAuthStateChange.");
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
-  }, []);
+  }, []); // Empty dependency array: runs once on mount, cleans up on unmount
 
   const fetchPartnerData = async (userId: string) => {
     console.log("Fetching partner data for user ID:", userId);
@@ -96,15 +110,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("No partner record found for user. This might be a client user, an admin, or a partner whose record creation is pending/failed at DB trigger level.");
         setPartner(null);
       }
-    } catch (e) {
-      console.error("Exception during fetchPartnerData:", e);
+    } catch (e: any) {
+      console.error("Exception during fetchPartnerData:", e.message);
       toast.error("Failed to retrieve partner details.");
       setPartner(null);
     }
   };
 
   const signInWithEmail = async (email: string) => {
-    setIsLoading(true);
+    setIsLoading(true); // Manage isLoading for this specific operation
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
@@ -118,26 +132,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Error sending magic link:", error);
       toast.error(`Failed to send magic link: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset isLoading for this specific operation
     }
   };
 
   const signInWithEmailPassword = async (email: string, password: string) => {
-    setIsLoading(true);
+    setIsLoading(true); // Manage isLoading for this specific operation
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast.success("Signed in successfully!");
+      // onAuthStateChange will handle fetching partner data and navigation
     } catch (error: any) {
       console.error("Error signing in:", error);
       toast.error(`Sign in failed: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset isLoading for this specific operation
     }
   };
 
   const signUpWithEmailPassword = async (email: string, password: string, companyName: string) => {
-    setIsLoading(true);
+    setIsLoading(true); // Manage isLoading for this specific operation
     try {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -169,12 +184,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.error(`Sign up failed: ${error.message}`);
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset isLoading for this specific operation
     }
   };
 
   const signOut = async () => {
-    setIsLoading(true);
+    setIsLoading(true); // Manage isLoading for this specific operation
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
@@ -184,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Error signing out:", error);
       toast.error(`Sign out failed: ${error.message}`);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset isLoading for this specific operation
     }
   };
 
