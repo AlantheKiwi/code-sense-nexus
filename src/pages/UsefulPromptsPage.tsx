@@ -14,6 +14,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Type definitions for prompts and terms
+type Prompt = {
+  title: string;
+  content: string;
+  attribution: string;
+};
+type GroupedPrompts = Record<string, Prompt[]>;
+
+type Term = {
+  term: string;
+  definition: string;
+};
+type GroupedTerms = Record<string, Term[]>;
+
 const prompts = {
   "Getting Started": [
     { title: "Project Foundation Template", content: "Create a web application tailored for {{Objective}} targeting {{Target Audience}}. Key features: {{Core Features}}. Unique elements: {{Unique Features}}. Main menu: {{Main Menu Items}}. Views: {{Views}}. Design should reflect {{Design elements}}. User interactions: {{User Interaction details}}.", attribution: "WisperaAI (Reddit)" },
@@ -130,9 +144,9 @@ const UsefulPromptsPage = () => {
   };
 
   const filteredPrompts = useMemo(() => {
-    let filtered = selectedPromptCat === 'All' 
+    let filtered: Prompt[] = selectedPromptCat === 'All' 
       ? Object.values(prompts).flat()
-      : prompts[selectedPromptCat] || [];
+      : prompts[selectedPromptCat as keyof typeof prompts] || [];
     
     if (promptSearch) {
       filtered = filtered.filter(p => 
@@ -143,7 +157,9 @@ const UsefulPromptsPage = () => {
     }
     
     return filtered.reduce((acc, curr) => {
-        const category = Object.keys(prompts).find(key => prompts[key].some(p => p.title === curr.title));
+        const category = Object.keys(prompts).find(key => 
+          prompts[key as keyof typeof prompts].some(p => p.title === curr.title)
+        );
         if (category) {
             if (!acc[category]) {
                 acc[category] = [];
@@ -151,14 +167,14 @@ const UsefulPromptsPage = () => {
             acc[category].push(curr);
         }
         return acc;
-    }, {} as typeof prompts);
+    }, {} as GroupedPrompts);
 
   }, [promptSearch, selectedPromptCat]);
 
   const filteredTerms = useMemo(() => {
-    let filtered = selectedTermCat === 'All'
+    let filtered: Term[] = selectedTermCat === 'All'
         ? Object.values(terms).flat()
-        : terms[selectedTermCat] || [];
+        : terms[selectedTermCat as keyof typeof terms] || [];
 
     if (termSearch) {
         filtered = filtered.filter(t =>
@@ -168,7 +184,9 @@ const UsefulPromptsPage = () => {
     }
     
     return filtered.reduce((acc, curr) => {
-        const category = Object.keys(terms).find(key => terms[key].some(t => t.term === curr.term));
+        const category = Object.keys(terms).find(key => 
+          terms[key as keyof typeof terms].some(t => t.term === curr.term)
+        );
         if (category) {
             if (!acc[category]) {
                 acc[category] = [];
@@ -176,7 +194,7 @@ const UsefulPromptsPage = () => {
             acc[category].push(curr);
         }
         return acc;
-    }, {} as typeof terms);
+    }, {} as GroupedTerms);
 
   }, [termSearch, selectedTermCat]);
 
@@ -282,4 +300,3 @@ const UsefulPromptsPage = () => {
 };
 
 export default UsefulPromptsPage;
-
