@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -29,12 +30,13 @@ const HowItWorksPage = () => {
       <Header />
       <main className="flex-grow">
         {/* 1. Hero Section Enhancement */}
-        <section className="py-20 md:py-32 bg-gradient-to-br from-primary-cyber/10 to-primary-electric/10">
-          <div className="container mx-auto px-4 text-center">
+        <section className="py-20 md:py-32 bg-background relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-cyber opacity-20" />
+          <div className="container mx-auto px-4 text-center relative">
             <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary-cyber to-primary-electric">
               How CodeSense + Lovable = <br /> Unstoppable No-Code Development
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto">
               Lovable helps you build faster. CodeSense ensures you build better. Together, they're the complete solution for entrepreneurial success.
             </p>
           </div>
