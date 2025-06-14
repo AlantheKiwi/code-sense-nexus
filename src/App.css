@@ -1,3 +1,4 @@
+
 /* #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -67,126 +68,126 @@
   transform: translateX(100%);
 }
 
-/* EMERGENCY VISIBILITY FIXES */
-
-/* Set a dark, readable default text color for the site, to contrast with the light grey background. */
-body {
-  color: #1e293b;
+/* HERO SECTION COMPLETE REDESIGN */
+.hero-section, .hero, [class*="hero"], section:first-of-type {
+  background: var(--bg-gradient) !important;
+  color: var(--text-inverse) !important;
+  padding: 120px 0 !important;
+  position: relative;
+  overflow: hidden;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
 }
 
-/* Ensure all elements inherit the body color by default, unless overridden by more specific styles. */
-* {
-  color: inherit;
-}
-
-/* Apply a dark gradient background to the hero section and ensure text within it is light. */
-.hero-section {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-  color: #ffffff !important;
-}
-
-/* Style h1 within the hero section */
-.hero-section h1 {
-  color: #ffffff !important;
-  font-weight: 700 !important;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
-}
-
-/* Style p within the hero section */
-.hero-section p {
-  color: #e2e8f0 !important;
-  font-weight: 500 !important;
-}
-
-/* NAVIGATION STYLES */
-.navbar, nav, [class*="nav"] {
-  background-color: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--primary-200);
-  padding: var(--space-md) 0;
-  position: sticky;
+.hero-section::before, .hero::before {
+  content: '';
+  position: absolute;
   top: 0;
-  z-index: 100;
-  transition: all 0.3s ease;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+  pointer-events: none;
 }
 
-.nav-container, .navbar-container {
+.hero-content, .hero-container {
+  position: relative;
+  z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-lg);
+  text-align: center;
+}
+
+/* Hero Text Elements */
+.hero-title, .hero h1, .hero-section h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem) !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  margin-bottom: var(--space-lg) !important;
+  color: var(--text-inverse) !important;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  font-family: var(--font-heading) !important;
+}
+
+.hero-subtitle, .hero h2, .hero-section h2 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: var(--accent-400) !important;
+  margin-bottom: var(--space-md) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.hero-description, .hero p, .hero-section p {
+  font-size: 1.125rem !important;
+  line-height: 1.7 !important;
+  color: var(--primary-300) !important;
+  margin-bottom: var(--space-3xl) !important;
+  max-width: 600px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  font-weight: 400 !important;
+}
+
+/* Hero Buttons */
+.hero-buttons, .hero-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: var(--space-md);
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3xl);
 }
 
-/* Logo */
-.logo, .navbar-brand, [class*="logo"] {
-  font-size: 1.5rem !important;
-  font-weight: 700 !important;
-  color: var(--accent-500) !important;
+.hero-buttons .btn, .hero-actions .btn, .hero button, .hero a[class*="btn"] {
+  padding: var(--space-md) var(--space-xl) !important;
+  border-radius: var(--radius-lg) !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
   text-decoration: none !important;
-  font-family: var(--font-heading);
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: var(--space-sm) !important;
+  border: 2px solid transparent !important;
+  min-width: 160px !important;
+  justify-content: center !important;
 }
 
-/* Navigation Links */
-.nav-links, .navbar-nav {
-  display: flex;
-  gap: var(--space-xl);
-  align-items: center;
-  list-style: none;
-}
-
-.nav-links a, .navbar-nav a, .nav-link {
-  color: var(--text-secondary) !important;
-  text-decoration: none !important;
-  font-weight: 500 !important;
-  font-size: 0.95rem !important;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
-  transition: all 0.2s ease;
-}
-
-.nav-links a:hover, .navbar-nav a:hover, .nav-link:hover {
-  color: var(--accent-500) !important;
-  background-color: var(--primary-50);
-}
-
-/* Navigation Buttons */
-.nav-buttons {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: center;
-}
-
-.btn-login, [class*="login"] {
-  color: var(--text-secondary) !important;
-  background: transparent !important;
-  border: 1px solid var(--primary-300) !important;
-  padding: var(--space-sm) var(--space-lg) !important;
-  border-radius: var(--radius-md) !important;
-  text-decoration: none !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease;
-}
-
-.btn-login:hover, [class*="login"]:hover {
-  background-color: var(--primary-50) !important;
-  border-color: var(--primary-400) !important;
-}
-
-.btn-signup, [class*="signup"], [class*="sign-up"] {
+.btn-primary, .hero .btn-primary, [class*="primary"] {
   background-color: var(--accent-500) !important;
   color: var(--text-inverse) !important;
-  border: none !important;
-  padding: var(--space-sm) var(--space-lg) !important;
-  border-radius: var(--radius-md) !important;
-  text-decoration: none !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
 
-.btn-signup:hover, [class*="signup"]:hover, [class*="sign-up"]:hover {
+.btn-primary:hover, .hero .btn-primary:hover {
   background-color: var(--accent-600) !important;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4) !important;
 }
+
+.btn-secondary, .hero .btn-secondary, [class*="secondary"] {
+  background-color: transparent !important;
+  color: var(--text-inverse) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.btn-secondary:hover, .hero .btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Trust Indicator */
+.trust-indicator, .hero-trust, [class*="trust"] {
+  color: var(--primary-400) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+}
+
+/* NAVIGATION STYLES */
+/* ... keep existing code ... */
