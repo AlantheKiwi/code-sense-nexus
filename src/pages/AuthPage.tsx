@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,29 +11,39 @@ import { Label } from '@/components/ui/label';
 const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [companyName, setCompanyName] = useState(''); // For sign-up
+  const [companyName, setCompanyName] = useState('');
   const { signInWithEmailPassword, signUpWithEmailPassword, signInWithEmail, isLoading, session } = useAuth();
   const navigate = useNavigate();
-  // Corrected the type for authMode to include 'magicLink'
   const [authMode, setAuthMode] = useState<'signIn' | 'signUp' | 'magicLink'>('signIn');
 
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log(`AuthPage: isLoading state received: ${isLoading}`);
+  }, [isLoading]);
+
+  useEffect(() => {
     if (session) {
-      navigate('/dashboard'); // Redirect if already logged in
+      console.log("AuthPage: Session detected, navigating to /dashboard");
+      navigate('/dashboard');
     }
   }, [session, navigate]);
 
-  if (session) return null; // Avoid rendering if redirecting
+  if (session) {
+    console.log("AuthPage: Session exists, returning null to prevent render while redirecting.");
+    return null; 
+  }
 
   const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("AuthPage: handleSignInSubmit called with email:", email);
     await signInWithEmailPassword(email, password);
   };
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("AuthPage: handleSignUpSubmit called with email:", email, "companyName:", companyName);
     if (!companyName) {
-        alert("Company name is required for sign up."); // Or use a toast
+        alert("Company name is required for sign up.");
+        // Consider using a toast for consistency: toast.error("Company name is required for sign up.");
         return;
     }
     await signUpWithEmailPassword(email, password, companyName);
@@ -40,8 +51,11 @@ const AuthPage = () => {
 
   const handleMagicLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("AuthPage: handleMagicLinkSubmit called with email:", email);
     await signInWithEmail(email);
   };
+  
+  console.log(`AuthPage: Rendering with isLoading: ${isLoading}, authMode: ${authMode}`);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -55,11 +69,20 @@ const AuthPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue="signin" 
+            onValueChange={(value) => {
+                console.log("AuthPage: Tab changed to:", value);
+                setEmail(''); 
+                setPassword(''); 
+                setCompanyName(''); 
+                setAuthMode(value as 'signIn' | 'signUp' | 'magicLink');
+            }} 
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="signin" onClick={() => { setEmail(''); setPassword(''); setCompanyName(''); setAuthMode('signIn'); }}>Sign In</TabsTrigger>
-              <TabsTrigger value="signup" onClick={() => { setEmail(''); setPassword(''); setCompanyName(''); setAuthMode('signUp'); }}>Sign Up</TabsTrigger>
-              <TabsTrigger value="magiclink" onClick={() => { setEmail(''); setPassword(''); setCompanyName(''); setAuthMode('magicLink'); }}>Magic Link</TabsTrigger>
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsTrigger value="magiclink">Magic Link</TabsTrigger>
             </TabsList>
             <TabsContent value="signin">
               <form onSubmit={handleSignInSubmit} className="space-y-4 mt-4">
@@ -174,3 +197,4 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
+

@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { Tables } from '@/integrations/supabase/types'; // Still needed for Partner type in context
+import { Tables } from '@/integrations/supabase/types';
 import { useAuthSession } from '@/hooks/useAuthSession';
 import { usePartnerData } from '@/hooks/usePartnerData';
 import { useAuthOperations } from '@/hooks/useAuthOperations';
@@ -32,11 +32,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isOperationLoading 
   } = useAuthOperations();
 
-  // Consolidate all loading states into one for the context consumers.
-  // isSessionLoading covers the initial auth state check.
-  // isPartnerLoading covers fetching partner data after user is identified.
-  // isOperationLoading covers active auth operations like sign-in/out/up.
   const isLoading = isSessionLoading || isPartnerLoading || isOperationLoading;
+
+  useEffect(() => {
+    console.log(
+      `AuthContext: Combined isLoading: ${isLoading}`,
+      { isSessionLoading, isPartnerLoading, isOperationLoading }
+    );
+  }, [isLoading, isSessionLoading, isPartnerLoading, isOperationLoading]);
   
   return (
     <AuthContext.Provider value={{ 
@@ -61,3 +64,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
