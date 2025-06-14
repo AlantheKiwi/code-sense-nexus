@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderKanban, History, PlusCircle, ExternalLink, FileCode, Sparkles } from "lucide-react";
+import { FolderKanban, History, PlusCircle, ExternalLink, FileCode, Sparkles, Code, Bug, TestTube } from "lucide-react";
 import { useProjectsData } from '@/hooks/useProjectsData';
 import { AddProjectDialog } from '@/components/projects/AddProjectDialog';
 import { Bar, BarChart, CartesianGrid, XAxis, Cell } from "recharts";
@@ -207,9 +207,15 @@ const DashboardPage = () => {
                     <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col space-y-2">
-                    <Button variant="outline">Analyze a Lovable App</Button>
-                    <Button variant="outline">Optimize a Bubble Workflow</Button>
-                    <Button variant="outline">Invite a Team Member</Button>
+                    <Button variant="outline" onClick={() => toast.info("ESLint analysis feature is coming soon!")}>
+                        <Code className="mr-2 h-4 w-4" /> Run ESLint Analysis
+                    </Button>
+                    <Button variant="outline" onClick={() => toast.info("Snyk security scan feature is coming soon!")}>
+                        <Bug className="mr-2 h-4 w-4" /> Scan with Snyk
+                    </Button>
+                    <Button variant="outline" onClick={() => toast.info("Lighthouse audit feature is coming soon!")}>
+                        <TestTube className="mr-2 h-4 w-4" /> Audit with Lighthouse
+                    </Button>
                 </CardContent>
             </Card>
         </div>
