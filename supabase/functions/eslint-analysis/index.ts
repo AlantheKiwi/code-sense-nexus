@@ -8,6 +8,7 @@ console.log('Secure analysis function booting up');
 
 const linter = new Linter();
 
+// ESLint v9 flat config structure
 const defaultConfig = {
   languageOptions: {
     ecmaVersion: 2022,
@@ -92,9 +93,11 @@ serve(async (req: Request) => {
     }
 
     console.log('Linting code snippet...');
-    const messages = linter.verify(code, finalConfig, {
+    // Use verifyAndFix for better compatibility with v9
+    const lintResult = linter.verifyAndFix(code, finalConfig, {
       filename: 'analysis.js'
     });
+    const messages = lintResult.messages;
     console.log(`Found ${messages.length} linting issues.`);
 
     const securityIssues = securityCheck(ast);
