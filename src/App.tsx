@@ -53,8 +53,9 @@ const App = () => (
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/best-practices" element={<BestPracticesPage />} />
             <Route element={<ProtectedRoute />}>
+              {/* The DashboardPage seems to have its own header, so we exclude it from the AppLayout */}
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
                 <Route path="/team/:teamId/settings" element={<TeamSettingsPage />} />
                 <Route path="/project/:projectId/debug/:sessionId" element={<DebugSessionPage />} />
