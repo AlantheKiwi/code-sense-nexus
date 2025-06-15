@@ -1,11 +1,18 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Tables } from '@/integrations/supabase/types';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, PlusCircle, Edit, Trash2 } from "lucide-react";
+import { ExternalLink, PlusCircle, Edit, Trash2, Settings, MoreVertical } from "lucide-react";
 import { ProjectDialog } from './ProjectDialog';
 import { DeleteProjectDialog } from './DeleteProjectDialog';
 import { useDeleteProject } from '@/hooks/useProjectMutations';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Project = Tables<'projects'>;
 
@@ -72,12 +79,29 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, partnerId })
                                     <Button variant="outline" size="sm">
                                         Analyze
                                     </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(project)}>
-                                        <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(project)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon">
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => handleEdit(project)}>
+                                                <Edit className="mr-2 h-4 w-4" />
+                                                <span>Edit Project</span>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link to={`/project/${project.id}/settings`}>
+                                                    <Settings className="mr-2 h-4 w-4" />
+                                                    <span>Manage Members</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleDelete(project)} className="text-destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                <span>Delete Project</span>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
                         ))}
