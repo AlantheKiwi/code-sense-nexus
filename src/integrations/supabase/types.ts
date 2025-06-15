@@ -216,6 +216,47 @@ export type Database = {
         }
         Relationships: []
       }
+      api_usage_logs: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip_address: unknown | null
+          partner_id: string
+          response_time_ms: number
+          status_code: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_address?: unknown | null
+          partner_id: string
+          response_time_ms: number
+          status_code: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_address?: unknown | null
+          partner_id?: string
+          response_time_ms?: number
+          status_code?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_logs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1030,6 +1071,36 @@ export type Database = {
         }
         Relationships: []
       }
+      optimization_rules: {
+        Row: {
+          cache_duration_seconds: number
+          compression_enabled: boolean
+          created_at: string
+          endpoint_pattern: string
+          id: string
+          is_active: boolean
+          updated_at: string
+        }
+        Insert: {
+          cache_duration_seconds?: number
+          compression_enabled?: boolean
+          created_at?: string
+          endpoint_pattern: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Update: {
+          cache_duration_seconds?: number
+          compression_enabled?: boolean
+          created_at?: string
+          endpoint_pattern?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           branding_config: Json | null
@@ -1453,6 +1524,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limit_configs: {
+        Row: {
+          burst_allowance: number
+          created_at: string
+          id: string
+          is_active: boolean
+          max_requests_per_hour: number
+          subscription_tier: string
+          updated_at: string
+        }
+        Insert: {
+          burst_allowance: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_requests_per_hour: number
+          subscription_tier: string
+          updated_at?: string
+        }
+        Update: {
+          burst_allowance?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          max_requests_per_hour?: number
+          subscription_tier?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       repository_analyses: {
         Row: {
