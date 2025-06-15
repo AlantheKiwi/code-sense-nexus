@@ -83,6 +83,80 @@ export type Database = {
           },
         ]
       }
+      debug_logs: {
+        Row: {
+          id: number
+          log_data: Json
+          session_id: string
+          timestamp: string
+          tool_id: string | null
+        }
+        Insert: {
+          id?: number
+          log_data: Json
+          session_id: string
+          timestamp?: string
+          tool_id?: string | null
+        }
+        Update: {
+          id?: number
+          log_data?: Json
+          session_id?: string
+          timestamp?: string
+          tool_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debug_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "debugging_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debug_logs_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debugging_sessions: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          project_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          project_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          project_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debugging_sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issues: {
         Row: {
           analysis_id: string
@@ -179,30 +253,39 @@ export type Database = {
         Row: {
           client_id: string | null
           created_at: string | null
+          framework: string | null
           github_url: string | null
           id: string
+          language: string | null
           name: string
           partner_id: string
+          settings: Json | null
           status: string | null
           updated_at: string | null
         }
         Insert: {
           client_id?: string | null
           created_at?: string | null
+          framework?: string | null
           github_url?: string | null
           id?: string
+          language?: string | null
           name: string
           partner_id: string
+          settings?: Json | null
           status?: string | null
           updated_at?: string | null
         }
         Update: {
           client_id?: string | null
           created_at?: string | null
+          framework?: string | null
           github_url?: string | null
           id?: string
+          language?: string | null
           name?: string
           partner_id?: string
+          settings?: Json | null
           status?: string | null
           updated_at?: string | null
         }
@@ -259,6 +342,78 @@ export type Database = {
           tenant_id?: string | null
           total_files?: number | null
           warnings?: number | null
+        }
+        Relationships: []
+      }
+      tool_configurations: {
+        Row: {
+          config_data: Json | null
+          created_at: string
+          enabled: boolean
+          id: string
+          partner_id: string
+          tool_id: string
+          updated_at: string
+        }
+        Insert: {
+          config_data?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          partner_id: string
+          tool_id: string
+          updated_at?: string
+        }
+        Update: {
+          config_data?: Json | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          partner_id?: string
+          tool_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_configurations_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_configurations_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tools: {
+        Row: {
+          api_endpoint: string | null
+          category: string
+          config_schema: Json | null
+          id: string
+          name: string
+          version: string | null
+        }
+        Insert: {
+          api_endpoint?: string | null
+          category: string
+          config_schema?: Json | null
+          id?: string
+          name: string
+          version?: string | null
+        }
+        Update: {
+          api_endpoint?: string | null
+          category?: string
+          config_schema?: Json | null
+          id?: string
+          name?: string
+          version?: string | null
         }
         Relationships: []
       }

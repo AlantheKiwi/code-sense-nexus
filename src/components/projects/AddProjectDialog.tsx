@@ -35,6 +35,8 @@ const formSchema = z.object({
     message: 'Project name must be at least 2 characters.',
   }),
   github_url: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
+  language: z.string().optional(),
+  framework: z.string().optional(),
 });
 
 interface AddProjectDialogProps {
@@ -59,6 +61,8 @@ export const AddProjectDialog: React.FC<AddProjectDialogProps> = ({ partnerId, i
     defaultValues: {
       name: '',
       github_url: '',
+      language: '',
+      framework: '',
     },
   });
 
@@ -80,6 +84,8 @@ export const AddProjectDialog: React.FC<AddProjectDialogProps> = ({ partnerId, i
       name: values.name,
       partner_id: partnerId,
       github_url: values.github_url || null,
+      language: values.language || null,
+      framework: values.framework || null,
     });
   }
 
@@ -115,6 +121,32 @@ export const AddProjectDialog: React.FC<AddProjectDialogProps> = ({ partnerId, i
                   <FormLabel>GitHub Repository URL (Optional)</FormLabel>
                   <FormControl>
                     <Input placeholder="https://github.com/user/repo" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="language"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Language (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., TypeScript" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="framework"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Framework (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., React" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
