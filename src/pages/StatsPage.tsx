@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -77,7 +78,7 @@ const StatsPage = () => {
       <Header />
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="py-20 md:py-28 bg-gradient-to-br from-background to-secondary text-center">
+        <section className="py-20 md:py-28 bg-gradient-to-br from-brand-light to-background text-center">
             <div className="container mx-auto px-4">
                 <h1 className="text-4xl md:text-6xl font-extrabold mb-4">The No-Code Revolution</h1>
                 <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
@@ -97,7 +98,7 @@ const StatsPage = () => {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Market Reality Check</h2>
             <div className="grid md:grid-cols-3 gap-8">
-              <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center"><TrendingUp className="mr-2 h-6 w-6 text-brand" /> Market Size</CardTitle>
                 </CardHeader>
@@ -107,7 +108,7 @@ const StatsPage = () => {
                   <p>Growth Rate: <span className="font-semibold text-primary">{marketStats.marketSize.growth}</span></p>
                 </CardContent>
               </Card>
-              <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center"><Rocket className="mr-2 h-6 w-6 text-brand" /> Platform Adoption</CardTitle>
                 </CardHeader>
@@ -117,7 +118,7 @@ const StatsPage = () => {
                   <p>Success Rate: <span className="font-semibold text-primary">{marketStats.adoption.successRate}</span></p>
                 </CardContent>
               </Card>
-              <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center"><Award className="mr-2 h-6 w-6 text-brand" /> Lovable's Rise</CardTitle>
                 </CardHeader>
@@ -136,97 +137,62 @@ const StatsPage = () => {
             <div className="container mx-auto px-4">
                 <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Inspirational Insights</h2>
                 <div className="grid lg:grid-cols-2 gap-12">
-                    <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+                    <Card>
                         <CardHeader><CardTitle>Revenue Potential (First Year)</CardTitle></CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
                                 <LineChart data={revenueData}>
-                                    <defs>
-                                      <linearGradient id="gradientCyber" x1="0" y1="0" x2="1" y2="0">
-                                        <stop offset="0%" stopColor="hsl(var(--primary-electric))" />
-                                        <stop offset="100%" stopColor="hsl(var(--primary-cyber))" />
-                                      </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.2)" />
-                                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                                    <YAxis tickFormatter={(value) => `$${Number(value) / 1000}k`} stroke="hsl(var(--muted-foreground))"/>
-                                    <Tooltip
-                                        formatter={(value) => `$${Number(value).toLocaleString()}`}
-                                        contentStyle={{ backgroundColor: 'hsl(var(--background) / 0.8)', border: '1px solid hsl(var(--border) / 0.2)' }}
-                                    />
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis tickFormatter={(value) => `$${Number(value) / 1000}k`} />
+                                    <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
                                     <Legend />
-                                    <Line type="monotone" dataKey="No-Code" stroke="url(#gradientCyber)" strokeWidth={3} dot={{ r: 0 }} activeDot={{ r: 6 }} />
-                                    <Line type="monotone" dataKey="Traditional" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="5 5" />
+                                    <Line type="monotone" dataKey="No-Code" stroke="hsl(var(--brand))" strokeWidth={2} />
+                                    <Line type="monotone" dataKey="Traditional" stroke="hsl(var(--muted-foreground))" strokeWidth={2} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
-                    <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+                    <Card>
                         <CardHeader><CardTitle>Time to Market (Months)</CardTitle></CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={timeToMarketData}>
-                                    <defs>
-                                      <linearGradient id="gradientMatrix" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="hsl(var(--primary-matrix))" />
-                                        <stop offset="100%" stopColor="hsl(var(--primary-electric))" />
-                                      </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.2)" />
-                                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))"/>
-                                    <YAxis stroke="hsl(var(--muted-foreground))"/>
-                                    <Tooltip 
-                                        formatter={(value) => `${value} months`}
-                                        contentStyle={{ backgroundColor: 'hsl(var(--background) / 0.8)', border: '1px solid hsl(var(--border) / 0.2)' }}
-                                    />
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip formatter={(value) => `${value} months`} />
                                     <Legend />
-                                    <Bar dataKey="No-Code" fill="url(#gradientMatrix)" />
+                                    <Bar dataKey="No-Code" fill="hsl(var(--brand))" />
                                     <Bar dataKey="Traditional" fill="hsl(var(--muted-foreground))" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
-                     <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+                     <Card>
                         <CardHeader><CardTitle>Platform Success Rate (%)</CardTitle></CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={successRateData} layout="vertical">
-                                     <defs>
-                                      <linearGradient id="gradientNeural" x1="0" y1="0" x2="1" y2="0">
-                                        <stop offset="0%" stopColor="hsl(var(--primary-neural))" />
-                                        <stop offset="100%" stopColor="hsl(var(--primary-cyber))" />
-                                      </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.2)"/>
-                                    <XAxis type="number" stroke="hsl(var(--muted-foreground))"/>
-                                    <YAxis type="category" dataKey="name" width={80} stroke="hsl(var(--muted-foreground))"/>
-                                    <Tooltip 
-                                        formatter={(value) => `${value}%`}
-                                        contentStyle={{ backgroundColor: 'hsl(var(--background) / 0.8)', border: '1px solid hsl(var(--border) / 0.2)' }}
-                                    />
-                                    <Bar dataKey="rate" fill="url(#gradientNeural)" />
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis type="number" />
+                                    <YAxis type="category" dataKey="name" width={80}/>
+                                    <Tooltip formatter={(value) => `${value}%`}/>
+                                    <Bar dataKey="rate" fill="hsl(var(--brand))" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
-                    <Card className="bg-card/80 backdrop-blur-sm border-border/20">
+                    <Card>
                         <CardHeader><CardTitle>Geographic Success Distribution</CardTitle></CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={geoData}>
-                                     <defs>
-                                      <linearGradient id="gradientElectric" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="hsl(var(--primary-electric))" />
-                                        <stop offset="100%" stopColor="hsl(var(--primary-neural))" />
-                                      </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.2)"/>
-                                    <XAxis dataKey="name" tick={{fontSize: 12}} angle={-25} textAnchor="end" height={60} stroke="hsl(var(--muted-foreground))"/>
-                                    <YAxis stroke="hsl(var(--muted-foreground))"/>
-                                    <Tooltip 
-                                      contentStyle={{ backgroundColor: 'hsl(var(--background) / 0.8)', border: '1px solid hsl(var(--border) / 0.2)' }}
-                                    />
-                                    <Bar dataKey="businesses" fill="url(#gradientElectric)" />
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" tick={{fontSize: 12}} angle={-25} textAnchor="end" height={60} />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Bar dataKey="businesses" fill="hsl(var(--brand))" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>

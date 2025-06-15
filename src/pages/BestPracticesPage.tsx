@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -100,7 +101,7 @@ const BestPracticesPage = () => {
                 <h2 className="text-3xl font-bold mb-8">Interactive Learning Modules</h2>
                 <Accordion type="single" collapsible className="w-full">
                     {learningModules.map((module) => (
-                        <AccordionItem value={module.title} key={module.title} className="border-border/20">
+                        <AccordionItem value={module.title} key={module.title}>
                             <AccordionTrigger className="text-lg">
                                 <div className="flex items-center">
                                     {module.icon}
@@ -109,7 +110,7 @@ const BestPracticesPage = () => {
                             </AccordionTrigger>
                             <AccordionContent className="text-muted-foreground">
                                 {module.description}
-                                <Button size="sm" variant="link" className="p-0 h-auto mt-2 text-brand">Start Learning</Button>
+                                <Button size="sm" variant="link" className="p-0 h-auto mt-2">Start Learning</Button>
                             </AccordionContent>
                         </AccordionItem>
                     ))}
@@ -118,7 +119,7 @@ const BestPracticesPage = () => {
 
             {/* Certification System */}
             <aside className="lg:col-span-2">
-                <Card className="sticky top-24 bg-card/80 backdrop-blur-sm border-border/20">
+                <Card className="sticky top-24">
                     <CardHeader>
                         <CardTitle className="flex items-center"><ShieldCheck className="mr-2 h-6 w-6 text-brand" /> Certification System</CardTitle>
                         <CardDescription>Become a recognized Lovable expert.</CardDescription>

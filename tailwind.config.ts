@@ -19,15 +19,8 @@ export default {
 			}
 		},
 		extend: {
-      backgroundImage: {
-        'gradient-cyber': 'linear-gradient(135deg, hsl(var(--primary-electric)) 0%, hsl(var(--primary-cyber)) 100%)',
-        'gradient-matrix': 'linear-gradient(135deg, hsl(var(--primary-matrix)) 0%, hsl(var(--primary-electric)) 100%)',
-        'gradient-neural': 'linear-gradient(135deg, hsl(var(--primary-neural)) 0%, hsl(var(--primary-cyber)) 100%)',
-        'gradient-electric': 'linear-gradient(135deg, hsl(var(--primary-electric)) 0%, hsl(var(--primary-neural)) 100%)',
-      },
 			fontFamily: {
         sans: ['Inter', 'sans-serif'],
-        heading: ['Poppins', 'sans-serif'],
       },
 			colors: {
 				border: 'hsl(var(--border))',
@@ -39,14 +32,6 @@ export default {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
 				},
-        'primary-electric': 'hsl(var(--primary-electric))',
-        'primary-cyber': 'hsl(var(--primary-cyber))',
-        'primary-matrix': 'hsl(var(--primary-matrix))',
-        'primary-neural': 'hsl(var(--primary-neural))',
-        'accent-success': 'hsl(var(--accent-success))',
-        'accent-warning': 'hsl(var(--accent-warning))',
-        'accent-error': 'hsl(var(--accent-error))',
-        'accent-info': 'hsl(var(--accent-info))',
         brand: {
           DEFAULT: 'hsl(var(--brand))',
           foreground: 'hsl(var(--brand-foreground))',
@@ -118,4 +103,3 @@ export default {
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
-

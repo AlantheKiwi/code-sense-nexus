@@ -26,70 +26,59 @@ const Header = () => {
 
   const AuthButtons: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
     const buttonBaseClasses = isMobile ? "w-full" : "";
-    const containerClasses = isMobile ? "flex flex-col space-y-2" : "nav-right";
-
     if (session) {
       return (
-        <div className={containerClasses}>
-          <Button variant="outline" className={`${buttonBaseClasses} btn-dashboard`} onClick={() => navigate('/dashboard')}>Dashboard</Button>
-          <Button className={`${buttonBaseClasses} btn-logout`} onClick={handleLogout}>Logout</Button>
-        </div>
+        <>
+          <Button variant="outline" className={buttonBaseClasses} onClick={() => navigate('/dashboard')}>Dashboard</Button>
+          <Button className={buttonBaseClasses} onClick={handleLogout}>Logout</Button>
+        </>
       );
     }
     return (
-      <div className={containerClasses}>
-        <Button className={`${buttonBaseClasses} btn-login`} onClick={() => navigate('/auth')}>Login</Button>
-        <Button variant="outline" className={`${buttonBaseClasses} btn-signup`} onClick={() => navigate('/auth')}>Sign Up</Button>
-      </div>
+      <>
+        <Button variant="outline" className={`${buttonBaseClasses} text-brand border-brand hover:bg-brand-light hover:text-brand`} onClick={() => navigate('/auth')}>Login</Button>
+        <Button className={`${buttonBaseClasses} bg-brand text-brand-foreground hover:bg-brand/90`} onClick={() => navigate('/auth')}>Sign Up</Button>
+      </>
     );
   };
 
   return (
-    <header className="navbar">
-      <a href="#main-content" className="skip-link">Skip to main content</a>
-      <div className="header">
-        <div className="nav-left">
-          <Logo />
-        </div>
-        
-        <div role="navigation" className="nav-center hidden md:flex">
+    <header className="py-4 sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b">
+      <div className="container mx-auto px-4 flex justify-between items-center">
+        <Logo />
+        <nav className="hidden md:flex space-x-6 items-center">
           {navLinks.map((link) => (
             <Link
               key={link.label}
               to={link.to}
-              className="nav-link"
+              className="text-foreground/70 hover:text-brand transition-colors"
             >
               {link.label}
             </Link>
           ))}
-        </div>
-
-        <div className="hidden md:flex">
           <AuthButtons />
-        </div>
-
+        </nav>
         <div className="md:hidden">
           <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             <Menu className="h-6 w-6" />
-            <span className="sr-only">Open main menu</span>
           </Button>
         </div>
       </div>
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b pb-4">
-          <div role="navigation" className="container mx-auto px-4 flex flex-col space-y-3 pt-3">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b pb-4">
+          <nav className="container mx-auto px-4 flex flex-col space-y-3 pt-3">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.to}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="nav-link text-center py-2"
+                className="text-foreground/70 hover:text-brand transition-colors py-2"
               >
                 {link.label}
               </Link>
             ))}
             <AuthButtons isMobile />
-          </div>
+          </nav>
         </div>
       )}
     </header>
