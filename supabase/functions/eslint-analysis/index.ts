@@ -8,36 +8,38 @@ console.log('Secure analysis function booting up');
 
 const linter = new Linter();
 
-// ESLint v9 flat config structure with required basePath
-const defaultConfig = {
-  languageOptions: {
-    ecmaVersion: 2022,
-    sourceType: 'module',
-    globals: {
-      // Common browser globals
-      window: 'readonly',
-      document: 'readonly',
-      console: 'readonly',
-      // Common Node.js globals for modules
-      require: 'readonly',
-      module: 'readonly',
-      exports: 'readonly',
-      // ES6
-      Promise: 'readonly',
-    },
-    parserOptions: {
-      ecmaFeatures: {
-        jsx: true,
+// ESLint v9 flat config array format
+const defaultConfig = [
+  {
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        // Common browser globals
+        window: 'readonly',
+        document: 'readonly',
+        console: 'readonly',
+        // Common Node.js globals for modules
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        // ES6
+        Promise: 'readonly',
+      },
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
-  },
-  rules: {
-    'no-undef': 'error',
-    'no-unused-vars': 'warn',
-    'prefer-const': 'warn',
-    'semi': ['error', 'always'],
-  },
-};
+    rules: {
+      'no-undef': 'error',
+      'no-unused-vars': 'warn',
+      'prefer-const': 'warn',
+      'semi': ['error', 'always'],
+    },
+  }
+];
 
 const securityCheck = (_ast: any) => {
     // Placeholder for security rule checking
@@ -94,11 +96,8 @@ serve(async (req: Request) => {
     }
 
     console.log('Linting code snippet...');
-    // Use verify method with filename option to avoid basePath issues
-    const messages = linter.verify(code, finalConfig, {
-      filename: 'analysis.js',
-      allowInlineConfig: false,
-    });
+    // Use verify method with proper filename
+    const messages = linter.verify(code, finalConfig, 'analysis.js');
     console.log(`Found ${messages.length} linting issues.`);
 
     const securityIssues = securityCheck(ast);
