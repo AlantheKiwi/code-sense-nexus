@@ -1,12 +1,9 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
 const Hero = () => {
-  return (
-    <section className="py-20 md:py-32 bg-gradient-to-br from-brand-light to-background">
+  return <section className="py-20 md:py-32 bg-gradient-to-br from-brand-light to-background">
       <div className="container mx-auto px-4 text-center">
         <h1 className="text-4xl md:text-6xl font-extrabold mb-6 text-gray-900 dark:text-white">
           CodeSense for Lovable: <br /> <span className="text-brand">Debug Smarter, Build Faster.</span>
@@ -25,10 +22,8 @@ const Hero = () => {
             <Link to="/demo">Request a Demo</Link>
           </Button>
         </div>
-        <p className="mt-8 text-sm text-muted-foreground">Trusted by 500+ Lovable developers and agencies</p>
+        <p className="mt-8 text-sm text-muted-foreground">Our algorithms and Ai assisted approach improves the debugging tools every single day. </p>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
