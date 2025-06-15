@@ -8,7 +8,7 @@ console.log('Secure analysis function booting up');
 
 const linter = new Linter();
 
-// ESLint v9 flat config structure
+// ESLint v9 flat config structure with required basePath
 const defaultConfig = {
   languageOptions: {
     ecmaVersion: 2022,
@@ -80,6 +80,7 @@ serve(async (req: Request) => {
                 issues: [{
                     fatal: true,
                     ruleId: 'babel-parser',
+                    severity: 'error',
                     message: e.message,
                     line: e.loc?.line ?? 0,
                     column: e.loc?.column ?? 0,
@@ -93,11 +94,11 @@ serve(async (req: Request) => {
     }
 
     console.log('Linting code snippet...');
-    // Use verifyAndFix for better compatibility with v9
-    const lintResult = linter.verifyAndFix(code, finalConfig, {
-      filename: 'analysis.js'
+    // Use verify method with filename option to avoid basePath issues
+    const messages = linter.verify(code, finalConfig, {
+      filename: 'analysis.js',
+      allowInlineConfig: false,
     });
-    const messages = lintResult.messages;
     console.log(`Found ${messages.length} linting issues.`);
 
     const securityIssues = securityCheck(ast);
