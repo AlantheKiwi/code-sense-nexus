@@ -338,6 +338,126 @@ export type Database = {
           },
         ]
       }
+      error_instances: {
+        Row: {
+          error_report_id: string
+          id: string
+          session_data: Json | null
+          timestamp: string
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          error_report_id: string
+          id?: string
+          session_data?: Json | null
+          timestamp?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          error_report_id?: string
+          id?: string
+          session_data?: Json | null
+          timestamp?: string
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_instances_error_report_id_fkey"
+            columns: ["error_report_id"]
+            isOneToOne: false
+            referencedRelation: "error_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      error_reports: {
+        Row: {
+          context: Json | null
+          count: number
+          created_at: string
+          error_hash: string
+          id: string
+          last_seen_at: string
+          message: string
+          project_id: string
+          stack_trace: string | null
+        }
+        Insert: {
+          context?: Json | null
+          count?: number
+          created_at?: string
+          error_hash: string
+          id?: string
+          last_seen_at?: string
+          message: string
+          project_id: string
+          stack_trace?: string | null
+        }
+        Update: {
+          context?: Json | null
+          count?: number
+          created_at?: string
+          error_hash?: string
+          id?: string
+          last_seen_at?: string
+          message?: string
+          project_id?: string
+          stack_trace?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      error_resolutions: {
+        Row: {
+          assigned_to: string | null
+          error_report_id: string
+          fixed_at: string | null
+          id: string
+          resolution_notes: string | null
+          status: Database["public"]["Enums"]["error_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          error_report_id: string
+          fixed_at?: string | null
+          id?: string
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["error_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          error_report_id?: string
+          fixed_at?: string | null
+          id?: string
+          resolution_notes?: string | null
+          status?: Database["public"]["Enums"]["error_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_resolutions_error_report_id_fkey"
+            columns: ["error_report_id"]
+            isOneToOne: true
+            referencedRelation: "error_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       github_app_installations: {
         Row: {
           created_at: string
@@ -506,6 +626,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      performance_issues: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          impact_score: number | null
+          metric_type: string
+          project_id: string
+          threshold_exceeded: number | null
+          value: number
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          metric_type: string
+          project_id: string
+          threshold_exceeded?: number | null
+          value: number
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          metric_type?: string
+          project_id?: string
+          threshold_exceeded?: number | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_issues_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       platform_analytics: {
         Row: {
@@ -1034,6 +1195,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      error_status: "unresolved" | "resolved" | "ignored" | "in_progress"
       project_platform_type:
         | "lovable"
         | "bubble"
@@ -1158,6 +1320,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      error_status: ["unresolved", "resolved", "ignored", "in_progress"],
       project_platform_type: [
         "lovable",
         "bubble",
