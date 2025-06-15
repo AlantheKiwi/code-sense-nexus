@@ -1786,6 +1786,174 @@ export type Database = {
           },
         ]
       }
+      saved_searches: {
+        Row: {
+          created_at: string
+          filters: Json | null
+          id: string
+          name: string
+          notifications_enabled: boolean
+          partner_id: string
+          query_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          name: string
+          notifications_enabled?: boolean
+          partner_id: string
+          query_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          name?: string
+          notifications_enabled?: boolean
+          partner_id?: string
+          query_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_searches_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_analytics: {
+        Row: {
+          clicked_content_id: string | null
+          clicked_content_type: string | null
+          created_at: string
+          id: number
+          partner_id: string
+          query_id: string | null
+          rank: number | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_content_id?: string | null
+          clicked_content_type?: string | null
+          created_at?: string
+          id?: number
+          partner_id: string
+          query_id?: string | null
+          rank?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_content_id?: string | null
+          clicked_content_type?: string | null
+          created_at?: string
+          id?: number
+          partner_id?: string
+          query_id?: string | null
+          rank?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_analytics_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "search_analytics_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "search_queries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_index: {
+        Row: {
+          content_id: string
+          content_type: string
+          id: string
+          indexed_at: string
+          keywords: string[] | null
+          project_id: string
+          searchable_text: unknown | null
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          id?: string
+          indexed_at?: string
+          keywords?: string[] | null
+          project_id: string
+          searchable_text?: unknown | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          id?: string
+          indexed_at?: string
+          keywords?: string[] | null
+          project_id?: string
+          searchable_text?: unknown | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_index_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      search_queries: {
+        Row: {
+          executed_at: string
+          filters: Json | null
+          id: string
+          partner_id: string
+          query_text: string | null
+          results_count: number
+          user_id: string | null
+        }
+        Insert: {
+          executed_at?: string
+          filters?: Json | null
+          id?: string
+          partner_id: string
+          query_text?: string | null
+          results_count: number
+          user_id?: string | null
+        }
+        Update: {
+          executed_at?: string
+          filters?: Json | null
+          id?: string
+          partner_id?: string
+          query_text?: string | null
+          results_count?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_queries_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_events: {
         Row: {
           created_at: string
@@ -2203,6 +2371,26 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
       has_role: {
         Args: {
           _user_id: string
@@ -2225,6 +2413,18 @@ export type Database = {
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
       }
     }
     Enums: {
