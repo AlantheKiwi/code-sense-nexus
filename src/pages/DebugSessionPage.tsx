@@ -11,11 +11,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 const DebugSessionPage = () => {
   const { sessionId } = useParams<{ sessionId: string; projectId: string }>();
   const { user } = useAuth();
   const { session, isLoading, error, collaborators, broadcastEvent, lastEvent } = useDebugSession(sessionId!, user);
+  const { track } = useAnalytics();
   
   const [code, setCode] = useState('// Start typing your code here...');
   const [result, setResult] = useState<any>(null);
@@ -46,10 +48,12 @@ const DebugSessionPage = () => {
       const newResult = { output: executionResult, timestamp: new Date().toISOString() };
       setResult(newResult);
       broadcastEvent({ type: 'EXECUTION_RESULT', payload: newResult });
+      track('code_executed', { sessionId, toolName: 'live_evaluator', success: true });
     } catch (e: any) {
       const newError = { error: e.message, stack: e.stack, timestamp: new Date().toISOString() };
       setResult(newError);
       broadcastEvent({ type: 'EXECUTION_RESULT', payload: newError });
+      track('code_executed', { sessionId, toolName: 'live_evaluator', success: false });
     }
   };
 
@@ -148,3 +152,4 @@ const DebugSessionPage = () => {
 };
 
 export default DebugSessionPage;
+

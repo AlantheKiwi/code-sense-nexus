@@ -122,6 +122,44 @@ export type Database = {
           },
         ]
       }
+      debug_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          issues_found: number | null
+          resolution_time_ms: number | null
+          session_id: string
+          time_saved_ms: number | null
+          tools_used: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issues_found?: number | null
+          resolution_time_ms?: number | null
+          session_id: string
+          time_saved_ms?: number | null
+          tools_used?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issues_found?: number | null
+          resolution_time_ms?: number | null
+          session_id?: string
+          time_saved_ms?: number | null
+          tools_used?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debug_metrics_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "debugging_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       debugging_sessions: {
         Row: {
           collaborators: Json | null
@@ -251,6 +289,77 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      platform_analytics: {
+        Row: {
+          created_at: string
+          daily_active_users: number | null
+          id: number
+          metric_date: string
+          performance_metrics: Json | null
+          popular_tools: Json | null
+        }
+        Insert: {
+          created_at?: string
+          daily_active_users?: number | null
+          id?: number
+          metric_date?: string
+          performance_metrics?: Json | null
+          popular_tools?: Json | null
+        }
+        Update: {
+          created_at?: string
+          daily_active_users?: number | null
+          id?: number
+          metric_date?: string
+          performance_metrics?: Json | null
+          popular_tools?: Json | null
+        }
+        Relationships: []
+      }
+      productivity_metrics: {
+        Row: {
+          bugs_fixed: number | null
+          code_quality_improvement: number | null
+          created_at: string
+          debug_sessions_completed: number | null
+          id: number
+          metric_date: string
+          partner_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bugs_fixed?: number | null
+          code_quality_improvement?: number | null
+          created_at?: string
+          debug_sessions_completed?: number | null
+          id?: number
+          metric_date?: string
+          partner_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bugs_fixed?: number | null
+          code_quality_improvement?: number | null
+          created_at?: string
+          debug_sessions_completed?: number | null
+          id?: number
+          metric_date?: string
+          partner_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productivity_metrics_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_members: {
         Row: {
@@ -494,6 +603,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "tool_updates_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_usage_stats: {
+        Row: {
+          created_at: string
+          id: number
+          last_used: string
+          partner_id: string
+          success_rate: number | null
+          tool_id: string
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          last_used?: string
+          partner_id: string
+          success_rate?: number | null
+          tool_id: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          last_used?: string
+          partner_id?: string
+          success_rate?: number | null
+          tool_id?: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_usage_stats_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_usage_stats_tool_id_fkey"
             columns: ["tool_id"]
             isOneToOne: false
             referencedRelation: "tools"
