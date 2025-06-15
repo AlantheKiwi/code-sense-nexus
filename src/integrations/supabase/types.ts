@@ -198,6 +198,83 @@ export type Database = {
           },
         ]
       }
+      github_app_installations: {
+        Row: {
+          created_at: string
+          github_account_id: number
+          github_account_login: string
+          id: number
+          partner_id: string
+          repository_selection: string
+          suspended_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          github_account_id: number
+          github_account_login: string
+          id: number
+          partner_id: string
+          repository_selection: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          github_account_id?: number
+          github_account_login?: string
+          id?: number
+          partner_id?: string
+          repository_selection?: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_app_installations_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          github_delivery_id: string
+          id: string
+          installation_id: number
+          payload: Json
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          github_delivery_id: string
+          id?: string
+          installation_id: number
+          payload: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          github_delivery_id?: string
+          id?: string
+          installation_id?: number
+          payload?: Json
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       issues: {
         Row: {
           analysis_id: string
@@ -458,6 +535,7 @@ export type Database = {
           critical_issues: number | null
           id: string
           project_id: string | null
+          quality_score: number | null
           suggestions: number | null
           tenant_id: string | null
           total_files: number | null
@@ -470,6 +548,7 @@ export type Database = {
           critical_issues?: number | null
           id?: string
           project_id?: string | null
+          quality_score?: number | null
           suggestions?: number | null
           tenant_id?: string | null
           total_files?: number | null
@@ -482,6 +561,7 @@ export type Database = {
           critical_issues?: number | null
           id?: string
           project_id?: string | null
+          quality_score?: number | null
           suggestions?: number | null
           tenant_id?: string | null
           total_files?: number | null
