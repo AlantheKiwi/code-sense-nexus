@@ -298,6 +298,124 @@ export type Database = {
           },
         ]
       }
+      custom_dashboards: {
+        Row: {
+          created_at: string
+          id: string
+          is_public: boolean
+          layout: Json | null
+          name: string
+          partner_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          layout?: Json | null
+          name: string
+          partner_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_public?: boolean
+          layout?: Json | null
+          name?: string
+          partner_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_dashboards_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_shares: {
+        Row: {
+          dashboard_id: string
+          id: string
+          permission: Database["public"]["Enums"]["dashboard_permission_level"]
+          shared_at: string
+          shared_with_user_id: string
+        }
+        Insert: {
+          dashboard_id: string
+          id?: string
+          permission?: Database["public"]["Enums"]["dashboard_permission_level"]
+          shared_at?: string
+          shared_with_user_id: string
+        }
+        Update: {
+          dashboard_id?: string
+          id?: string
+          permission?: Database["public"]["Enums"]["dashboard_permission_level"]
+          shared_at?: string
+          shared_with_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_shares_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "custom_dashboards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_widgets: {
+        Row: {
+          config: Json | null
+          created_at: string
+          dashboard_id: string
+          id: string
+          position: Json | null
+          size: Json | null
+          widget_type: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          dashboard_id: string
+          id?: string
+          position?: Json | null
+          size?: Json | null
+          widget_type: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          dashboard_id?: string
+          id?: string
+          position?: Json | null
+          size?: Json | null
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_widgets_dashboard_id_fkey"
+            columns: ["dashboard_id"]
+            isOneToOne: false
+            referencedRelation: "custom_dashboards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dashboard_widgets_widget_type_fkey"
+            columns: ["widget_type"]
+            isOneToOne: false
+            referencedRelation: "widget_templates"
+            referencedColumns: ["widget_type"]
+          },
+        ]
+      }
       debug_logs: {
         Row: {
           id: number
@@ -1754,11 +1872,81 @@ export type Database = {
         }
         Relationships: []
       }
+      widget_data_sources: {
+        Row: {
+          created_at: string
+          data_source_table: string
+          id: string
+          query_config: Json
+          refresh_interval_seconds: number
+          widget_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_source_table: string
+          id?: string
+          query_config: Json
+          refresh_interval_seconds?: number
+          widget_id: string
+        }
+        Update: {
+          created_at?: string
+          data_source_table?: string
+          id?: string
+          query_config?: Json
+          refresh_interval_seconds?: number
+          widget_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_data_sources_widget_id_fkey"
+            columns: ["widget_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_widgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      widget_templates: {
+        Row: {
+          config_schema: Json | null
+          description: string | null
+          id: string
+          name: string
+          preview_image_url: string | null
+          widget_type: string
+        }
+        Insert: {
+          config_schema?: Json | null
+          description?: string | null
+          id?: string
+          name: string
+          preview_image_url?: string | null
+          widget_type: string
+        }
+        Update: {
+          config_schema?: Json | null
+          description?: string | null
+          id?: string
+          name?: string
+          preview_image_url?: string | null
+          widget_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_edit_dashboard: {
+        Args: { _dashboard_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_dashboard: {
+        Args: { _dashboard_id: string; _user_id: string }
+        Returns: boolean
+      }
       get_my_partner_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1789,6 +1977,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      dashboard_permission_level: "view" | "edit"
       error_status: "unresolved" | "resolved" | "ignored" | "in_progress"
       notification_channel_type:
         | "email"
@@ -1927,6 +2116,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      dashboard_permission_level: ["view", "edit"],
       error_status: ["unresolved", "resolved", "ignored", "in_progress"],
       notification_channel_type: [
         "email",
