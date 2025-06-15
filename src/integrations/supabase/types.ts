@@ -9,6 +9,136 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_analysis_results: {
+        Row: {
+          analysis_result: Json | null
+          analysis_type: string
+          code_hash: string
+          created_at: string
+          id: string
+          project_id: string
+          quality_score: number | null
+          user_id: string
+        }
+        Insert: {
+          analysis_result?: Json | null
+          analysis_type: string
+          code_hash: string
+          created_at?: string
+          id?: string
+          project_id: string
+          quality_score?: number | null
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json | null
+          analysis_type?: string
+          code_hash?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          quality_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_analysis_results_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_fix_suggestions: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          id: string
+          implementation_code: string | null
+          priority: string
+          suggestion_text: string
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          id?: string
+          implementation_code?: string | null
+          priority?: string
+          suggestion_text: string
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          id?: string
+          implementation_code?: string | null
+          priority?: string
+          suggestion_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_fix_suggestions_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "ai_analysis_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_interactions: {
+        Row: {
+          completion_tokens: number | null
+          cost: number | null
+          created_at: string
+          function_name: string
+          id: string
+          partner_id: string
+          project_id: string | null
+          prompt_tokens: number | null
+          total_tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          completion_tokens?: number | null
+          cost?: number | null
+          created_at?: string
+          function_name: string
+          id?: string
+          partner_id: string
+          project_id?: string | null
+          prompt_tokens?: number | null
+          total_tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          completion_tokens?: number | null
+          cost?: number | null
+          created_at?: string
+          function_name?: string
+          id?: string
+          partner_id?: string
+          project_id?: string | null
+          prompt_tokens?: number | null
+          total_tokens?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_interactions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_interactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_key_configs: {
         Row: {
           api_key: string
