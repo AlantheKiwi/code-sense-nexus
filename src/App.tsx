@@ -25,6 +25,7 @@ import ProjectSettingsPage from "./pages/ProjectSettingsPage";
 import UpdatesPage from "./pages/UpdatesPage";
 import DebugSessionPage from "./pages/DebugSessionPage";
 import TeamSettingsPage from "./pages/TeamSettingsPage";
+import AppLayout from "./components/layout/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -50,11 +51,13 @@ const App = () => (
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/best-practices" element={<BestPracticesPage />} />
             <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
-              <Route path="/team/:teamId/settings" element={<TeamSettingsPage />} />
-              <Route path="/project/:projectId/debug/:sessionId" element={<DebugSessionPage />} />
-              <Route path="/updates" element={<UpdatesPage />} />
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
+                <Route path="/team/:teamId/settings" element={<TeamSettingsPage />} />
+                <Route path="/project/:projectId/debug/:sessionId" element={<DebugSessionPage />} />
+                <Route path="/updates" element={<UpdatesPage />} />
+              </Route>
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
