@@ -124,6 +124,7 @@ export type Database = {
       }
       debugging_sessions: {
         Row: {
+          collaborators: Json | null
           created_at: string
           data: Json | null
           id: string
@@ -132,6 +133,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          collaborators?: Json | null
           created_at?: string
           data?: Json | null
           id?: string
@@ -140,6 +142,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          collaborators?: Json | null
           created_at?: string
           data?: Json | null
           id?: string
@@ -376,6 +379,41 @@ export type Database = {
           warnings?: number | null
         }
         Relationships: []
+      }
+      session_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: number
+          payload: Json | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: number
+          payload?: Json | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: number
+          payload?: Json | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_events_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "debugging_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tool_configurations: {
         Row: {

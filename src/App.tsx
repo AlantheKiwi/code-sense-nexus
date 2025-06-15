@@ -23,6 +23,7 @@ import StatsPage from "./pages/StatsPage";
 import BestPracticesPage from "./pages/BestPracticesPage";
 import ProjectSettingsPage from "./pages/ProjectSettingsPage";
 import UpdatesPage from "./pages/UpdatesPage";
+import DebugSessionPage from "./pages/DebugSessionPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
+              <Route path="/project/:projectId/debug/:sessionId" element={<DebugSessionPage />} />
               <Route path="/updates" element={<UpdatesPage />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
