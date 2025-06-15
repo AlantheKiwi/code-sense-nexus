@@ -1,11 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useAddProject, useUpdateProject } from '@/hooks/useProjectMutations';
+import { Tables } from '@/integrations/supabase/types';
 
 import {
   Dialog,
@@ -26,9 +25,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { TablesInsert } from '@/integrations/supabase/types';
 
-type ProjectInsert = TablesInsert<'projects'>;
+type Project = Tables<'projects'>;
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -39,23 +37,14 @@ const formSchema = z.object({
   framework: z.string().optional(),
 });
 
-interface AddProjectDialogProps {
+interface ProjectDialogProps {
   partnerId: string;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  projectToEdit?: Project | null;
 }
 
-const addProject = async (newProject: ProjectInsert) => {
-  const { data, error } = await supabase.from('projects').insert(newProject).select().single();
-  if (error) {
-    throw new Error(error.message);
-  }
-  return data;
-};
-
-export const AddProjectDialog: React.FC<AddProjectDialogProps> = ({ partnerId, isOpen, onOpenChange }) => {
-  const queryClient = useQueryClient();
-
+export const ProjectDialog: React.FC<ProjectDialogProps> = ({ partnerId, isOpen, onOpenChange, projectToEdit }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -66,36 +55,67 @@ export const AddProjectDialog: React.FC<AddProjectDialogProps> = ({ partnerId, i
     },
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: addProject,
-    onSuccess: () => {
-      toast.success('Project added successfully!');
-      queryClient.invalidateQueries({ queryKey: ['projects', partnerId] });
-      onOpenChange(false);
-      form.reset();
-    },
-    onError: (error) => {
-      toast.error(`Failed to add project: ${error.message}`);
-    },
-  });
+  useEffect(() => {
+    if (projectToEdit && isOpen) {
+      form.reset({
+        name: projectToEdit.name,
+        github_url: projectToEdit.github_url || '',
+        language: projectToEdit.language || '',
+        framework: projectToEdit.framework || '',
+      });
+    } else if (!projectToEdit && isOpen) {
+       form.reset({
+          name: '',
+          github_url: '',
+          language: '',
+          framework: '',
+       });
+    }
+  }, [projectToEdit, form, isOpen]);
+
+  const addProjectMutation = useAddProject();
+  const updateProjectMutation = useUpdateProject();
+
+  const isPending = addProjectMutation.isPending || updateProjectMutation.isPending;
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    mutate({
-      name: values.name,
-      partner_id: partnerId,
-      github_url: values.github_url || null,
-      language: values.language || null,
-      framework: values.framework || null,
-    });
+    const commonPayload = {
+        ...values,
+        github_url: values.github_url || null,
+        language: values.language || null,
+        framework: values.framework || null,
+    };
+
+    if (projectToEdit) {
+      updateProjectMutation.mutate({
+        id: projectToEdit.id,
+        ...commonPayload
+      }, {
+        onSuccess: () => onOpenChange(false)
+      });
+    } else {
+      addProjectMutation.mutate({
+        ...commonPayload,
+        partner_id: partnerId,
+      }, {
+        onSuccess: () => onOpenChange(false)
+      });
+    }
   }
+  
+  const handleDialogClose = (open: boolean) => {
+    if (!isPending) {
+      onOpenChange(open);
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Project</DialogTitle>
+          <DialogTitle>{projectToEdit ? 'Edit Project' : 'Add New Project'}</DialogTitle>
           <DialogDescription>
-            Enter the details of your new project. Connect to GitHub to enable automatic analysis.
+            {projectToEdit ? 'Update the details of your project.' : 'Enter the details of your new project. Connect to GitHub to enable automatic analysis.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -153,12 +173,12 @@ export const AddProjectDialog: React.FC<AddProjectDialogProps> = ({ partnerId, i
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+              <Button type="button" variant="outline" onClick={() => handleDialogClose(false)} disabled={isPending}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Add Project
+                {projectToEdit ? 'Save Changes' : 'Add Project'}
               </Button>
             </DialogFooter>
           </form>
