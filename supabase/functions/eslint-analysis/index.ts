@@ -9,12 +9,6 @@ console.log('Secure analysis function booting up');
 const linter = new Linter();
 
 const defaultConfig = {
-  rules: {
-    'no-undef': 'error',
-    'no-unused-vars': 'warn',
-    'prefer-const': 'warn',
-    'semi': ['error', 'always'],
-  },
   languageOptions: {
     ecmaVersion: 2022,
     sourceType: 'module',
@@ -35,6 +29,12 @@ const defaultConfig = {
         jsx: true,
       },
     },
+  },
+  rules: {
+    'no-undef': 'error',
+    'no-unused-vars': 'warn',
+    'prefer-const': 'warn',
+    'semi': ['error', 'always'],
   },
 };
 
@@ -70,7 +70,7 @@ serve(async (req: Request) => {
             plugins: ['jsx', 'typescript'],
             errorRecovery: true, // Try to parse even with errors
         });
-    } catch (e) {
+    } catch (e: any) {
         // Babel parser throws on syntax errors. We can catch and return them.
         console.log('Babel parsing error:', e.message);
         return new Response(JSON.stringify({ 
@@ -93,7 +93,7 @@ serve(async (req: Request) => {
 
     console.log('Linting code snippet...');
     const messages = linter.verify(code, finalConfig, {
-      filename: 'file.tsx'
+      filename: 'analysis.js'
     });
     console.log(`Found ${messages.length} linting issues.`);
 
@@ -109,7 +109,7 @@ serve(async (req: Request) => {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error('Error in secure analysis function:', e);
     return new Response(JSON.stringify({ error: e.message }), {
       status: 500,
