@@ -1276,6 +1276,54 @@ export type Database = {
           },
         ]
       }
+      tool_autoupdate_configs: {
+        Row: {
+          auto_update_enabled: boolean
+          created_at: string
+          id: string
+          partner_id: string
+          rollback_policy: string
+          tool_id: string
+          update_window: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_update_enabled?: boolean
+          created_at?: string
+          id?: string
+          partner_id: string
+          rollback_policy?: string
+          tool_id: string
+          update_window?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_update_enabled?: boolean
+          created_at?: string
+          id?: string
+          partner_id?: string
+          rollback_policy?: string
+          tool_id?: string
+          update_window?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_autoupdate_configs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_autoupdate_configs_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tool_configurations: {
         Row: {
           config_data: Json | null

@@ -40,6 +40,21 @@ export function UpdatesTable({ updates, isLoading, isHistory = false }: UpdatesT
         }
     };
 
+    const handleRollback = async (updateId: string) => {
+        toast.info("Starting rollback...");
+
+        const { error } = await supabase.functions.invoke('rollback-update', {
+            body: { updateId },
+        });
+
+        if (error) {
+            toast.error(`Rollback failed: ${error.message}`);
+        } else {
+            toast.success("Update successfully rolled back!");
+            queryClient.invalidateQueries({ queryKey: ['toolUpdates'] });
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-2">
@@ -54,6 +69,21 @@ export function UpdatesTable({ updates, isLoading, isHistory = false }: UpdatesT
         return <p className="text-center text-muted-foreground py-4">No updates found.</p>;
     }
 
+    const getBadgeVariant = (status: string) => {
+        switch (status) {
+            case 'completed':
+                return 'default';
+            case 'rolled_back':
+                return 'outline';
+            case 'installing':
+                return 'secondary';
+            case 'failed':
+                return 'destructive';
+            default:
+                return 'secondary';
+        }
+    };
+
     return (
         <Table>
             <TableHeader>
@@ -61,9 +91,9 @@ export function UpdatesTable({ updates, isLoading, isHistory = false }: UpdatesT
                     <TableHead>Tool</TableHead>
                     <TableHead>From Version</TableHead>
                     <TableHead>To Version</TableHead>
-                    <TableHead>Detected On</TableHead>
+                    <TableHead>Date</TableHead>
                     {isHistory && <TableHead>Status</TableHead>}
-                    {!isHistory && <TableHead className="text-right">Action</TableHead>}
+                    <TableHead className="text-right">Action</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -75,18 +105,23 @@ export function UpdatesTable({ updates, isLoading, isHistory = false }: UpdatesT
                         <TableCell>{format(new Date(update.created_at), 'PPP')}</TableCell>
                         {isHistory && (
                             <TableCell>
-                                <Badge variant={update.status === 'completed' ? 'default' : 'destructive'}>
+                                <Badge variant={getBadgeVariant(update.status)}>
                                     {update.status}
                                 </Badge>
                             </TableCell>
                         )}
-                        {!isHistory && (
-                            <TableCell className="text-right">
+                        <TableCell className="text-right">
+                            {!isHistory && (
                                 <Button onClick={() => handleInstall(update.id)}>
                                     Install
                                 </Button>
-                            </TableCell>
-                        )}
+                            )}
+                            {isHistory && update.status === 'completed' && (
+                                <Button variant="outline" size="sm" onClick={() => handleRollback(update.id)}>
+                                    Rollback
+                                </Button>
+                            )}
+                        </TableCell>
                     </TableRow>
                 ))}
             </TableBody>
