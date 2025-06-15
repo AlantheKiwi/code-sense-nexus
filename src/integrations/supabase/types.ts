@@ -180,6 +180,167 @@ export type Database = {
           },
         ]
       }
+      api_changelog: {
+        Row: {
+          breaking_changes: string | null
+          changes: string | null
+          created_at: string
+          id: string
+          partner_id: string
+          release_date: string
+          version: string
+        }
+        Insert: {
+          breaking_changes?: string | null
+          changes?: string | null
+          created_at?: string
+          id?: string
+          partner_id: string
+          release_date: string
+          version: string
+        }
+        Update: {
+          breaking_changes?: string | null
+          changes?: string | null
+          created_at?: string
+          id?: string
+          partner_id?: string
+          release_date?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_changelog_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_documentation: {
+        Row: {
+          author_id: string | null
+          content: string | null
+          created_at: string
+          endpoint_id: string
+          id: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          author_id?: string | null
+          content?: string | null
+          created_at?: string
+          endpoint_id: string
+          id?: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          author_id?: string | null
+          content?: string | null
+          created_at?: string
+          endpoint_id?: string
+          id?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_documentation_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "api_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_endpoints: {
+        Row: {
+          created_at: string
+          id: string
+          method: string
+          parameters: Json | null
+          partner_id: string
+          path: string
+          responses: Json | null
+          summary: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          method: string
+          parameters?: Json | null
+          partner_id: string
+          path: string
+          responses?: Json | null
+          summary?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          method?: string
+          parameters?: Json | null
+          partner_id?: string
+          path?: string
+          responses?: Json | null
+          summary?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_endpoints_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_examples: {
+        Row: {
+          code_example: string
+          created_at: string
+          description: string | null
+          endpoint_id: string
+          id: string
+          language: string
+          updated_at: string
+        }
+        Insert: {
+          code_example: string
+          created_at?: string
+          description?: string | null
+          endpoint_id: string
+          id?: string
+          language: string
+          updated_at?: string
+        }
+        Update: {
+          code_example?: string
+          created_at?: string
+          description?: string | null
+          endpoint_id?: string
+          id?: string
+          language?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_examples_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "api_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_key_configs: {
         Row: {
           api_key: string
@@ -215,6 +376,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      api_usage_examples: {
+        Row: {
+          created_at: string
+          difficulty_level: string | null
+          full_example: string | null
+          id: string
+          partner_id: string
+          updated_at: string
+          use_case: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty_level?: string | null
+          full_example?: string | null
+          id?: string
+          partner_id: string
+          updated_at?: string
+          use_case: string
+        }
+        Update: {
+          created_at?: string
+          difficulty_level?: string | null
+          full_example?: string | null
+          id?: string
+          partner_id?: string
+          updated_at?: string
+          use_case?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_examples_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       api_usage_logs: {
         Row: {
