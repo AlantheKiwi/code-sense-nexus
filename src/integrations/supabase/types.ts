@@ -703,6 +703,47 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          metric_type: string
+          project_id: string
+          threshold: number
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metric_type: string
+          project_id: string
+          threshold: number
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          metric_type?: string
+          project_id?: string
+          threshold?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_issues: {
         Row: {
           context: Json | null
@@ -737,6 +778,76 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "performance_issues_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_metrics: {
+        Row: {
+          id: string
+          metadata: Json | null
+          metric_type: string
+          project_id: string
+          timestamp: string
+          value: number
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          project_id: string
+          timestamp?: string
+          value: number
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          project_id?: string
+          timestamp?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_metrics_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      performance_reports: {
+        Row: {
+          generated_at: string
+          id: string
+          project_id: string
+          report_period_end: string
+          report_period_start: string
+          summary_data: Json | null
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          project_id: string
+          report_period_end: string
+          report_period_start: string
+          summary_data?: Json | null
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          project_id?: string
+          report_period_end?: string
+          report_period_start?: string
+          summary_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_reports_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
@@ -1024,6 +1135,44 @@ export type Database = {
           warnings?: number | null
         }
         Relationships: []
+      }
+      resource_usage: {
+        Row: {
+          cpu_usage: number | null
+          disk_io: number | null
+          id: string
+          memory_usage: number | null
+          network_io: number | null
+          project_id: string
+          timestamp: string
+        }
+        Insert: {
+          cpu_usage?: number | null
+          disk_io?: number | null
+          id?: string
+          memory_usage?: number | null
+          network_io?: number | null
+          project_id: string
+          timestamp?: string
+        }
+        Update: {
+          cpu_usage?: number | null
+          disk_io?: number | null
+          id?: string
+          memory_usage?: number | null
+          network_io?: number | null
+          project_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_usage_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       session_events: {
         Row: {
