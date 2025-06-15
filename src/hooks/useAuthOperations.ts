@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
+import { Provider } from '@supabase/supabase-js';
 
 export function useAuthOperations() {
   const [isOperationLoading, setIsOperationLoading] = useState(false);
@@ -77,6 +77,24 @@ export function useAuthOperations() {
     }
   };
 
+  const signInWithProvider = async (provider: Provider) => {
+    setIsOperationLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error(`Error signing in with ${provider}:`, error);
+      toast.error(`Sign in with ${provider} failed: ${error.message}`);
+    } finally {
+      setIsOperationLoading(false);
+    }
+  };
+
   const signOut = async () => {
     setIsOperationLoading(true);
     try {
@@ -95,6 +113,7 @@ export function useAuthOperations() {
     signInWithEmail,
     signInWithEmailPassword,
     signUpWithEmailPassword,
+    signInWithProvider,
     signOut,
     isOperationLoading,
   };

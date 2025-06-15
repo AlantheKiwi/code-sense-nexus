@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useEffect } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, Provider } from '@supabase/supabase-js';
 import { Tables } from '@/integrations/supabase/types';
 import { useAuthSession } from '@/hooks/useAuthSession';
 import { usePartnerData } from '@/hooks/usePartnerData';
@@ -16,6 +15,7 @@ interface AuthContextType {
   signInWithEmail: (email: string) => Promise<void>;
   signInWithEmailPassword: (email: string, password: string) => Promise<void>;
   signUpWithEmailPassword: (email: string, password: string, companyName: string) => Promise<void>;
+  signInWithProvider: (provider: Provider) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -28,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signInWithEmail, 
     signInWithEmailPassword, 
     signUpWithEmailPassword, 
+    signInWithProvider,
     signOut, 
     isOperationLoading 
   } = useAuthOperations();
@@ -50,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signInWithEmail, 
       signInWithEmailPassword, 
       signUpWithEmailPassword, 
+      signInWithProvider,
       signOut 
     }}>
       {children}
@@ -64,4 +66,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
