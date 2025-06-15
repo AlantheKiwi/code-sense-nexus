@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
 import { useEffect, useState, useRef } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
+import { Terminal, Rocket } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSkeleton } from '@/components/debug-session/LoadingSkeleton';
@@ -20,7 +20,20 @@ const DebugSessionPage = () => {
   const { session, isLoading, error, collaborators, broadcastEvent, lastEvent } = useDebugSession(sessionId!, user);
   const { track } = useAnalytics();
   
-  const [code, setCode] = useState('// Start typing your code here...');
+  const [code, setCode] = useState(`// Welcome to the Live Debugging Session!
+// 1. This is a shared code editor. Any changes you make will be seen by your team in real-time.
+// 2. Click "Analyze Code" to get feedback from ESLint.
+//
+// Here's some example code with a few issues to find:
+
+function sayHello(name) {
+  const message = "Hello, " + name
+  console.log(message);
+}
+
+const unusedVar = "I'm not used anywhere";
+
+sayHello('World')`);
   const [result, setResult] = useState<any>(null);
   const [cursors, setCursors] = useState<{ [userId: string]: { x: number, y: number, email: string } }>({});
   const throttleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -118,6 +131,19 @@ const DebugSessionPage = () => {
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8 relative" onMouseMove={handleMouseMove}>
       <SessionHeader sessionId={session?.id} />
+
+       <Alert variant="default" className="bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
+        <Rocket className="h-4 w-4" />
+        <AlertTitle>How to Use the Analyzer</AlertTitle>
+        <AlertDescription>
+          <ol className="list-decimal list-inside space-y-1 mt-2">
+            <li>The editor below is pre-filled with sample code. You can also paste your own.</li>
+            <li>Click the <strong>Analyze Code</strong> button to check for issues.</li>
+            <li>The results will appear in the "Analysis Result" panel.</li>
+            <li>Collaborate with your team in real-time! Changes are synced automatically.</li>
+          </ol>
+        </AlertDescription>
+      </Alert>
 
        <Alert>
         <Terminal className="h-4 w-4" />
