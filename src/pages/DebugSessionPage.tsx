@@ -2,7 +2,7 @@
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Terminal } from 'lucide-react';
+import { Terminal, MousePointer2 } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 
 const DebugSessionPage = () => {
@@ -21,6 +21,8 @@ const DebugSessionPage = () => {
   
   const [code, setCode] = useState('// Start typing your code here...');
   const [result, setResult] = useState<any>(null);
+  const [cursors, setCursors] = useState<{ [userId: string]: { x: number, y: number, email: string } }>({});
+  const throttleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (lastEvent) {
@@ -30,8 +32,31 @@ const DebugSessionPage = () => {
       if (lastEvent.type === 'EXECUTION_RESULT') {
         setResult(lastEvent.payload);
       }
+      if (lastEvent.type === 'CURSOR_UPDATE') {
+        const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
+        if (collaborator) {
+            setCursors(prev => ({
+                ...prev,
+                [lastEvent.sender]: { ...lastEvent.payload, email: collaborator.email }
+            }));
+        }
+      }
     }
-  }, [lastEvent]);
+  }, [lastEvent, collaborators]);
+
+  useEffect(() => {
+    // Clean up cursors for collaborators who have left the session
+    setCursors(currentCursors => {
+      const activeCollaboratorIds = new Set(collaborators.map(c => c.user_id));
+      const newCursors = {};
+      Object.keys(currentCursors).forEach(userId => {
+        if (activeCollaboratorIds.has(userId)) {
+          newCursors[userId] = currentCursors[userId];
+        }
+      });
+      return newCursors;
+    });
+  }, [collaborators]);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
@@ -39,6 +64,19 @@ const DebugSessionPage = () => {
       type: 'CODE_UPDATE',
       payload: { code: newCode },
     });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (throttleTimeoutRef.current) {
+      return;
+    }
+    broadcastEvent({
+      type: 'CURSOR_UPDATE',
+      payload: { x: e.clientX, y: e.clientY },
+    });
+    throttleTimeoutRef.current = setTimeout(() => {
+      throttleTimeoutRef.current = null;
+    }, 50); // Throttle to ~20fps
   };
   
   const handleExecuteCode = () => {
@@ -80,7 +118,7 @@ const DebugSessionPage = () => {
   }
   
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8">
+    <div className="container mx-auto p-4 md:p-8 space-y-8 relative" onMouseMove={handleMouseMove}>
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Live Debugging Session</h1>
         <p className="text-muted-foreground">Session ID: {session?.id}</p>
@@ -147,9 +185,21 @@ const DebugSessionPage = () => {
           </Card>
         </div>
       </div>
+      {Object.entries(cursors).map(([userId, cursorData]) => {
+        if (userId === user?.id) return null;
+        return (
+          <div
+            key={userId}
+            className="absolute flex items-center gap-1 text-white bg-blue-500/80 px-2 py-1 rounded-full pointer-events-none transition-all duration-75 ease-out"
+            style={{ left: cursorData.x, top: cursorData.y, zIndex: 50, transform: 'translateY(-100%)' }}
+          >
+            <MousePointer2 className="h-4 w-4" />
+            <span className="text-xs font-medium">{cursorData.email}</span>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
 export default DebugSessionPage;
-

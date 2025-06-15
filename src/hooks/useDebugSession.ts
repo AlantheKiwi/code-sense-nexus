@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +8,7 @@ export type DebuggingSession = Database['public']['Tables']['debugging_sessions'
 export type SessionEventPayload = Database['public']['Tables']['session_events']['Row'];
 
 export type BroadcastEvent = {
-  type: 'CODE_UPDATE' | 'EXECUTION_RESULT';
+  type: 'CODE_UPDATE' | 'EXECUTION_RESULT' | 'CURSOR_UPDATE';
   payload: any;
   sender: string;
 };
