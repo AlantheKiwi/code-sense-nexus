@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, MousePointer2 } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { supabase } from '@/integrations/supabase/client';
 
 const DebugSessionPage = () => {
   const { sessionId } = useParams<{ sessionId: string; projectId: string }>();
@@ -23,6 +23,7 @@ const DebugSessionPage = () => {
   const [result, setResult] = useState<any>(null);
   const [cursors, setCursors] = useState<{ [userId: string]: { x: number, y: number, email: string } }>({});
   const throttleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (lastEvent) {
@@ -79,19 +80,29 @@ const DebugSessionPage = () => {
     }, 50); // Throttle to ~20fps
   };
   
-  const handleExecuteCode = () => {
-    // WARNING: eval is used for demo purposes ONLY. DO NOT USE IN PRODUCTION.
+  const handleAnalyzeCode = async () => {
+    setIsAnalyzing(true);
+    setResult(null);
+    track('code_analysis_started', { sessionId, toolName: 'secure_analyzer' });
     try {
-      const executionResult = eval(code);
-      const newResult = { output: executionResult, timestamp: new Date().toISOString() };
+      const { data, error } = await supabase.functions.invoke('eslint-analysis', {
+        body: { code },
+      });
+
+      if (error) throw error;
+      
+      const newResult = { ...data, timestamp: new Date().toISOString() };
       setResult(newResult);
       broadcastEvent({ type: 'EXECUTION_RESULT', payload: newResult });
-      track('code_executed', { sessionId, toolName: 'live_evaluator', success: true });
+      track('code_analysis_completed', { sessionId, toolName: 'secure_analyzer', success: true, issueCount: data.analysis?.issues?.length || 0 });
+
     } catch (e: any) {
-      const newError = { error: e.message, stack: e.stack, timestamp: new Date().toISOString() };
+      const newError = { error: e.message, timestamp: new Date().toISOString() };
       setResult(newError);
       broadcastEvent({ type: 'EXECUTION_RESULT', payload: newError });
-      track('code_executed', { sessionId, toolName: 'live_evaluator', success: false });
+      track('code_analysis_completed', { sessionId, toolName: 'secure_analyzer', success: false });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -124,11 +135,11 @@ const DebugSessionPage = () => {
         <p className="text-muted-foreground">Session ID: {session?.id}</p>
       </div>
 
-       <Alert variant="destructive">
+       <Alert>
         <Terminal className="h-4 w-4" />
-        <AlertTitle>Developer Demo</AlertTitle>
+        <AlertTitle>Secure Code Analysis</AlertTitle>
         <AlertDescription>
-          This live debugger uses `eval()` for code execution and is for demonstration purposes only. Do not use in production.
+          This tool uses static analysis to check your code for issues. No code is executed on the server.
         </AlertDescription>
       </Alert>
 
@@ -145,16 +156,22 @@ const DebugSessionPage = () => {
                 className="font-mono h-64 bg-gray-900 text-green-400"
                 placeholder="Enter your Javascript code here"
               />
-              <Button onClick={handleExecuteCode} className="mt-4">Execute</Button>
+              <Button onClick={handleAnalyzeCode} className="mt-4" disabled={isAnalyzing}>
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Code'}
+              </Button>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Execution Result</CardTitle>
+              <CardTitle>Analysis Result</CardTitle>
             </CardHeader>
             <CardContent>
               <pre className="bg-gray-900 text-white p-4 rounded-md overflow-x-auto h-40">
-                {result ? JSON.stringify(result, null, 2) : 'No result yet. Click "Execute" to run the code.'}
+                {isAnalyzing 
+                  ? 'Analyzing code...' 
+                  : result 
+                    ? JSON.stringify(result, null, 2) 
+                    : 'No result yet. Click "Analyze Code" to run the analysis.'}
               </pre>
             </CardContent>
           </Card>
