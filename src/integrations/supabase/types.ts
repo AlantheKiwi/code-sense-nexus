@@ -139,6 +139,47 @@ export type Database = {
           },
         ]
       }
+      analysis_results: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          issues_found: number | null
+          pipeline_run_id: string
+          quality_score: number | null
+          report_url: string | null
+          tool_used: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          issues_found?: number | null
+          pipeline_run_id: string
+          quality_score?: number | null
+          report_url?: string | null
+          tool_used: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          issues_found?: number | null
+          pipeline_run_id?: string
+          quality_score?: number | null
+          report_url?: string | null
+          tool_used?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_results_pipeline_run_id_fkey"
+            columns: ["pipeline_run_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_key_configs: {
         Row: {
           api_key: string
@@ -334,6 +375,41 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deployment_tracking: {
+        Row: {
+          created_at: string
+          deployed_at: string | null
+          environment: string
+          health_status: string | null
+          id: string
+          pipeline_run_id: string
+        }
+        Insert: {
+          created_at?: string
+          deployed_at?: string | null
+          environment: string
+          health_status?: string | null
+          id?: string
+          pipeline_run_id: string
+        }
+        Update: {
+          created_at?: string
+          deployed_at?: string | null
+          environment?: string
+          health_status?: string | null
+          id?: string
+          pipeline_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deployment_tracking_pipeline_run_id_fkey"
+            columns: ["pipeline_run_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -664,6 +740,85 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_integrations: {
+        Row: {
+          config: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          platform: string
+          project_id: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          platform: string
+          project_id: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          platform?: string
+          project_id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_integrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pipeline_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          external_run_id: string
+          id: string
+          integration_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          external_run_id: string
+          id?: string
+          integration_id: string
+          started_at?: string | null
+          status: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          external_run_id?: string
+          id?: string
+          integration_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipeline_runs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_integrations"
             referencedColumns: ["id"]
           },
         ]

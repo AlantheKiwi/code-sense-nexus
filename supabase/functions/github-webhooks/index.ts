@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Shared CORS headers. It's important to include the GitHub-specific headers.
@@ -18,6 +17,18 @@ interface GitHubWebhookPayload {
     };
     repository_selection: string;
     suspended_at?: string | null;
+  };
+  repository?: {
+    html_url: string;
+    full_name: string;
+  };
+  workflow_run?: {
+    id: number;
+    name: string;
+    status: string;
+    conclusion: string | null;
+    run_started_at: string;
+    updated_at: string;
   };
 }
 
@@ -124,6 +135,59 @@ Deno.serve(async (req) => {
       }
     } else if (githubEventType === 'push') {
       console.log(`Received push event for installation ID: ${payload.installation.id}. Analysis logic to be implemented.`);
+    } else if (githubEventType === 'workflow_run') {
+        console.log(`Processing 'workflow_run' event for repo: ${payload.repository?.full_name}`);
+        
+        if (!payload.repository?.html_url || !payload.workflow_run || !payload.action) {
+            throw new Error('Missing repository or workflow_run data in webhook payload.');
+        }
+
+        const { data: project } = await supabaseAdmin
+            .from('projects')
+            .select('id')
+            .eq('github_url', payload.repository.html_url)
+            .single();
+
+        if (!project) {
+            console.warn(`No project found for repository URL: ${payload.repository.html_url}`);
+        } else {
+            // Find or create the pipeline integration record
+            const { data: integration, error: integrationError } = await supabaseAdmin
+                .from('pipeline_integrations')
+                .upsert({
+                    project_id: project.id,
+                    platform: 'github',
+                }, { onConflict: 'project_id,platform' })
+                .select('id')
+                .single();
+            
+            if (integrationError) throw integrationError;
+            
+            const integrationId = integration.id;
+            const workflowRun = payload.workflow_run;
+
+            if (payload.action === 'requested' || payload.action === 'in_progress') {
+                const { error } = await supabaseAdmin.from('pipeline_runs').insert({
+                    integration_id: integrationId,
+                    external_run_id: workflowRun.id.toString(),
+                    status: workflowRun.status,
+                    started_at: workflowRun.run_started_at,
+                });
+                if (error) throw error;
+                console.log(`Created pipeline run record for run ID: ${workflowRun.id}`);
+
+            } else if (payload.action === 'completed') {
+                const { error } = await supabaseAdmin.from('pipeline_runs')
+                    .update({
+                        status: workflowRun.conclusion || workflowRun.status,
+                        completed_at: workflowRun.updated_at,
+                    })
+                    .eq('integration_id', integrationId)
+                    .eq('external_run_id', workflowRun.id.toString());
+                if (error) throw error;
+                console.log(`Updated pipeline run record for run ID: ${workflowRun.id}`);
+            }
+        }
     }
 
     await supabaseAdmin.from('github_webhook_events').update({ status: 'success', processed_at: new Date().toISOString() }).eq('github_delivery_id', githubDeliveryId);
