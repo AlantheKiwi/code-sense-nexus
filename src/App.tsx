@@ -26,6 +26,7 @@ import UpdatesPage from "./pages/UpdatesPage";
 import DebugSessionPage from "./pages/DebugSessionPage";
 import TeamSettingsPage from "./pages/TeamSettingsPage";
 import AppLayout from "./components/layout/AppLayout";
+import InstructionsPage from "./pages/InstructionsPage";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
+            <Route path="/instructions" element={<InstructionsPage />} />
             <Route path="/demo" element={<DemoPage />} />
             <Route path="/useful-prompts" element={<UsefulPromptsPage />} />
             <Route path="/pricing" element={<PricingPage />} />
