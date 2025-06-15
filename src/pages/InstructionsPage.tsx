@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -31,7 +30,7 @@ const InstructionsPage = () => {
                 <li className="relative pl-8">
                   <div className="absolute left-[-11px] top-1.5 h-6 w-6 rounded-full bg-brand text-brand-foreground flex items-center justify-center font-bold">2</div>
                   <h3 className="text-xl font-semibold mb-1">Start a Debugging Session</h3>
-                  <p className="text-muted-foreground">From the project page, initiate a "Live Debugging Session." This opens our collaborative environment where you and your team can inspect code in real-time.</p>
+                  <p className="text-muted-foreground">From your dashboard, find your project and click "Analyze" to initiate a "Live Debugging Session." This opens our collaborative environment where you and your team can inspect code in real-time.</p>
                 </li>
                 <li className="relative pl-8">
                   <div className="absolute left-[-11px] top-1.5 h-6 w-6 rounded-full bg-brand text-brand-foreground flex items-center justify-center font-bold">3</div>
@@ -96,4 +95,3 @@ const InstructionsPage = () => {
 };
 
 export default InstructionsPage;
-
