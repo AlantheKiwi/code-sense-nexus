@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Tables } from '@/integrations/supabase/types';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, PlusCircle, Edit, Trash2, Settings, MoreVertical } from "lucide-react";
@@ -13,6 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type Project = Tables<'projects'>;
 
@@ -28,6 +30,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, partnerId })
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
     
     const deleteProjectMutation = useDeleteProject(partnerId);
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
     const handleEdit = (project: Project) => {
         setProjectToEdit(project);
@@ -55,6 +59,32 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, partnerId })
         }
     };
 
+    const handleAnalyze = async (projectId: string) => {
+        if (!user) {
+            toast.error("You must be logged in to start an analysis.");
+            return;
+        }
+
+        const { data: sessionData, error: sessionError } = await supabase
+            .from('debugging_sessions')
+            .insert({
+                project_id: projectId,
+                user_id: user.id,
+                status: 'started'
+            })
+            .select('id')
+            .single();
+
+        if (sessionError) {
+            toast.error(`Failed to start analysis session: ${sessionError.message}`);
+            return;
+        }
+
+        if (sessionData) {
+            navigate(`/project/${projectId}/debug/${sessionData.id}`);
+        }
+    };
+
     return (
         <>
             {projects.length > 0 ? (
@@ -76,7 +106,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({ projects, partnerId })
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <Button variant="outline" size="sm">
+                                    <Button variant="outline" size="sm" onClick={() => handleAnalyze(project.id)}>
                                         Analyze
                                     </Button>
                                     <DropdownMenu>
