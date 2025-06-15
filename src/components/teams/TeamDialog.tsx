@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,7 +47,7 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
       );
     } else {
       addTeamMutation.mutate(
-        { ...values, partner_id: partnerId },
+        { name: values.name, partner_id: partnerId },
         { onSuccess: () => onOpenChange(false) }
       );
     }
