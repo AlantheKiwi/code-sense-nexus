@@ -22,9 +22,9 @@ const tiers = [
     link: '/auth'
   },
   {
-    name: 'Agency Ready',
+    name: 'Pro',
     price: '$19',
-    description: 'For freelancers and small agencies ready to deliver quality.',
+    description: 'For professionals and small agencies ready to deliver quality.',
     features: [
       '10 Lovable projects',
       'Unlimited analyses',
