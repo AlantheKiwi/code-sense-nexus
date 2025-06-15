@@ -1024,6 +1024,158 @@ export type Database = {
           },
         ]
       }
+      ml_insights: {
+        Row: {
+          confidence: number | null
+          content: Json
+          created_at: string
+          expires_at: string | null
+          id: string
+          insight_type: string
+          is_acknowledged: boolean
+          partner_id: string
+          project_id: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          content: Json
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          insight_type: string
+          is_acknowledged?: boolean
+          partner_id: string
+          project_id?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          content?: Json
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          is_acknowledged?: boolean
+          partner_id?: string
+          project_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_insights_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ml_insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ml_models: {
+        Row: {
+          accuracy: number | null
+          created_at: string
+          deployed_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          model_type: Database["public"]["Enums"]["ml_model_type"]
+          partner_id: string | null
+          training_data_hash: string | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string
+          deployed_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          model_type: Database["public"]["Enums"]["ml_model_type"]
+          partner_id?: string | null
+          training_data_hash?: string | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string
+          deployed_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          model_type?: Database["public"]["Enums"]["ml_model_type"]
+          partner_id?: string | null
+          training_data_hash?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_models_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ml_predictions: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          input_data: Json
+          model_id: string
+          prediction: Json
+          project_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          input_data: Json
+          model_id: string
+          prediction: Json
+          project_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          input_data?: Json
+          model_id?: string
+          prediction?: Json
+          project_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ml_predictions_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ml_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ml_predictions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_channels: {
         Row: {
           active: boolean
@@ -2268,6 +2420,50 @@ export type Database = {
         }
         Relationships: []
       }
+      training_datasets: {
+        Row: {
+          created_at: string
+          data_hash: string
+          data_source: string
+          feature_columns: string[] | null
+          id: string
+          label_column: string | null
+          model_type: Database["public"]["Enums"]["ml_model_type"]
+          partner_id: string | null
+          record_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_hash: string
+          data_source: string
+          feature_columns?: string[] | null
+          id?: string
+          label_column?: string | null
+          model_type: Database["public"]["Enums"]["ml_model_type"]
+          partner_id?: string | null
+          record_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_hash?: string
+          data_source?: string
+          feature_columns?: string[] | null
+          id?: string
+          label_column?: string | null
+          model_type?: Database["public"]["Enums"]["ml_model_type"]
+          partner_id?: string | null
+          record_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_datasets_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2439,6 +2635,13 @@ export type Database = {
       backup_type: "full_database" | "storage" | "configuration"
       dashboard_permission_level: "view" | "edit"
       error_status: "unresolved" | "resolved" | "ignored" | "in_progress"
+      ml_model_type:
+        | "bug_severity_classifier"
+        | "debugging_time_predictor"
+        | "code_quality_scorer"
+        | "error_pattern_detector"
+        | "performance_regression_predictor"
+        | "tool_effectiveness_analyzer"
       notification_channel_type:
         | "email"
         | "slack"
@@ -2587,6 +2790,14 @@ export const Constants = {
       backup_type: ["full_database", "storage", "configuration"],
       dashboard_permission_level: ["view", "edit"],
       error_status: ["unresolved", "resolved", "ignored", "in_progress"],
+      ml_model_type: [
+        "bug_severity_classifier",
+        "debugging_time_predictor",
+        "code_quality_scorer",
+        "error_pattern_detector",
+        "performance_regression_predictor",
+        "tool_effectiveness_analyzer",
+      ],
       notification_channel_type: [
         "email",
         "slack",
