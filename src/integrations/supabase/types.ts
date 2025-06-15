@@ -714,6 +714,204 @@ export type Database = {
           },
         ]
       }
+      notification_channels: {
+        Row: {
+          active: boolean
+          config: Json
+          created_at: string
+          id: string
+          partner_id: string
+          type: Database["public"]["Enums"]["notification_channel_type"]
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          active?: boolean
+          config: Json
+          created_at?: string
+          id?: string
+          partner_id: string
+          type: Database["public"]["Enums"]["notification_channel_type"]
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          active?: boolean
+          config?: Json
+          created_at?: string
+          id?: string
+          partner_id?: string
+          type?: Database["public"]["Enums"]["notification_channel_type"]
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_channels_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_history: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          id: string
+          interaction_type: string | null
+          notification_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          interaction_type?: string | null
+          notification_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          interaction_type?: string | null
+          notification_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_history_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notification_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          channel_type: Database["public"]["Enums"]["notification_channel_type"]
+          created_at: string
+          enabled: boolean
+          id: string
+          notification_type: string
+          settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_type: Database["public"]["Enums"]["notification_channel_type"]
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          notification_type: string
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_type?: Database["public"]["Enums"]["notification_channel_type"]
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          notification_type?: string
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_queue: {
+        Row: {
+          attempts: number
+          channel_type: Database["public"]["Enums"]["notification_channel_type"]
+          content: Json
+          created_at: string
+          error_message: string | null
+          id: string
+          notification_type: string
+          partner_id: string | null
+          scheduled_at: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["notification_status"]
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          channel_type: Database["public"]["Enums"]["notification_channel_type"]
+          content: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          partner_id?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          channel_type?: Database["public"]["Enums"]["notification_channel_type"]
+          content?: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          partner_id?: string | null
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["notification_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_queue_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          active: boolean
+          body: string
+          channel: Database["public"]["Enums"]["notification_channel_type"]
+          created_at: string
+          id: string
+          subject: string | null
+          type: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          channel: Database["public"]["Enums"]["notification_channel_type"]
+          created_at?: string
+          id?: string
+          subject?: string | null
+          type: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          channel?: Database["public"]["Enums"]["notification_channel_type"]
+          created_at?: string
+          id?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           branding_config: Json | null
@@ -1592,6 +1790,19 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       error_status: "unresolved" | "resolved" | "ignored" | "in_progress"
+      notification_channel_type:
+        | "email"
+        | "slack"
+        | "discord"
+        | "sms"
+        | "webhook"
+        | "in_app"
+      notification_status:
+        | "pending"
+        | "processing"
+        | "sent"
+        | "failed"
+        | "retrying"
       project_platform_type:
         | "lovable"
         | "bubble"
@@ -1717,6 +1928,21 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       error_status: ["unresolved", "resolved", "ignored", "in_progress"],
+      notification_channel_type: [
+        "email",
+        "slack",
+        "discord",
+        "sms",
+        "webhook",
+        "in_app",
+      ],
+      notification_status: [
+        "pending",
+        "processing",
+        "sent",
+        "failed",
+        "retrying",
+      ],
       project_platform_type: [
         "lovable",
         "bubble",
