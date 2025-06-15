@@ -298,6 +298,7 @@ export type Database = {
           id: string
           project_id: string
           status: string
+          team_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -307,6 +308,7 @@ export type Database = {
           id?: string
           project_id: string
           status?: string
+          team_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -316,6 +318,7 @@ export type Database = {
           id?: string
           project_id?: string
           status?: string
+          team_id?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -324,6 +327,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debugging_sessions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -734,6 +744,73 @@ export type Database = {
           },
         ]
       }
+      team_members: {
+        Row: {
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          partner_id: string
+          settings: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          partner_id: string
+          settings?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          partner_id?: string
+          settings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tool_configurations: {
         Row: {
           config_data: Json | null
@@ -946,6 +1023,14 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      is_team_admin: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -956,6 +1041,7 @@ export type Database = {
         | "flutterflow"
         | "other"
       project_role: "admin" | "editor" | "viewer"
+      team_role: "admin" | "developer" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1080,6 +1166,7 @@ export const Constants = {
         "other",
       ],
       project_role: ["admin", "editor", "viewer"],
+      team_role: ["admin", "developer", "viewer"],
     },
   },
 } as const
