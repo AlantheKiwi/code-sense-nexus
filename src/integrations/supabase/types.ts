@@ -301,6 +301,116 @@ export type Database = {
           },
         ]
       }
+      backup_history: {
+        Row: {
+          backup_type: Database["public"]["Enums"]["backup_type"]
+          checksum: string | null
+          completed_at: string | null
+          created_at: string
+          file_path: string | null
+          id: string
+          logs: Json | null
+          partner_id: string
+          schedule_id: string | null
+          size_bytes: number | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["backup_status"]
+        }
+        Insert: {
+          backup_type: Database["public"]["Enums"]["backup_type"]
+          checksum?: string | null
+          completed_at?: string | null
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          logs?: Json | null
+          partner_id: string
+          schedule_id?: string | null
+          size_bytes?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["backup_status"]
+        }
+        Update: {
+          backup_type?: Database["public"]["Enums"]["backup_type"]
+          checksum?: string | null
+          completed_at?: string | null
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          logs?: Json | null
+          partner_id?: string
+          schedule_id?: string | null
+          size_bytes?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["backup_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_history_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backup_history_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "backup_schedules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backup_schedules: {
+        Row: {
+          backup_type: Database["public"]["Enums"]["backup_type"]
+          created_at: string
+          frequency: Database["public"]["Enums"]["backup_frequency"]
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          partner_id: string
+          retention_days: number
+          time_of_day_utc: string
+          updated_at: string
+        }
+        Insert: {
+          backup_type: Database["public"]["Enums"]["backup_type"]
+          created_at?: string
+          frequency: Database["public"]["Enums"]["backup_frequency"]
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          partner_id: string
+          retention_days: number
+          time_of_day_utc?: string
+          updated_at?: string
+        }
+        Update: {
+          backup_type?: Database["public"]["Enums"]["backup_type"]
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["backup_frequency"]
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          partner_id?: string
+          retention_days?: number
+          time_of_day_utc?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_schedules_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           created_at: string | null
@@ -613,6 +723,47 @@ export type Database = {
             columns: ["pipeline_run_id"]
             isOneToOne: false
             referencedRelation: "pipeline_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disaster_recovery_configs: {
+        Row: {
+          backup_regions: Json | null
+          created_at: string
+          id: string
+          is_active: boolean
+          partner_id: string
+          rpo_hours: number
+          rto_hours: number
+          updated_at: string
+        }
+        Insert: {
+          backup_regions?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          partner_id: string
+          rpo_hours: number
+          rto_hours: number
+          updated_at?: string
+        }
+        Update: {
+          backup_regions?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          partner_id?: string
+          rpo_hours?: number
+          rto_hours?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disaster_recovery_configs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: true
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -2078,6 +2229,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      backup_frequency: "daily" | "weekly" | "monthly"
+      backup_status:
+        | "pending"
+        | "in_progress"
+        | "succeeded"
+        | "failed"
+        | "deleted"
+      backup_type: "full_database" | "storage" | "configuration"
       dashboard_permission_level: "view" | "edit"
       error_status: "unresolved" | "resolved" | "ignored" | "in_progress"
       notification_channel_type:
@@ -2217,6 +2376,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      backup_frequency: ["daily", "weekly", "monthly"],
+      backup_status: [
+        "pending",
+        "in_progress",
+        "succeeded",
+        "failed",
+        "deleted",
+      ],
+      backup_type: ["full_database", "storage", "configuration"],
       dashboard_permission_level: ["view", "edit"],
       error_status: ["unresolved", "resolved", "ignored", "in_progress"],
       notification_channel_type: [
