@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -79,23 +78,22 @@ export const ProjectDialog: React.FC<ProjectDialogProps> = ({ partnerId, isOpen,
   const isPending = addProjectMutation.isPending || updateProjectMutation.isPending;
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const commonPayload = {
-        ...values,
-        github_url: values.github_url || null,
-        language: values.language || null,
-        framework: values.framework || null,
-    };
-
     if (projectToEdit) {
       updateProjectMutation.mutate({
         id: projectToEdit.id,
-        ...commonPayload
+        name: values.name,
+        github_url: values.github_url || null,
+        language: values.language || null,
+        framework: values.framework || null,
       }, {
         onSuccess: () => onOpenChange(false)
       });
     } else {
       addProjectMutation.mutate({
-        ...commonPayload,
+        name: values.name,
+        github_url: values.github_url || null,
+        language: values.language || null,
+        framework: values.framework || null,
         partner_id: partnerId,
       }, {
         onSuccess: () => onOpenChange(false)
