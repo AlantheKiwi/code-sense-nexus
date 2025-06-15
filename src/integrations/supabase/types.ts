@@ -422,6 +422,47 @@ export type Database = {
           },
         ]
       }
+      tool_updates: {
+        Row: {
+          created_at: string
+          details: Json | null
+          from_version: string | null
+          id: string
+          status: string
+          to_version: string
+          tool_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          from_version?: string | null
+          id?: string
+          status: string
+          to_version: string
+          tool_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          from_version?: string | null
+          id?: string
+          status?: string
+          to_version?: string
+          tool_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_updates_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tools: {
         Row: {
           api_endpoint: string | null
