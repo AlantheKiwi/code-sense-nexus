@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FolderKanban, History, PlusCircle, ExternalLink, FileCode, Sparkles, Code, Bug, TestTube, Github, CheckCircle2, AlertCircle, Rocket } from "lucide-react";
+import { FolderKanban, History, TestTube, FileCode, Sparkles, Code, Bug, Github, CheckCircle2, AlertCircle, Rocket, Loader2 } from "lucide-react";
 import { useProjectsData } from '@/hooks/useProjectsData';
 import { ProjectList } from '@/components/projects/ProjectList';
 import { Bar, BarChart, CartesianGrid, XAxis, Cell } from "recharts";
@@ -16,6 +16,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const chartData = [
   { severity: "Critical", issues: 3, fill: "var(--color-critical)" },
@@ -49,6 +51,53 @@ const chartConfig = {
 const DashboardPage = () => {
   const { user, partner, isLoading: isAuthLoading } = useAuth();
   const { data: projects, isLoading: areProjectsLoading } = useProjectsData(partner?.id);
+
+  const lighthouseMutation = useMutation({
+    mutationFn: async ({ url, device = 'mobile' }: { url: string; device?: 'mobile' | 'desktop' }) => {
+      const { data, error } = await supabase.functions.invoke('lighthouse-analysis', {
+        body: { url, device },
+      });
+
+      if (error) {
+        let errorMessage = error.message;
+        try {
+          // Supabase function errors often come as stringified JSON
+          const parsed = JSON.parse(error.message);
+          if (parsed.error) errorMessage = parsed.error;
+        } catch (e) {
+          // Ignore if not valid JSON
+        }
+        throw new Error(errorMessage);
+      }
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      const { scores } = data;
+      toast.success(`Lighthouse Audit Complete for ${variables.url}`, {
+        description: (
+          <div className="text-sm text-muted-foreground">
+            <p>Performance: {scores.performance.toFixed(0)}</p>
+            <p>Accessibility: {scores.accessibility.toFixed(0)}</p>
+            <p>Best Practices: {scores.bestPractices.toFixed(0)}</p>
+            <p>SEO: {scores.seo.toFixed(0)}</p>
+          </div>
+        ),
+      });
+    },
+    onError: (error: Error) => {
+      toast.error('Lighthouse Audit Failed', {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleLighthouseAudit = () => {
+    // For demo purposes, we audit a default URL.
+    // A full implementation would let the user select a project's URL.
+    const targetUrl = 'https://www.google.com';
+    toast.info(`Starting Lighthouse audit for ${targetUrl}...`);
+    lighthouseMutation.mutate({ url: targetUrl });
+  };
 
   const recentActivities = [
     {
@@ -243,8 +292,16 @@ const DashboardPage = () => {
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="outline" onClick={() => toast.info("Lighthouse audit feature is coming soon!")}>
-                            <TestTube className="mr-2 h-4 w-4" /> Audit with Lighthouse
+                        <Button
+                          variant="outline"
+                          onClick={handleLighthouseAudit}
+                          disabled={lighthouseMutation.isPending}
+                        >
+                          {lighthouseMutation.isPending ? (
+                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running...</>
+                          ) : (
+                            <><TestTube className="mr-2 h-4 w-4" /> Audit with Lighthouse</>
+                          )}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
