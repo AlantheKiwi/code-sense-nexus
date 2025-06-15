@@ -1,7 +1,7 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { logAuditEvent } from '../_shared/audit.ts'
 
 // This admin client is required to look up users by email.
 const supabaseAdmin = createClient(
@@ -91,6 +91,15 @@ serve(async (req: Request) => {
           }
           throw error;
         }
+
+        await logAuditEvent(
+          supabaseAdmin,
+          req,
+          'project_member_add',
+          { project_id: project_id, user_id: targetUser.id },
+          { added_user_email: email, role: role }
+        );
+
         return new Response(JSON.stringify(data), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 201 });
       }
 
@@ -102,6 +111,15 @@ serve(async (req: Request) => {
          
          const { data, error } = await supabaseClient.from('project_members').update({ role }).eq('project_id', project_id).eq('user_id', user_id).select().single();
          if (error) throw error;
+
+         await logAuditEvent(
+            supabaseAdmin,
+            req,
+            'project_member_update_role',
+            { project_id: project_id, user_id: user_id },
+            { new_role: role }
+         );
+
          return new Response(JSON.stringify(data), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       }
 
@@ -113,6 +131,14 @@ serve(async (req: Request) => {
         
         const { error } = await supabaseClient.from('project_members').delete().eq('project_id', project_id).eq('user_id', user_id);
         if (error) throw error;
+
+        await logAuditEvent(
+          supabaseAdmin,
+          req,
+          'project_member_remove',
+          { project_id: project_id, user_id: user_id }
+        );
+        
         return new Response(JSON.stringify({ message: 'Member removed' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
       }
 

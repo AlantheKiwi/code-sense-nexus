@@ -1,8 +1,8 @@
-
 import 'https://deno.land/x/xhr@0.1.0/mod.ts'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
+import { logAuditEvent } from '../_shared/audit.ts'
 
 async function getSupabaseAdminClient() {
   return createClient(
@@ -26,7 +26,7 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  const supabaseAdmin = getSupabaseAdminClient();
+  const supabaseAdmin = await getSupabaseAdminClient();
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -53,18 +53,44 @@ serve(async (req) => {
       
       const { data, error } = await supabaseAdmin.from('team_members').insert({ team_id, user_id: invitedUser.id, role }).select();
       if (error) throw error;
+      
+      await logAuditEvent(
+        supabaseAdmin,
+        req,
+        'team_member_add',
+        { team_id: team_id, user_id: invitedUser.id },
+        { added_user_email: email, role: role }
+      );
+
       return new Response(JSON.stringify(data), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (req.method === 'PATCH') { // Update member role
       const { data, error } = await supabaseAdmin.from('team_members').update({ role }).match({ team_id, user_id }).select();
       if (error) throw error;
+
+      await logAuditEvent(
+        supabaseAdmin,
+        req,
+        'team_member_update_role',
+        { team_id: team_id, user_id: user_id },
+        { new_role: role }
+      );
+
       return new Response(JSON.stringify(data), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
     if (req.method === 'DELETE') { // Remove member
       const { error } = await supabaseAdmin.from('team_members').delete().match({ team_id, user_id });
       if (error) throw error;
+
+      await logAuditEvent(
+        supabaseAdmin,
+        req,
+        'team_member_remove',
+        { team_id: team_id, user_id: user_id }
+      );
+
       return new Response(null, { status: 204, headers: corsHeaders });
     }
     
