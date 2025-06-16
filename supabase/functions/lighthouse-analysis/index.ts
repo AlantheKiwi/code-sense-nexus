@@ -1,72 +1,94 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { corsHeaders } from '../_shared/cors.ts'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/cors.ts';
 
-console.log('Lighthouse analysis function booting up.')
+console.log('Lighthouse analysis function started');
 
-const PAGESPEED_API_KEY = Deno.env.get('PAGESPEED_API_KEY')
-const PAGESPEED_API_URL = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
-serve(async (req) => {
-  // This is needed if you're planning to invoke your function from a browser.
+interface LighthouseRequest {
+  url: string;
+  device?: 'mobile' | 'desktop';
+  projectId?: string;
+  priority?: 'low' | 'normal' | 'high';
+}
+
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
-  if (!PAGESPEED_API_KEY) {
-    console.error('PAGESPEED_API_KEY is not set in environment variables.')
-    return new Response(JSON.stringify({ error: 'PageSpeed API key is not configured.' }), {
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    });
   }
 
   try {
-    const { url, device = 'mobile' } = await req.json()
-
-    if (!url) {
-        return new Response(JSON.stringify({ error: 'URL parameter is required to run an audit.' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-        })
+    const request: LighthouseRequest = await req.json();
+    
+    if (!request.url) {
+      return new Response(JSON.stringify({ error: 'URL is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const categories = ['performance', 'accessibility', 'best-practices', 'seo', 'pwa']
-    const categoryParams = categories.map(c => `category=${c}`).join('&')
-    const apiResponse = await fetch(`${PAGESPEED_API_URL}?url=${encodeURIComponent(url)}&strategy=${device}&key=${PAGESPEED_API_KEY}&${categoryParams}`)
-    
-    if (!apiResponse.ok) {
-        const errorBody = await apiResponse.text()
-        console.error('PageSpeed API error:', errorBody)
-        return new Response(JSON.stringify({ error: 'Failed to communicate with Google PageSpeed API.', details: errorBody }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: apiResponse.status,
-        })
+    // Validate URL format
+    try {
+      new URL(request.url);
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid URL format' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const results = await apiResponse.json()
-    
-    const { lighthouseResult } = results;
-    const { scores: categoryScores } = lighthouseResult;
-    
-    const scores = {
-      performance: categoryScores.performance * 100,
-      accessibility: categoryScores.accessibility * 100,
-      bestPractices: categoryScores['best-practices'] * 100,
-      seo: categoryScores.seo * 100,
-      pwa: categoryScores.pwa * 100,
-    };
+    console.log(`Queueing Lighthouse audit for: ${request.url}`);
 
-    return new Response(JSON.stringify({ scores, fullReportId: results.id }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Add to queue for processing
+    const { data: queueResponse, error: queueError } = await supabase.functions.invoke('lighthouse-queue', {
+      body: {
+        urls: [request.url],
+        device: request.device || 'mobile',
+        projectId: request.projectId,
+        priority: request.priority || 'normal'
+      }
+    });
+
+    if (queueError) {
+      console.error('Error queuing audit:', queueError);
+      return new Response(JSON.stringify({ 
+        error: 'Failed to queue audit',
+        details: queueError.message 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Lighthouse audit queued successfully',
+      data: queueResponse
+    }), {
       status: 200,
-    })
-
-  } catch (e) {
-    console.error('Error in lighthouse-analysis function:', e)
-    return new Response(JSON.stringify({ error: e.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error: any) {
+    console.error('Error in Lighthouse analysis function:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      message: error.message 
+    }), {
       status: 500,
-    })
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
-})
+});

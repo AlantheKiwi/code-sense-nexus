@@ -1520,6 +1520,106 @@ export type Database = {
           },
         ]
       }
+      lighthouse_audits: {
+        Row: {
+          audit_id: string | null
+          created_at: string
+          device: string
+          diagnostics: Json | null
+          full_report: Json | null
+          id: string
+          metrics: Json
+          opportunities: Json | null
+          project_id: string | null
+          scores: Json
+          url: string
+        }
+        Insert: {
+          audit_id?: string | null
+          created_at?: string
+          device: string
+          diagnostics?: Json | null
+          full_report?: Json | null
+          id?: string
+          metrics: Json
+          opportunities?: Json | null
+          project_id?: string | null
+          scores: Json
+          url: string
+        }
+        Update: {
+          audit_id?: string | null
+          created_at?: string
+          device?: string
+          diagnostics?: Json | null
+          full_report?: Json | null
+          id?: string
+          metrics?: Json
+          opportunities?: Json | null
+          project_id?: string | null
+          scores?: Json
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_audits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_queue: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          device: string
+          error_message: string | null
+          id: string
+          priority: string
+          project_id: string | null
+          result: Json | null
+          started_at: string | null
+          status: string
+          url: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          device?: string
+          error_message?: string | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          url: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          device?: string
+          error_message?: string | null
+          id?: string
+          priority?: string
+          project_id?: string | null
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_queue_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ml_insights: {
         Row: {
           confidence: number | null

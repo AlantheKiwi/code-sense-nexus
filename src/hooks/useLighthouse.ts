@@ -1,0 +1,128 @@
+
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+interface LighthouseAuditRequest {
+  url: string;
+  device?: 'mobile' | 'desktop';
+  projectId?: string;
+  priority?: 'low' | 'normal' | 'high';
+}
+
+interface LighthouseAudit {
+  id: string;
+  url: string;
+  device: string;
+  project_id: string | null;
+  scores: {
+    performance: number;
+    accessibility: number;
+    bestPractices: number;
+    seo: number;
+    pwa: number;
+  };
+  metrics: {
+    firstContentfulPaint: number;
+    largestContentfulPaint: number;
+    firstInputDelay: number;
+    cumulativeLayoutShift: number;
+    speedIndex: number;
+    totalBlockingTime: number;
+  };
+  opportunities: Array<{
+    id: string;
+    title: string;
+    description: string;
+    savings: number;
+    displayValue: string;
+  }>;
+  diagnostics: Array<{
+    id: string;
+    title: string;
+    description: string;
+    score: number;
+    displayValue: string;
+  }>;
+  created_at: string;
+}
+
+interface QueueItem {
+  id: string;
+  url: string;
+  device: string;
+  project_id: string | null;
+  priority: 'low' | 'normal' | 'high';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  error_message: string | null;
+  result: any;
+}
+
+const startLighthouseAudit = async (request: LighthouseAuditRequest) => {
+  const { data, error } = await supabase.functions.invoke('lighthouse-analysis', {
+    body: request
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+const fetchLighthouseAudits = async (projectId?: string): Promise<LighthouseAudit[]> => {
+  let query = supabase
+    .from('lighthouse_audits')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (projectId) {
+    query = query.eq('project_id', projectId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data || [];
+};
+
+const fetchQueueStatus = async (projectId?: string) => {
+  const { data, error } = await supabase.functions.invoke('lighthouse-queue', {
+    method: 'GET',
+    body: projectId ? { projectId } : {}
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const useLighthouseAudit = () => {
+  return useMutation({
+    mutationFn: startLighthouseAudit,
+  });
+};
+
+export const useLighthouseAudits = (projectId?: string) => {
+  return useQuery({
+    queryKey: ['lighthouse-audits', projectId],
+    queryFn: () => fetchLighthouseAudits(projectId),
+  });
+};
+
+export const useLighthouseQueue = (projectId?: string) => {
+  return useQuery({
+    queryKey: ['lighthouse-queue', projectId],
+    queryFn: () => fetchQueueStatus(projectId),
+    refetchInterval: 5000, // Poll every 5 seconds
+  });
+};
+
+export type { LighthouseAuditRequest, LighthouseAudit, QueueItem };
