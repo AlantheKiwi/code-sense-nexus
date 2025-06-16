@@ -1862,6 +1862,310 @@ export type Database = {
           },
         ]
       }
+      lighthouse_recommendation_batches: {
+        Row: {
+          actual_savings_ms: number | null
+          actual_total_hours: number | null
+          audit_ids: string[]
+          completed_at: string | null
+          completed_recommendations: number | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_total_hours: number | null
+          expected_savings_ms: number | null
+          id: string
+          name: string
+          project_id: string
+          started_at: string | null
+          status: string
+          total_recommendations: number | null
+          updated_at: string
+        }
+        Insert: {
+          actual_savings_ms?: number | null
+          actual_total_hours?: number | null
+          audit_ids: string[]
+          completed_at?: string | null
+          completed_recommendations?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_total_hours?: number | null
+          expected_savings_ms?: number | null
+          id?: string
+          name: string
+          project_id: string
+          started_at?: string | null
+          status?: string
+          total_recommendations?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actual_savings_ms?: number | null
+          actual_total_hours?: number | null
+          audit_ids?: string[]
+          completed_at?: string | null
+          completed_recommendations?: number | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_total_hours?: number | null
+          expected_savings_ms?: number | null
+          id?: string
+          name?: string
+          project_id?: string
+          started_at?: string | null
+          status?: string
+          total_recommendations?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_recommendation_batches_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_recommendation_progress: {
+        Row: {
+          after_metrics: Json | null
+          before_metrics: Json | null
+          created_at: string
+          id: string
+          new_status: string
+          notes: string | null
+          old_status: string | null
+          project_id: string
+          recommendation_id: string
+          status_changed_by: string | null
+          time_spent_hours: number | null
+          tools_used: Json | null
+        }
+        Insert: {
+          after_metrics?: Json | null
+          before_metrics?: Json | null
+          created_at?: string
+          id?: string
+          new_status: string
+          notes?: string | null
+          old_status?: string | null
+          project_id: string
+          recommendation_id: string
+          status_changed_by?: string | null
+          time_spent_hours?: number | null
+          tools_used?: Json | null
+        }
+        Update: {
+          after_metrics?: Json | null
+          before_metrics?: Json | null
+          created_at?: string
+          id?: string
+          new_status?: string
+          notes?: string | null
+          old_status?: string | null
+          project_id?: string
+          recommendation_id?: string
+          status_changed_by?: string | null
+          time_spent_hours?: number | null
+          tools_used?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_recommendation_progress_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_recommendation_progress_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_recommendations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_recommendation_templates: {
+        Row: {
+          audit_rule: string
+          category: string
+          created_at: string
+          description: string
+          estimated_time_hours: number | null
+          expected_impact: Json
+          fix_template: string
+          id: string
+          implementation_difficulty: string
+          is_active: boolean
+          name: string
+          prerequisites: Json | null
+          project_type: string
+          title: string
+          tools_integration: Json | null
+          updated_at: string
+        }
+        Insert: {
+          audit_rule: string
+          category: string
+          created_at?: string
+          description: string
+          estimated_time_hours?: number | null
+          expected_impact?: Json
+          fix_template: string
+          id?: string
+          implementation_difficulty: string
+          is_active?: boolean
+          name: string
+          prerequisites?: Json | null
+          project_type: string
+          title: string
+          tools_integration?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          audit_rule?: string
+          category?: string
+          created_at?: string
+          description?: string
+          estimated_time_hours?: number | null
+          expected_impact?: Json
+          fix_template?: string
+          id?: string
+          implementation_difficulty?: string
+          is_active?: boolean
+          name?: string
+          prerequisites?: Json | null
+          project_type?: string
+          title?: string
+          tools_integration?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lighthouse_recommendations: {
+        Row: {
+          audit_id: string
+          audit_rule: string
+          category: string
+          cost_benefit_score: number | null
+          created_at: string
+          current_value: number | null
+          description: string
+          difficulty_level: string
+          dismissed_at: string | null
+          dismissed_reason: string | null
+          estimated_savings_ms: number | null
+          estimated_time_hours: number | null
+          fix_suggestion: string
+          id: string
+          implementation_code: string | null
+          implemented_at: string | null
+          is_automated: boolean | null
+          priority_score: number
+          project_id: string
+          status: string
+          target_value: number | null
+          template_id: string | null
+          title: string
+          tool_integrations: Json | null
+          updated_at: string
+          url: string
+          verification_audit_id: string | null
+        }
+        Insert: {
+          audit_id: string
+          audit_rule: string
+          category: string
+          cost_benefit_score?: number | null
+          created_at?: string
+          current_value?: number | null
+          description: string
+          difficulty_level: string
+          dismissed_at?: string | null
+          dismissed_reason?: string | null
+          estimated_savings_ms?: number | null
+          estimated_time_hours?: number | null
+          fix_suggestion: string
+          id?: string
+          implementation_code?: string | null
+          implemented_at?: string | null
+          is_automated?: boolean | null
+          priority_score?: number
+          project_id: string
+          status?: string
+          target_value?: number | null
+          template_id?: string | null
+          title: string
+          tool_integrations?: Json | null
+          updated_at?: string
+          url: string
+          verification_audit_id?: string | null
+        }
+        Update: {
+          audit_id?: string
+          audit_rule?: string
+          category?: string
+          cost_benefit_score?: number | null
+          created_at?: string
+          current_value?: number | null
+          description?: string
+          difficulty_level?: string
+          dismissed_at?: string | null
+          dismissed_reason?: string | null
+          estimated_savings_ms?: number | null
+          estimated_time_hours?: number | null
+          fix_suggestion?: string
+          id?: string
+          implementation_code?: string | null
+          implemented_at?: string | null
+          is_automated?: boolean | null
+          priority_score?: number
+          project_id?: string
+          status?: string
+          target_value?: number | null
+          template_id?: string | null
+          title?: string
+          tool_integrations?: Json | null
+          updated_at?: string
+          url?: string
+          verification_audit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_recommendations_audit_id_fkey"
+            columns: ["audit_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_audits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_recommendations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_recommendations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_recommendation_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_recommendations_verification_audit_id_fkey"
+            columns: ["verification_audit_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_audits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lighthouse_schedules: {
         Row: {
           configuration_id: string | null
@@ -1971,6 +2275,56 @@ export type Database = {
             columns: ["monitoring_run_id"]
             isOneToOne: false
             referencedRelation: "lighthouse_monitoring_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_tool_integrations: {
+        Row: {
+          api_credentials: Json | null
+          configuration: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          last_used_at: string | null
+          project_id: string
+          success_rate: number | null
+          tool_category: string
+          tool_name: string
+          updated_at: string
+        }
+        Insert: {
+          api_credentials?: Json | null
+          configuration?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          project_id: string
+          success_rate?: number | null
+          tool_category: string
+          tool_name: string
+          updated_at?: string
+        }
+        Update: {
+          api_credentials?: Json | null
+          configuration?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_used_at?: string | null
+          project_id?: string
+          success_rate?: number | null
+          tool_category?: string
+          tool_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_tool_integrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -3530,6 +3884,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_cost_benefit_score: {
+        Args: {
+          estimated_hours: number
+          potential_savings_ms: number
+          difficulty: string
+        }
+        Returns: number
+      }
       calculate_next_lighthouse_run: {
         Args: {
           interval_type: string
@@ -3539,6 +3901,15 @@ export type Database = {
           peak_end?: string
         }
         Returns: string
+      }
+      calculate_recommendation_priority: {
+        Args: {
+          savings_ms: number
+          difficulty: string
+          current_score: number
+          impact_area: string
+        }
+        Returns: number
       }
       can_edit_dashboard: {
         Args: { _dashboard_id: string; _user_id: string }
