@@ -8,6 +8,47 @@ console.log('Secure analysis function booting up');
 
 const linter = new Linter();
 
+// ESLint v9 flat config array format
+const eslintFlatConfig = [
+  {
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        // Common browser globals
+        window: 'readonly',
+        document: 'readonly',
+        console: 'readonly',
+        // Common Node.js globals for modules
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        // ES6+
+        Promise: 'readonly',
+        Set: 'readonly',
+        Map: 'readonly',
+        // React globals
+        React: 'readonly',
+        JSX: 'readonly',
+      },
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    rules: {
+      'no-undef': 'error',
+      'no-unused-vars': 'warn',
+      'prefer-const': 'warn',
+      'semi': ['error', 'always'],
+      'no-console': 'warn',
+      'eqeqeq': 'warn',
+      'no-var': 'warn',
+    },
+  }
+];
+
 const securityCheck = (_ast: any) => {
     // Placeholder for security rule checking
     // In the future, we can traverse the AST to find potential security vulnerabilities
@@ -62,26 +103,33 @@ serve(async (req: Request) => {
 
     console.log('Linting code snippet...');
     
-    // Create a simple rules-only configuration for ESLint v9
-    const eslintConfig = {
-      'no-undef': 'error',
-      'no-unused-vars': 'warn',
-      'prefer-const': 'warn',
-      'semi': ['error', 'always'],
-    };
-
-    // Use linter.verifyAndFix with minimal config to avoid basePath issues
     let messages;
     try {
-      const result = linter.verifyAndFix(code, eslintConfig, {
-        filename: 'temp.js',
-        allowInlineConfig: false,
+      // Use the flat config with ESLint v9
+      messages = linter.verify(code, eslintFlatConfig, {
+        filename: 'analysis.js',
       });
-      messages = result.messages;
+      console.log(`ESLint analysis completed successfully with ${messages.length} issues found.`);
     } catch (configError: any) {
-      console.log('ESLint config error, falling back to basic analysis:', configError.message);
-      // If ESLint fails, return basic syntax analysis from Babel
-      messages = [];
+      console.log('ESLint config error:', configError.message);
+      // If ESLint fails, return the configuration error
+      return new Response(JSON.stringify({
+        error: 'ESLint Configuration Error',
+        analysis: {
+          issues: [{
+            fatal: true,
+            ruleId: 'eslint-config',
+            severity: 'error',
+            message: `ESLint configuration error: ${configError.message}`,
+            line: 0,
+            column: 0,
+          }],
+          securityIssues: []
+        }
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log(`Found ${messages.length} linting issues.`);
