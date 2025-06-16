@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
@@ -22,7 +21,7 @@ const DebugSessionPage = () => {
   
   const [code, setCode] = useState(`// Welcome to the Live Debugging Session!
 // 1. This is a shared code editor. Any changes you make will be seen by your team in real-time.
-// 2. Click "Analyze Code" to get feedback from ESLint.
+// 2. Select your debugging tools and click "Analyze" to get comprehensive feedback.
 //
 // Here's some example code with a few issues to find:
 
@@ -94,27 +93,53 @@ sayHello('World')`);
     }, 50); // Throttle to ~20fps
   };
   
-  const handleAnalyzeCode = async () => {
+  const handleAnalyzeCode = async (selectedTools: string[]) => {
     setIsAnalyzing(true);
     setResult(null);
-    track('code_analysis_started', { sessionId, toolName: 'secure_analyzer' });
+    track('code_analysis_started', { 
+      sessionId, 
+      selectedTools,
+      toolCount: selectedTools.length 
+    });
+    
     try {
+      // For now, we'll still use ESLint as the primary analysis tool
+      // In the future, this would be enhanced to handle multiple tools
       const { data, error } = await supabase.functions.invoke('eslint-analysis', {
-        body: { code },
+        body: { code, selectedTools },
       });
 
       if (error) throw error;
       
-      const newResult = { ...data, timestamp: new Date().toISOString() };
+      const newResult = { 
+        ...data, 
+        timestamp: new Date().toISOString(),
+        analyzedTools: selectedTools 
+      };
       setResult(newResult);
       broadcastEvent({ type: 'EXECUTION_RESULT', payload: newResult });
-      track('code_analysis_completed', { sessionId, toolName: 'secure_analyzer', success: true, issueCount: data.analysis?.issues?.length || 0 });
+      track('code_analysis_completed', { 
+        sessionId, 
+        selectedTools,
+        toolCount: selectedTools.length,
+        success: true, 
+        issueCount: data.analysis?.issues?.length || 0 
+      });
 
     } catch (e: any) {
-      const newError = { error: e.message, timestamp: new Date().toISOString() };
+      const newError = { 
+        error: e.message, 
+        timestamp: new Date().toISOString(),
+        analyzedTools: selectedTools 
+      };
       setResult(newError);
       broadcastEvent({ type: 'EXECUTION_RESULT', payload: newError });
-      track('code_analysis_completed', { sessionId, toolName: 'secure_analyzer', success: false });
+      track('code_analysis_completed', { 
+        sessionId, 
+        selectedTools,
+        toolCount: selectedTools.length,
+        success: false 
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -134,12 +159,13 @@ sayHello('World')`);
 
        <Alert variant="default" className="bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
         <Rocket className="h-4 w-4" />
-        <AlertTitle>How to Use the Analyzer</AlertTitle>
+        <AlertTitle>How to Use the Multi-Tool Analyzer</AlertTitle>
         <AlertDescription>
           <ol className="list-decimal list-inside space-y-1 mt-2">
             <li>The editor below is pre-filled with sample code. You can also paste your own.</li>
-            <li>Click the <strong>Analyze Code</strong> button to check for issues.</li>
-            <li>The results will appear in the "Analysis Result" panel.</li>
+            <li>Select the debugging tools you want to use from the tool selection interface.</li>
+            <li>Click the <strong>Analyze</strong> button to run your selected tools.</li>
+            <li>The results will appear in the "Analysis Result" panel with findings from all tools.</li>
             <li>Collaborate with your team in real-time! Changes are synced automatically.</li>
           </ol>
         </AlertDescription>
@@ -147,9 +173,9 @@ sayHello('World')`);
 
        <Alert>
         <Terminal className="h-4 w-4" />
-        <AlertTitle>Secure Code Analysis</AlertTitle>
+        <AlertTitle>Secure Multi-Tool Analysis</AlertTitle>
         <AlertDescription>
-          This tool uses static analysis to check your code for issues. No code is executed on the server.
+          This platform uses static analysis to check your code for issues across multiple categories. No code is executed on the server.
         </AlertDescription>
       </Alert>
 
