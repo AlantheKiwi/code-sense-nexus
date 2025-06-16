@@ -1,3 +1,4 @@
+
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
@@ -14,6 +15,7 @@ import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
 import { RealTimeAnalysisDashboard } from '@/components/debug-session/RealTimeAnalysisDashboard';
 import { IssuesRecommendationsDashboard } from '@/components/debug-session/IssuesRecommendationsDashboard';
+import { ResultsSummaryDashboard } from '@/components/debug-session/results/ResultsSummaryDashboard';
 
 const DebugSessionPage = () => {
   const { sessionId } = useParams<{ sessionId: string; projectId: string }>();
@@ -44,6 +46,7 @@ sayHello('World')`);
 
   const { result, isAnalyzing, handleAnalyzeCode, setResult } = useDebugSessionAnalysis(sessionId);
   const { cursors, handleMouseMove, updateCursor, cleanupCursors } = useDebugSessionCursor();
+  const [showResultsSummary, setShowResultsSummary] = useState(false);
 
   useEffect(() => {
     if (lastEvent) {
@@ -52,6 +55,10 @@ sayHello('World')`);
       }
       if (lastEvent.type === 'EXECUTION_RESULT') {
         setResult(lastEvent.payload);
+        // Show results summary when analysis completes
+        if (lastEvent.payload && !lastEvent.payload.error) {
+          setShowResultsSummary(true);
+        }
       }
       if (lastEvent.type === 'CURSOR_UPDATE') {
         const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
@@ -112,6 +119,46 @@ sayHello('World')`);
         projectId={session?.id} 
         sessionId={sessionId}
       />
+
+      {/* Results Summary Dashboard - Show after analysis completes */}
+      {showResultsSummary && result && !result.error && (
+        <ResultsSummaryDashboard
+          projectId={session?.id || ''}
+          sessionId={sessionId}
+          results={{
+            id: 'current-analysis',
+            projectId: session?.id || '',
+            sessionId: sessionId || '',
+            timestamp: new Date().toISOString(),
+            overallHealthScore: result.analysis?.overallScore || 75,
+            toolsUsed: result.analyzedTools || [],
+            issues: result.analysis?.issues?.map((issue: any, index: number) => ({
+              id: `issue-${index}`,
+              title: issue.message || 'Code issue detected',
+              description: issue.description || issue.message || '',
+              severity: issue.severity === 2 ? 'critical' : issue.severity === 1 ? 'high' : 'medium',
+              category: issue.ruleId?.includes('security') ? 'security' : 
+                       issue.ruleId?.includes('performance') ? 'performance' : 
+                       issue.ruleId?.includes('a11y') ? 'accessibility' : 'code_quality',
+              impact: issue.severity === 2 ? 'high' : 'medium',
+              effort: 'low',
+              estimatedTimeHours: 2,
+              businessImpact: `Resolving this ${issue.ruleId || 'issue'} will improve code quality and maintainability`,
+              technicalDebt: true,
+              quickWin: issue.severity !== 2,
+              status: 'open' as const,
+            })) || [],
+            recommendations: [],
+            metrics: {
+              codeQualityScore: result.analysis?.codeQualityScore || 75,
+              securityScore: result.analysis?.securityScore || 80,
+              performanceScore: result.analysis?.performanceScore || 70,
+              accessibilityScore: result.analysis?.accessibilityScore || 85,
+              technicalDebtIndex: result.analysis?.technicalDebtIndex || 25,
+            }
+          }}
+        />
+      )}
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-4">
