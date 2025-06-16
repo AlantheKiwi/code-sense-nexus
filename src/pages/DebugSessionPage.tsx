@@ -12,6 +12,7 @@ import { CodeEditor } from '@/components/debug-session/CodeEditor';
 import { AnalysisResult } from '@/components/debug-session/AnalysisResult';
 import { CollaboratorsList } from '@/components/debug-session/CollaboratorsList';
 import { CursorOverlay } from '@/components/debug-session/CursorOverlay';
+import { AutomationControlPanel, AutomationSettings } from '@/components/debug-session/AutomationControlPanel';
 
 const DebugSessionPage = () => {
   const { sessionId } = useParams<{ sessionId: string; projectId: string }>();
@@ -37,6 +38,12 @@ sayHello('World')`);
   const [cursors, setCursors] = useState<{ [userId: string]: { x: number, y: number, email: string } }>({});
   const throttleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [automationSettings, setAutomationSettings] = useState<AutomationSettings>({
+    allAutomatic: false,
+    smartAnalysis: true,
+    toolSettings: {},
+    activePreset: 'development'
+  });
 
   useEffect(() => {
     if (lastEvent) {
@@ -145,6 +152,12 @@ sayHello('World')`);
     }
   };
 
+  const handleAutomationSettingsChange = (settings: AutomationSettings) => {
+    setAutomationSettings(settings);
+    // TODO: Save automation settings to project preferences
+    console.log('Automation settings updated:', settings);
+  };
+
   if (isLoading) {
     return <LoadingSkeleton />;
   }
@@ -190,8 +203,13 @@ sayHello('World')`);
           <AnalysisResult result={result} isAnalyzing={isAnalyzing} />
         </div>
         
-        <div>
+        <div className="space-y-4">
           <CollaboratorsList collaborators={collaborators} />
+          <AutomationControlPanel
+            projectId={session?.id}
+            availableTools={['eslint', 'lighthouse', 'snyk', 'sonarqube', 'accessibility', 'bundle-analyzer']}
+            onSettingsChange={handleAutomationSettingsChange}
+          />
         </div>
       </div>
       <CursorOverlay cursors={cursors} currentUserId={user?.id} />
