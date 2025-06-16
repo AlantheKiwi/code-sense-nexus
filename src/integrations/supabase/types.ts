@@ -1087,6 +1087,66 @@ export type Database = {
           },
         ]
       }
+      eslint_analysis_queue: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          max_retries: number
+          priority: number
+          progress: number
+          project_id: string
+          result_summary: Json | null
+          retry_count: number
+          scheduled_at: string
+          started_at: string | null
+          status: string
+          status_message: string | null
+          trigger_data: Json | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          priority?: number
+          progress?: number
+          project_id: string
+          result_summary?: Json | null
+          retry_count?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          status_message?: string | null
+          trigger_data?: Json | null
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          priority?: number
+          progress?: number
+          project_id?: string
+          result_summary?: Json | null
+          retry_count?: number
+          scheduled_at?: string
+          started_at?: string | null
+          status?: string
+          status_message?: string | null
+          trigger_data?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       eslint_configuration_templates: {
         Row: {
           created_at: string
