@@ -53,7 +53,6 @@ const App = () => (
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/best-practices" element={<BestPracticesPage />} />
             <Route element={<ProtectedRoute />}>
-              {/* The DashboardPage seems to have its own header, so we exclude it from the AppLayout */}
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route element={<AppLayout />}>
                 <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
@@ -62,7 +61,6 @@ const App = () => (
                 <Route path="/updates" element={<UpdatesPage />} />
               </Route>
             </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

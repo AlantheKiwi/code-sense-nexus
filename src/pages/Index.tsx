@@ -13,7 +13,6 @@ const Index = () => {
       <main className="flex-grow">
         <Hero />
         <FeaturesTeaser />
-        {/* Future sections can be added here: How it works, Testimonials, Pricing Table, etc. */}
         <CallToAction />
       </main>
       <Footer />
