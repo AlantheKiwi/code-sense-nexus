@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Queue, Play, Pause, RotateCcw } from 'lucide-react';
+import { List, Play, Pause, RotateCcw } from 'lucide-react';
 
 interface AnalysisQueueManagerProps {
   queueStats: {
@@ -49,7 +48,7 @@ export const AnalysisQueueManager = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Queue className="h-5 w-5" />
+          <List className="h-5 w-5" />
           Queue Management
         </CardTitle>
       </CardHeader>
