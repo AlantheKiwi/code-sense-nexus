@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ export const RealTimeAnalysisDashboard = ({
 }: RealTimeAnalysisDashboardProps) => {
   const [activeAnalyses, setActiveAnalyses] = useState<any[]>([]);
   const [criticalIssues, setCriticalIssues] = useState<any[]>([]);
+  const subscribedRef = useRef(false);
   
   const { jobs, queueStats, fetchQueueStatus } = useESLintScheduler();
   const { subscribeToJobUpdates, unsubscribeFromJobUpdates } = useESLintRealtimeUpdates();
@@ -31,29 +32,32 @@ export const RealTimeAnalysisDashboard = ({
 
   // Subscribe to real-time updates
   useEffect(() => {
-    if (projectId) {
-      subscribeToJobUpdates(projectId, (updatedJob) => {
-        setActiveAnalyses(prev => {
-          const index = prev.findIndex(job => job.id === updatedJob.id);
-          if (index >= 0) {
-            const newAnalyses = [...prev];
-            newAnalyses[index] = updatedJob;
-            return newAnalyses;
-          }
-          return [...prev, updatedJob];
-        });
+    if (!projectId || subscribedRef.current) return;
 
-        // Check for critical issues in completed analyses
-        if (updatedJob.status === 'completed' && updatedJob.result_summary?.criticalIssues) {
-          setCriticalIssues(prev => [...prev, ...updatedJob.result_summary.criticalIssues]);
+    subscribedRef.current = true;
+    
+    subscribeToJobUpdates(projectId, (updatedJob) => {
+      setActiveAnalyses(prev => {
+        const index = prev.findIndex(job => job.id === updatedJob.id);
+        if (index >= 0) {
+          const newAnalyses = [...prev];
+          newAnalyses[index] = updatedJob;
+          return newAnalyses;
         }
+        return [...prev, updatedJob];
       });
 
-      // Initial fetch
-      fetchQueueStatus();
-    }
+      // Check for critical issues in completed analyses
+      if (updatedJob.status === 'completed' && updatedJob.result_summary?.criticalIssues) {
+        setCriticalIssues(prev => [...prev, ...updatedJob.result_summary.criticalIssues]);
+      }
+    });
+
+    // Initial fetch
+    fetchQueueStatus();
 
     return () => {
+      subscribedRef.current = false;
       unsubscribeFromJobUpdates();
     };
   }, [projectId, subscribeToJobUpdates, unsubscribeFromJobUpdates, fetchQueueStatus]);

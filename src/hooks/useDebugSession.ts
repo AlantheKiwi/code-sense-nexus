@@ -30,6 +30,7 @@ export function useDebugSession(sessionId: string, user: User | null) {
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [lastEvent, setLastEvent] = useState<BroadcastEvent | null>(null);
   const isSubscribedRef = useRef(false);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['debugSession', sessionId],
@@ -38,7 +39,12 @@ export function useDebugSession(sessionId: string, user: User | null) {
   });
 
   useEffect(() => {
-    if (!sessionId || !user || isSubscribedRef.current) return;
+    if (!sessionId || !user) return;
+
+    // Prevent duplicate subscriptions
+    if (isSubscribedRef.current || channelRef.current) {
+      return;
+    }
 
     const channelName = `debug_session:${sessionId}`;
     console.log('Creating channel:', channelName);
@@ -50,6 +56,8 @@ export function useDebugSession(sessionId: string, user: User | null) {
         },
       },
     });
+
+    channelRef.current = sessionChannel;
 
     sessionChannel
       .on('presence', { event: 'sync' }, () => {
@@ -81,11 +89,12 @@ export function useDebugSession(sessionId: string, user: User | null) {
     return () => {
       console.log('Cleaning up channel subscription');
       isSubscribedRef.current = false;
+      channelRef.current = null;
       if (sessionChannel) {
         supabase.removeChannel(sessionChannel);
       }
     };
-  }, [sessionId, user?.id]); // Only depend on sessionId and user.id, not the full user object
+  }, [sessionId, user?.id]); // Stable dependencies
 
   const broadcastEvent = (event: Omit<BroadcastEvent, 'sender'>) => {
     if (channel && user && isSubscribedRef.current) {
