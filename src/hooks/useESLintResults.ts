@@ -274,8 +274,24 @@ export function useESLintResults() {
         throw new Error(error.message);
       }
 
-      setResults(data || []);
-      return data;
+      // Transform the data to match our interface
+      const transformedResults: ESLintResult[] = (data || []).map(item => ({
+        id: item.id,
+        project_id: item.project_id,
+        file_path: item.file_path,
+        issues: Array.isArray(item.issues) ? item.issues as ESLintIssue[] : [],
+        severity_counts: typeof item.severity_counts === 'object' && item.severity_counts !== null 
+          ? item.severity_counts as { error: number; warn: number; info: number; }
+          : { error: 0, warn: 0, info: 0 },
+        quality_score: item.quality_score || 0,
+        total_issues: item.total_issues,
+        configuration_used: item.configuration_used || undefined,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+
+      setResults(transformedResults);
+      return transformedResults;
     } catch (error: any) {
       console.error('Error fetching project results:', error);
       toast.error('Failed to fetch ESLint results');
