@@ -80,8 +80,8 @@ export function useESLintScheduler() {
     try {
       setIsLoading(true);
       
-      // Use GET request with query parameter
-      const url = new URL(`${supabase.supabaseUrl}/functions/v1/eslint-scheduler`);
+      // Use the direct Supabase URL constants
+      const url = new URL(`https://dtwgnqzuskdfuypigaor.supabase.co/functions/v1/eslint-scheduler`);
       url.searchParams.append('action', 'queue-status');
 
       const response = await fetch(url.toString(), {
@@ -89,7 +89,7 @@ export function useESLintScheduler() {
         headers: {
           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0d2ducXp1c2tkZnV5cGlnYW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNzY3NDcsImV4cCI6MjA2NDc1Mjc0N30.D_Ms-plmjx82XAw4MdCYQMh03X6nzFnAajVMKIJLCVQ',
         },
       });
 
