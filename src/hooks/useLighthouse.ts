@@ -1,4 +1,3 @@
-
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -7,6 +6,7 @@ interface LighthouseAuditRequest {
   device?: 'mobile' | 'desktop';
   projectId?: string;
   priority?: 'low' | 'normal' | 'high';
+  configurationId?: string; // Add configuration support
 }
 
 interface LighthouseAudit {
@@ -63,6 +63,37 @@ interface QueueItem {
 const startLighthouseAudit = async (request: LighthouseAuditRequest) => {
   const { data, error } = await supabase.functions.invoke('lighthouse-analysis', {
     body: request
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+const startLighthouseAuditWithConfig = async (request: LighthouseAuditRequest & { configurationId: string }) => {
+  // Fetch configuration first
+  const { data: config, error: configError } = await supabase
+    .from('lighthouse_configurations')
+    .select('*')
+    .eq('id', request.configurationId)
+    .single();
+
+  if (configError || !config) {
+    throw new Error('Configuration not found');
+  }
+
+  // Combine request with configuration settings
+  const auditRequest = {
+    ...request,
+    device: config.settings.device,
+    configuration: config.settings,
+    auditCategories: config.audit_categories,
+  };
+
+  const { data, error } = await supabase.functions.invoke('lighthouse-analysis', {
+    body: auditRequest
   });
 
   if (error) {
@@ -131,6 +162,12 @@ const fetchQueueStatus = async (projectId?: string) => {
 export const useLighthouseAudit = () => {
   return useMutation({
     mutationFn: startLighthouseAudit,
+  });
+};
+
+export const useLighthouseAuditWithConfig = () => {
+  return useMutation({
+    mutationFn: startLighthouseAuditWithConfig,
   });
 };
 

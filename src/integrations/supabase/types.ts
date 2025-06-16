@@ -1570,6 +1570,60 @@ export type Database = {
           },
         ]
       }
+      lighthouse_configurations: {
+        Row: {
+          audit_categories: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_default: boolean
+          name: string
+          organization_id: string | null
+          project_id: string | null
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          audit_categories?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          organization_id?: string | null
+          project_id?: string | null
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          audit_categories?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          organization_id?: string | null
+          project_id?: string | null
+          settings?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_configurations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_configurations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lighthouse_queue: {
         Row: {
           completed_at: string | null
@@ -1613,6 +1667,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lighthouse_queue_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_schedules: {
+        Row: {
+          configuration_id: string | null
+          created_at: string
+          frequency: string
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          project_id: string | null
+          schedule_time: string | null
+          updated_at: string
+          urls: string[]
+        }
+        Insert: {
+          configuration_id?: string | null
+          created_at?: string
+          frequency: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          project_id?: string | null
+          schedule_time?: string | null
+          updated_at?: string
+          urls: string[]
+        }
+        Update: {
+          configuration_id?: string | null
+          created_at?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          project_id?: string | null
+          schedule_time?: string | null
+          updated_at?: string
+          urls?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_schedules_configuration_id_fkey"
+            columns: ["configuration_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_schedules_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
