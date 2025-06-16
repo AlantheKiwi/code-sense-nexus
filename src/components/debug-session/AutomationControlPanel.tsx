@@ -147,7 +147,12 @@ export const AutomationControlPanel = ({
   };
 
   const handleToolToggle = (toolId: string, enabled: boolean) => {
-    const updatedSettings = {
+    const allToolsEnabled = enabled && availableTools.every(id => {
+      if (id === toolId) return true;
+      return settings.toolSettings[id]?.enabled || false;
+    });
+
+    const updatedSettings: AutomationSettings = {
       ...settings,
       toolSettings: {
         ...settings.toolSettings,
@@ -157,23 +162,27 @@ export const AutomationControlPanel = ({
           frequency: enabled ? 'daily' : 'manual'
         }
       },
-      activePreset: 'custom' as const,
-      allAutomatic: enabled && Object.values(settings.toolSettings).every(tool => 
-        tool.enabled || toolId === Object.keys(settings.toolSettings).find(id => id === toolId)
-      )
+      activePreset: 'custom',
+      allAutomatic: allToolsEnabled
     };
 
     handleSettingsChange(updatedSettings);
   };
 
   const handleFrequencyChange = (toolId: string, frequency: string) => {
+    // Type guard to ensure frequency is one of the allowed values
+    const validFrequencies = ['on-change', 'daily', 'weekly', 'manual'] as const;
+    if (!validFrequencies.includes(frequency as any)) {
+      return;
+    }
+
     handleSettingsChange({
       ...settings,
       toolSettings: {
         ...settings.toolSettings,
         [toolId]: {
           ...settings.toolSettings[toolId],
-          frequency: frequency as any
+          frequency: frequency as 'on-change' | 'daily' | 'weekly' | 'manual'
         }
       },
       activePreset: 'custom'
