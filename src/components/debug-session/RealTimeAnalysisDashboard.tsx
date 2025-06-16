@@ -9,6 +9,7 @@ import { AnalysisProgressIndicator } from './analysis/AnalysisProgressIndicator'
 import { AnalysisQueueManager } from './analysis/AnalysisQueueManager';
 import { AnalysisTimeline } from './analysis/AnalysisTimeline';
 import { CriticalIssuesPreview } from './analysis/CriticalIssuesPreview';
+import { toast } from 'sonner';
 
 interface RealTimeAnalysisDashboardProps {
   projectId?: string;
@@ -35,6 +36,23 @@ export const RealTimeAnalysisDashboard = ({
     console.log('Initializing RealTimeAnalysisDashboard for project:', projectId);
     
     subscribeToJobUpdates(projectId, (updatedJob) => {
+      console.log('Job update received:', updatedJob);
+      
+      // Show toast notifications for job status changes
+      if (updatedJob.status === 'running' && updatedJob.trigger_data?.source === 'debug_session') {
+        toast.info(`Analysis started (${updatedJob.trigger_data.selectedTools?.join(', ') || 'ESLint'})`, {
+          description: `Job ${updatedJob.id.slice(0, 8)}... is now processing`
+        });
+      } else if (updatedJob.status === 'completed') {
+        toast.success(`Analysis completed successfully`, {
+          description: `Job ${updatedJob.id.slice(0, 8)}... finished with ${updatedJob.result_summary?.totalIssues || 0} issues found`
+        });
+      } else if (updatedJob.status === 'failed') {
+        toast.error(`Analysis failed`, {
+          description: `Job ${updatedJob.id.slice(0, 8)}... failed: ${updatedJob.error_message || 'Unknown error'}`
+        });
+      }
+
       setActiveAnalyses(prev => {
         const index = prev.findIndex(job => job.id === updatedJob.id);
         if (index >= 0) {
@@ -78,6 +96,11 @@ export const RealTimeAnalysisDashboard = ({
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
             Real-Time Analysis Dashboard
+            {projectId && (
+              <span className="text-sm font-normal text-muted-foreground">
+                Project: {projectId.slice(0, 8)}...
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -85,7 +108,10 @@ export const RealTimeAnalysisDashboard = ({
           <div>
             <h3 className="font-medium mb-3">Active Analyses</h3>
             {activeAnalyses.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No active analyses running</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm mb-2">No active analyses running</p>
+                <p className="text-xs">Use the Queue Manager to start a new analysis</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {activeAnalyses.map((analysis) => (
@@ -94,6 +120,7 @@ export const RealTimeAnalysisDashboard = ({
                     analysis={analysis}
                     onCancel={(id) => {
                       console.log('Cancel analysis:', id);
+                      toast.info('Analysis cancellation requested');
                     }}
                   />
                 ))}

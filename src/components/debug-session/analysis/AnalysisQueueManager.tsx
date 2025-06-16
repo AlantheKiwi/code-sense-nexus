@@ -1,8 +1,13 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { List, Play, Pause, RotateCcw } from 'lucide-react';
+import { List, Play, Pause, RotateCcw, Zap } from 'lucide-react';
+import { useAnalysisTrigger } from '@/hooks/useAnalysisTrigger';
+import { useESLintSchedulerActions } from '@/hooks/useESLintSchedulerActions';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface AnalysisQueueManagerProps {
   queueStats: {
@@ -34,6 +39,10 @@ export const AnalysisQueueManager = ({
   lighthouseQueue, 
   projectId 
 }: AnalysisQueueManagerProps) => {
+  const { triggerAnalysis, isTriggering } = useAnalysisTrigger();
+  const { processQueue } = useESLintSchedulerActions();
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+  
   const totalQueued = (queueStats?.queued || 0) + (lighthouseQueue?.stats?.pending || 0);
   const totalRunning = (queueStats?.running || 0) + (lighthouseQueue?.stats?.processing || 0);
   const totalItems = queueStats?.total || 0;
@@ -42,6 +51,42 @@ export const AnalysisQueueManager = ({
     if (totalItems === 0) return 0;
     const completed = queueStats?.completed || 0;
     return (completed / totalItems) * 100;
+  };
+
+  const handleTriggerAnalysis = async () => {
+    if (!projectId) {
+      toast.error('No project selected');
+      return;
+    }
+
+    const sampleCode = `// Sample code analysis
+function example() {
+  const unused = "variable";
+  console.log("Hello World");
+}`;
+
+    await triggerAnalysis(
+      projectId,
+      sampleCode,
+      ['eslint'],
+      'manual'
+    );
+  };
+
+  const handleProcessQueue = async () => {
+    setIsProcessingQueue(true);
+    try {
+      await processQueue();
+      toast.success('Queue processing initiated');
+    } catch (error: any) {
+      toast.error(`Failed to process queue: ${error.message}`);
+    } finally {
+      setIsProcessingQueue(false);
+    }
+  };
+
+  const handleRetryFailed = async () => {
+    toast.info('Retry failed functionality coming soon');
   };
 
   return (
@@ -67,6 +112,23 @@ export const AnalysisQueueManager = ({
             </div>
             <div className="text-xs text-muted-foreground">Running</div>
           </div>
+        </div>
+
+        {/* Trigger Analysis Button */}
+        <div className="border rounded-lg p-3 bg-muted/20">
+          <h4 className="text-sm font-medium mb-2">Quick Actions</h4>
+          <Button 
+            onClick={handleTriggerAnalysis}
+            disabled={isTriggering || !projectId}
+            className="w-full mb-2"
+            size="sm"
+          >
+            <Zap className="h-4 w-4 mr-1" />
+            {isTriggering ? 'Scheduling...' : 'Start Analysis'}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Trigger a manual ESLint analysis for this project
+          </p>
         </div>
 
         {/* Overall Progress */}
@@ -100,6 +162,15 @@ export const AnalysisQueueManager = ({
                   </span>
                   <span>{queueStats.running}</span>
                 </div>
+                {queueStats.failed > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2">
+                      <Badge variant="destructive" className="text-xs">ESLint</Badge>
+                      Failed
+                    </span>
+                    <span>{queueStats.failed}</span>
+                  </div>
+                )}
               </>
             )}
             {lighthouseQueue && (
@@ -125,11 +196,23 @@ export const AnalysisQueueManager = ({
 
         {/* Queue Actions */}
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1">
-            <Pause className="h-4 w-4 mr-1" />
-            Pause Queue
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={handleProcessQueue}
+            disabled={isProcessingQueue}
+          >
+            <Play className="h-4 w-4 mr-1" />
+            {isProcessingQueue ? 'Processing...' : 'Process Queue'}
           </Button>
-          <Button variant="outline" size="sm" className="flex-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={handleRetryFailed}
+            disabled={!queueStats?.failed}
+          >
             <RotateCcw className="h-4 w-4 mr-1" />
             Retry Failed
           </Button>
@@ -149,6 +232,12 @@ export const AnalysisQueueManager = ({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {projectId && (
+          <div className="text-xs text-muted-foreground">
+            Project: {projectId.slice(0, 8)}...
           </div>
         )}
       </CardContent>
