@@ -1,9 +1,10 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
+import { useChannelManager } from './useChannelManager';
 
 export type DebuggingSession = Database['public']['Tables']['debugging_sessions']['Row'];
 export type SessionEventPayload = Database['public']['Tables']['session_events']['Row'];
@@ -26,11 +27,10 @@ const fetchDebugSession = async (sessionId: string): Promise<DebuggingSession> =
 };
 
 export function useDebugSession(sessionId: string, user: User | null) {
-  const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [lastEvent, setLastEvent] = useState<BroadcastEvent | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
   const isInitializedRef = useRef(false);
+  const { createChannel, cleanup } = useChannelManager();
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['debugSession', sessionId],
@@ -41,19 +41,17 @@ export function useDebugSession(sessionId: string, user: User | null) {
   useEffect(() => {
     if (!sessionId || !user || isInitializedRef.current) return;
 
+    console.log('Initializing debug session for:', sessionId, user.id);
     isInitializedRef.current = true;
-    const channelName = `debug_session:${sessionId}`;
-    console.log('Creating debug session channel:', channelName);
 
-    const sessionChannel = supabase.channel(channelName, {
+    const channelName = `debug_session:${sessionId}`;
+    const sessionChannel = createChannel(channelName, {
       config: {
         presence: {
           key: user.id,
         },
       },
     });
-
-    channelRef.current = sessionChannel;
 
     sessionChannel
       .on('presence', { event: 'sync' }, () => {
@@ -79,22 +77,20 @@ export function useDebugSession(sessionId: string, user: User | null) {
         }
       });
 
-    setChannel(sessionChannel);
-
     return () => {
-      console.log('Cleaning up debug session channel');
+      console.log('Cleaning up debug session');
       isInitializedRef.current = false;
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      cleanup();
     };
-  }, [sessionId, user?.id]);
+  }, [sessionId, user?.id, createChannel, cleanup]);
 
   const broadcastEvent = (event: Omit<BroadcastEvent, 'sender'>) => {
-    if (channel && user) {
+    if (user) {
       const fullEvent: BroadcastEvent = { ...event, sender: user.id };
       console.log('Broadcasting debug session event:', fullEvent);
+      
+      const channelName = `debug_session:${sessionId}`;
+      const channel = createChannel(channelName);
       
       channel.send({
         type: 'broadcast',

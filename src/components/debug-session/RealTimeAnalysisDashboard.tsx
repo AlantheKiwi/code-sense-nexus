@@ -1,10 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, CheckCircle, Clock, Play, Square, X, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useESLintScheduler } from '@/hooks/useESLintScheduler';
 import { useESLintRealtimeUpdates } from '@/hooks/useESLintRealtimeUpdates';
 import { useLighthouseQueue } from '@/hooks/useLighthouse';
@@ -64,7 +61,7 @@ export const RealTimeAnalysisDashboard = ({
       hasInitializedRef.current = false;
       unsubscribeFromJobUpdates();
     };
-  }, [projectId]); // Only depend on projectId
+  }, [projectId, subscribeToJobUpdates, unsubscribeFromJobUpdates, fetchQueueStatus]);
 
   // Update active analyses from queue data
   useEffect(() => {
@@ -73,28 +70,6 @@ export const RealTimeAnalysisDashboard = ({
     );
     setActiveAnalyses(runningJobs);
   }, [jobs]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'queued': return 'secondary';
-      case 'running': return 'default';
-      case 'completed': return 'secondary';
-      case 'failed': return 'destructive';
-      case 'retrying': return 'secondary';
-      default: return 'outline';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'queued': return <Clock className="h-4 w-4" />;
-      case 'running': return <Play className="h-4 w-4" />;
-      case 'completed': return <CheckCircle className="h-4 w-4" />;
-      case 'failed': return <AlertTriangle className="h-4 w-4" />;
-      case 'retrying': return <Zap className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -118,7 +93,6 @@ export const RealTimeAnalysisDashboard = ({
                     key={analysis.id}
                     analysis={analysis}
                     onCancel={(id) => {
-                      // Handle cancellation
                       console.log('Cancel analysis:', id);
                     }}
                   />

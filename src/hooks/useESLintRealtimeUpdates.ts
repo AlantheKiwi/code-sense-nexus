@@ -1,31 +1,17 @@
 
-import { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { useCallback } from 'react';
+import { useChannelManager } from './useChannelManager';
 
 export function useESLintRealtimeUpdates() {
-  const [realtimeChannel, setRealtimeChannel] = useState<RealtimeChannel | null>(null);
-  const isSubscribedRef = useRef<Set<string>>(new Set());
+  const { createChannel, cleanup } = useChannelManager();
 
-  const subscribeToJobUpdates = (projectId: string, onJobUpdate: (job: any) => void) => {
-    // Prevent duplicate subscriptions for the same project
-    if (isSubscribedRef.current.has(projectId)) {
-      console.log('Already subscribed to project:', projectId);
-      return;
-    }
-
-    // Clean up existing channel if any
-    if (realtimeChannel) {
-      console.log('Removing existing channel before creating new one');
-      supabase.removeChannel(realtimeChannel);
-      isSubscribedRef.current.clear();
-    }
-
+  const subscribeToJobUpdates = useCallback((projectId: string, onJobUpdate: (job: any) => void) => {
     const channelName = `eslint-jobs-${projectId}`;
-    console.log('Creating ESLint channel:', channelName);
+    console.log('Subscribing to ESLint updates:', channelName);
 
-    const channel = supabase
-      .channel(channelName)
+    const channel = createChannel(channelName);
+    
+    channel
       .on('broadcast', { event: 'job-update' }, (payload) => {
         const updatedJob = payload.payload;
         console.log('ESLint job update received:', updatedJob);
@@ -33,29 +19,14 @@ export function useESLintRealtimeUpdates() {
       })
       .subscribe((status) => {
         console.log('ESLint channel subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          isSubscribedRef.current.add(projectId);
-        }
       });
 
-    setRealtimeChannel(channel);
-  };
+  }, [createChannel]);
 
-  const unsubscribeFromJobUpdates = () => {
-    if (realtimeChannel) {
-      console.log('Unsubscribing from ESLint job updates');
-      supabase.removeChannel(realtimeChannel);
-      setRealtimeChannel(null);
-      isSubscribedRef.current.clear();
-    }
-  };
-
-  // Cleanup realtime subscription on unmount
-  useEffect(() => {
-    return () => {
-      unsubscribeFromJobUpdates();
-    };
-  }, []);
+  const unsubscribeFromJobUpdates = useCallback(() => {
+    console.log('Unsubscribing from ESLint job updates');
+    cleanup();
+  }, [cleanup]);
 
   return {
     subscribeToJobUpdates,
