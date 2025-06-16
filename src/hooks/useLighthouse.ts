@@ -88,7 +88,31 @@ const fetchLighthouseAudits = async (projectId?: string): Promise<LighthouseAudi
     throw new Error(error.message);
   }
 
-  return data || [];
+  // Transform the database data to match our interface
+  return (data || []).map(item => ({
+    id: item.id,
+    url: item.url,
+    device: item.device,
+    project_id: item.project_id,
+    scores: item.scores as {
+      performance: number;
+      accessibility: number;
+      bestPractices: number;
+      seo: number;
+      pwa: number;
+    },
+    metrics: item.metrics as {
+      firstContentfulPaint: number;
+      largestContentfulPaint: number;
+      firstInputDelay: number;
+      cumulativeLayoutShift: number;
+      speedIndex: number;
+      totalBlockingTime: number;
+    },
+    opportunities: (item.opportunities as any[]) || [],
+    diagnostics: (item.diagnostics as any[]) || [],
+    created_at: item.created_at,
+  }));
 };
 
 const fetchQueueStatus = async (projectId?: string) => {
