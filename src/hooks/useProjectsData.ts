@@ -29,7 +29,7 @@ const fetchProjects = async (partnerId: string): Promise<Project[]> => {
 export const useProjectsData = (partnerId: string | undefined) => {
   console.log('useProjectsData: Hook called with partnerId:', partnerId);
   
-  return useQuery({
+  const query = useQuery({
     queryKey: ['projects', partnerId],
     queryFn: () => {
       if (!partnerId) {
@@ -42,12 +42,17 @@ export const useProjectsData = (partnerId: string | undefined) => {
     retry: (failureCount, error) => {
       console.log('useProjectsData: Query retry attempt', failureCount, 'Error:', error);
       return failureCount < 2; // Only retry twice
-    },
-    onError: (error: any) => {
-      console.error('useProjectsData: Query failed with error:', error);
-    },
-    onSuccess: (data) => {
-      console.log('useProjectsData: Query succeeded with data:', data);
     }
   });
+
+  // Handle success/error states using the query result
+  if (query.isSuccess && query.data) {
+    console.log('useProjectsData: Query succeeded with data:', query.data);
+  }
+  
+  if (query.isError) {
+    console.error('useProjectsData: Query failed with error:', query.error);
+  }
+
+  return query;
 };
