@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -8,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Shield, Code, Zap, Accessibility, FileSearch, Info, ChevronDown } from 'lucide-react';
 import { ToolEducationSystem } from './education/ToolEducationSystem';
+import { SmartRecommendationEngine } from './recommendations/SmartRecommendationEngine';
 
 export interface ToolConfig {
   id: string;
@@ -159,6 +159,17 @@ export const ToolSelectionGrid = ({ onAnalyze, isAnalyzing }: ToolSelectionGridP
 
   return (
     <div className="space-y-6">
+      {/* Smart Recommendations */}
+      <SmartRecommendationEngine
+        projectId="sample-project-id" // In real app, get from context
+        selectedTools={selectedTools}
+        onToolSelect={handleToolToggle}
+        onApplyRecommendation={(tools) => {
+          setSelectedTools(tools);
+        }}
+      />
+
+      {/* Existing Tool Selection Grid */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
