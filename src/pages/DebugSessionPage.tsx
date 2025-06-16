@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
@@ -13,6 +12,7 @@ import { AutomationControlPanel, AutomationSettings } from '@/components/debug-s
 import { DebugSessionInstructions } from '@/components/debug-session/DebugSessionInstructions';
 import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
+import { RealTimeAnalysisDashboard } from '@/components/debug-session/RealTimeAnalysisDashboard';
 
 const DebugSessionPage = () => {
   const { sessionId } = useParams<{ sessionId: string; projectId: string }>();
@@ -99,6 +99,12 @@ sayHello('World')`);
     <div className="container mx-auto p-4 md:p-8 space-y-8 relative" onMouseMove={onMouseMove}>
       <SessionHeader sessionId={session?.id} />
       <DebugSessionInstructions />
+
+      {/* Real-Time Analysis Dashboard */}
+      <RealTimeAnalysisDashboard 
+        projectId={session?.id} 
+        sessionId={sessionId}
+      />
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-4">
