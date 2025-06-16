@@ -36,7 +36,6 @@ export function useESLintScheduler() {
   const [jobs, setJobs] = useState<ESLintJob[]>([]);
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [realtimeChannel, setRealtimeChannel] = useState<any>(null);
 
   const scheduleAnalysis = async (
     projectId: string, 
@@ -80,23 +79,30 @@ export function useESLintScheduler() {
   const fetchQueueStatus = async () => {
     try {
       setIsLoading(true);
-      const response = await supabase.functions.invoke('eslint-scheduler', {
-        body: { action: 'queue-status' },
+      
+      // Use GET request with query parameter
+      const url = new URL(`${supabase.supabaseUrl}/functions/v1/eslint-scheduler`);
+      url.searchParams.append('action', 'queue-status');
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
         headers: {
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
           'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey,
         },
       });
 
-      if (response.error) {
-        throw new Error(response.error.message);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setJobs(response.data.jobs);
-      setQueueStats(response.data.stats);
-      return response.data;
+      const data = await response.json();
+      setJobs(data.jobs || []);
+      setQueueStats(data.stats || null);
+      return data;
     } catch (error: any) {
       console.error('Error fetching queue status:', error);
-      toast.error('Failed to fetch queue status');
       throw error;
     } finally {
       setIsLoading(false);
@@ -105,8 +111,10 @@ export function useESLintScheduler() {
 
   // Auto-refresh queue status
   useEffect(() => {
+    fetchQueueStatus().catch(console.error);
+    
     const interval = setInterval(() => {
-      fetchQueueStatus();
+      fetchQueueStatus().catch(console.error);
     }, 30000); // Refresh every 30 seconds
 
     return () => clearInterval(interval);

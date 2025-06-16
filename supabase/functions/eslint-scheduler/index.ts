@@ -15,8 +15,6 @@ serve(async (req: Request) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const url = new URL(req.url);
-    const action = url.searchParams.get('action');
     const authHeader = req.headers.get('Authorization');
 
     if (!authHeader) {
@@ -37,28 +35,56 @@ serve(async (req: Request) => {
       });
     }
 
+    // Handle different request methods and body formats
+    let action: string | null = null;
+    let requestData: any = {};
+
+    if (req.method === 'POST') {
+      try {
+        requestData = await req.json();
+        action = requestData.action;
+      } catch {
+        return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    } else if (req.method === 'GET') {
+      const url = new URL(req.url);
+      action = url.searchParams.get('action') || 'queue-status';
+    }
+
+    if (!action) {
+      return new Response(JSON.stringify({ error: 'Action parameter required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     switch (action) {
       case 'schedule':
-        const scheduleData = await req.json();
-        const job = await scheduleAnalysis(supabase, scheduleData, user.id);
+        const job = await scheduleAnalysis(supabase, requestData, user.id);
         return new Response(JSON.stringify({ success: true, job }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+
       case 'queue-status':
         const queueData = await getQueueStatus(supabase);
         return new Response(JSON.stringify(queueData), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+
       case 'process-queue':
         const processResult = await processQueue(supabase);
         return new Response(JSON.stringify(processResult), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+
       default:
-        return new Response(JSON.stringify({ error: 'Invalid action' }), {
+        return new Response(JSON.stringify({ error: `Invalid action: ${action}` }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
