@@ -101,6 +101,36 @@ export interface LighthouseToolIntegration {
   updated_at: string;
 }
 
+// Helper function to safely cast database types to our interfaces
+const castRecommendation = (data: any): LighthouseRecommendation => ({
+  ...data,
+  category: data.category as LighthouseRecommendation['category'],
+  difficulty_level: data.difficulty_level as LighthouseRecommendation['difficulty_level'],
+  status: data.status as LighthouseRecommendation['status'],
+  tool_integrations: Array.isArray(data.tool_integrations) ? data.tool_integrations : [],
+});
+
+const castTemplate = (data: any): LighthouseRecommendationTemplate => ({
+  ...data,
+  category: data.category as LighthouseRecommendationTemplate['category'],
+  implementation_difficulty: data.implementation_difficulty as LighthouseRecommendationTemplate['implementation_difficulty'],
+  tools_integration: Array.isArray(data.tools_integration) ? data.tools_integration : [],
+  prerequisites: Array.isArray(data.prerequisites) ? data.prerequisites : [],
+  expected_impact: typeof data.expected_impact === 'object' && data.expected_impact !== null ? data.expected_impact : {},
+});
+
+const castBatch = (data: any): LighthouseRecommendationBatch => ({
+  ...data,
+  status: data.status as LighthouseRecommendationBatch['status'],
+  audit_ids: Array.isArray(data.audit_ids) ? data.audit_ids : [],
+});
+
+const castToolIntegration = (data: any): LighthouseToolIntegration => ({
+  ...data,
+  configuration: typeof data.configuration === 'object' && data.configuration !== null ? data.configuration : {},
+  api_credentials: typeof data.api_credentials === 'object' && data.api_credentials !== null ? data.api_credentials : undefined,
+});
+
 export function useLighthouseRecommendations(projectId?: string) {
   const [recommendations, setRecommendations] = useState<LighthouseRecommendation[]>([]);
   const [templates, setTemplates] = useState<LighthouseRecommendationTemplate[]>([]);
@@ -126,7 +156,7 @@ export function useLighthouseRecommendations(projectId?: string) {
         throw new Error(error.message);
       }
 
-      setRecommendations(data || []);
+      setRecommendations((data || []).map(castRecommendation));
     } catch (error: any) {
       console.error('Error fetching recommendations:', error);
       toast.error('Failed to fetch recommendations');
@@ -147,7 +177,7 @@ export function useLighthouseRecommendations(projectId?: string) {
         throw new Error(error.message);
       }
 
-      setTemplates(data || []);
+      setTemplates((data || []).map(castTemplate));
     } catch (error: any) {
       console.error('Error fetching templates:', error);
       toast.error('Failed to fetch recommendation templates');
@@ -168,7 +198,7 @@ export function useLighthouseRecommendations(projectId?: string) {
         throw new Error(error.message);
       }
 
-      setBatches(data || []);
+      setBatches((data || []).map(castBatch));
     } catch (error: any) {
       console.error('Error fetching batches:', error);
       toast.error('Failed to fetch recommendation batches');
@@ -189,7 +219,7 @@ export function useLighthouseRecommendations(projectId?: string) {
         throw new Error(error.message);
       }
 
-      setToolIntegrations(data || []);
+      setToolIntegrations((data || []).map(castToolIntegration));
     } catch (error: any) {
       console.error('Error fetching tool integrations:', error);
       toast.error('Failed to fetch tool integrations');
