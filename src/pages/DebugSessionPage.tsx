@@ -13,6 +13,7 @@ import { DebugSessionInstructions } from '@/components/debug-session/DebugSessio
 import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
 import { RealTimeAnalysisDashboard } from '@/components/debug-session/RealTimeAnalysisDashboard';
+import { IssuesRecommendationsDashboard } from '@/components/debug-session/IssuesRecommendationsDashboard';
 
 const DebugSessionPage = () => {
   const { sessionId } = useParams<{ sessionId: string; projectId: string }>();
@@ -102,6 +103,12 @@ sayHello('World')`);
 
       {/* Real-Time Analysis Dashboard */}
       <RealTimeAnalysisDashboard 
+        projectId={session?.id} 
+        sessionId={sessionId}
+      />
+
+      {/* Issues Recommendations Dashboard */}
+      <IssuesRecommendationsDashboard 
         projectId={session?.id} 
         sessionId={sessionId}
       />
