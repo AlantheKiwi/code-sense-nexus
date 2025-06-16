@@ -1624,6 +1624,194 @@ export type Database = {
           },
         ]
       }
+      lighthouse_deployment_hooks: {
+        Row: {
+          auth_token_hash: string | null
+          created_at: string
+          deployment_stage: string
+          id: string
+          is_active: boolean | null
+          monitoring_config_id: string
+          project_id: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          auth_token_hash?: string | null
+          created_at?: string
+          deployment_stage: string
+          id?: string
+          is_active?: boolean | null
+          monitoring_config_id: string
+          project_id: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          auth_token_hash?: string | null
+          created_at?: string
+          deployment_stage?: string
+          id?: string
+          is_active?: boolean | null
+          monitoring_config_id?: string
+          project_id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_deployment_hooks_monitoring_config_id_fkey"
+            columns: ["monitoring_config_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_monitoring_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_deployment_hooks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_monitoring_configs: {
+        Row: {
+          alert_channels: Json | null
+          avoid_peak_hours: boolean | null
+          configuration_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          max_audits_per_day: number | null
+          next_run_at: string | null
+          peak_hours_end: string | null
+          peak_hours_start: string | null
+          performance_thresholds: Json
+          project_id: string
+          retry_failed_audits: boolean | null
+          schedule_interval: string
+          schedule_time: string | null
+          updated_at: string
+          urls: string[]
+        }
+        Insert: {
+          alert_channels?: Json | null
+          avoid_peak_hours?: boolean | null
+          configuration_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          max_audits_per_day?: number | null
+          next_run_at?: string | null
+          peak_hours_end?: string | null
+          peak_hours_start?: string | null
+          performance_thresholds?: Json
+          project_id: string
+          retry_failed_audits?: boolean | null
+          schedule_interval: string
+          schedule_time?: string | null
+          updated_at?: string
+          urls: string[]
+        }
+        Update: {
+          alert_channels?: Json | null
+          avoid_peak_hours?: boolean | null
+          configuration_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          max_audits_per_day?: number | null
+          next_run_at?: string | null
+          peak_hours_end?: string | null
+          peak_hours_start?: string | null
+          performance_thresholds?: Json
+          project_id?: string
+          retry_failed_audits?: boolean | null
+          schedule_interval?: string
+          schedule_time?: string | null
+          updated_at?: string
+          urls?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_monitoring_configs_configuration_id_fkey"
+            columns: ["configuration_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lighthouse_monitoring_configs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_monitoring_runs: {
+        Row: {
+          average_scores: Json | null
+          completed_at: string | null
+          completed_urls: number | null
+          config_id: string
+          created_at: string
+          deployment_context: Json | null
+          error_message: string | null
+          failed_urls: number | null
+          id: string
+          started_at: string | null
+          status: string
+          threshold_breaches: Json | null
+          total_urls: number | null
+          trigger_type: string
+        }
+        Insert: {
+          average_scores?: Json | null
+          completed_at?: string | null
+          completed_urls?: number | null
+          config_id: string
+          created_at?: string
+          deployment_context?: Json | null
+          error_message?: string | null
+          failed_urls?: number | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          threshold_breaches?: Json | null
+          total_urls?: number | null
+          trigger_type: string
+        }
+        Update: {
+          average_scores?: Json | null
+          completed_at?: string | null
+          completed_urls?: number | null
+          config_id?: string
+          created_at?: string
+          deployment_context?: Json | null
+          error_message?: string | null
+          failed_urls?: number | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          threshold_breaches?: Json | null
+          total_urls?: number | null
+          trigger_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_monitoring_runs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_monitoring_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lighthouse_queue: {
         Row: {
           completed_at: string | null
@@ -1727,6 +1915,62 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lighthouse_threshold_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          current_score: number
+          id: string
+          is_acknowledged: boolean | null
+          metric_type: string
+          monitoring_run_id: string
+          previous_score: number | null
+          resolved_at: string | null
+          severity: string
+          threshold_score: number
+          url: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          current_score: number
+          id?: string
+          is_acknowledged?: boolean | null
+          metric_type: string
+          monitoring_run_id: string
+          previous_score?: number | null
+          resolved_at?: string | null
+          severity: string
+          threshold_score: number
+          url: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          current_score?: number
+          id?: string
+          is_acknowledged?: boolean | null
+          metric_type?: string
+          monitoring_run_id?: string
+          previous_score?: number | null
+          resolved_at?: string | null
+          severity?: string
+          threshold_score?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lighthouse_threshold_alerts_monitoring_run_id_fkey"
+            columns: ["monitoring_run_id"]
+            isOneToOne: false
+            referencedRelation: "lighthouse_monitoring_runs"
             referencedColumns: ["id"]
           },
         ]
@@ -3286,6 +3530,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_next_lighthouse_run: {
+        Args: {
+          interval_type: string
+          schedule_time: string
+          avoid_peak_hours?: boolean
+          peak_start?: string
+          peak_end?: string
+        }
+        Returns: string
+      }
       can_edit_dashboard: {
         Args: { _dashboard_id: string; _user_id: string }
         Returns: boolean
