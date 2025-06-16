@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Info, Lightbulb, Code } from 'lucide-react';
 
 interface AnalysisResultProps {
   result: any;
@@ -30,6 +30,73 @@ const getSeverityColor = (severity: string) => {
       return 'outline';
   }
 };
+
+const SyntaxErrorDisplay = ({ issue }: { issue: any }) => (
+  <div className="space-y-4">
+    <Alert variant="destructive">
+      <div className="flex items-start gap-3">
+        <XCircle className="h-5 w-5 text-red-500 mt-1" />
+        <div className="flex-1 space-y-3">
+          <div className="flex items-center gap-2">
+            <Badge variant="destructive">SYNTAX ERROR</Badge>
+            <Badge variant="outline" className="text-xs">
+              Line {issue.line}:{issue.column}
+            </Badge>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="font-semibold text-red-800 dark:text-red-200">
+              What's wrong:
+            </div>
+            <AlertDescription className="text-sm">
+              {issue.userFriendlyExplanation || issue.message}
+            </AlertDescription>
+          </div>
+
+          {issue.codeContext && (
+            <div className="space-y-2">
+              <div className="font-semibold text-red-800 dark:text-red-200 flex items-center gap-2">
+                <Code className="h-4 w-4" />
+                Code around the error:
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded font-mono text-sm">
+                {issue.codeContext.before && (
+                  <div className="text-gray-500">
+                    {issue.line - 1}: {issue.codeContext.before}
+                  </div>
+                )}
+                <div className="text-red-600 dark:text-red-400 font-bold bg-red-50 dark:bg-red-900/20 px-1">
+                  {issue.line}: {issue.codeContext.current}
+                </div>
+                {issue.codeContext.after && (
+                  <div className="text-gray-500">
+                    {issue.line + 1}: {issue.codeContext.after}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {issue.fixSuggestions && issue.fixSuggestions.length > 0 && (
+            <div className="space-y-2">
+              <div className="font-semibold text-red-800 dark:text-red-200 flex items-center gap-2">
+                <Lightbulb className="h-4 w-4" />
+                How to fix it:
+              </div>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                {issue.fixSuggestions.map((suggestion: string, index: number) => (
+                  <li key={index} className="text-gray-700 dark:text-gray-300">
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    </Alert>
+  </div>
+);
 
 export const AnalysisResult = ({ result, isAnalyzing }: AnalysisResultProps) => {
   if (isAnalyzing) {
@@ -62,7 +129,7 @@ export const AnalysisResult = ({ result, isAnalyzing }: AnalysisResultProps) => 
   }
 
   // Handle error case
-  if (result.error) {
+  if (result.error && result.error !== 'SyntaxError') {
     return (
       <Card>
         <CardHeader>
@@ -82,6 +149,8 @@ export const AnalysisResult = ({ result, isAnalyzing }: AnalysisResultProps) => 
 
   const issues = result.analysis?.issues || [];
   const securityIssues = result.analysis?.securityIssues || [];
+  const syntaxErrors = issues.filter((issue: any) => issue.ruleId === 'syntax-error');
+  const otherIssues = issues.filter((issue: any) => issue.ruleId !== 'syntax-error');
 
   return (
     <Card>
@@ -110,7 +179,13 @@ export const AnalysisResult = ({ result, isAnalyzing }: AnalysisResultProps) => 
           </Alert>
         ) : (
           <>
-            {issues.map((issue, index) => (
+            {/* Display syntax errors with enhanced UI */}
+            {syntaxErrors.map((issue, index) => (
+              <SyntaxErrorDisplay key={`syntax-${index}`} issue={issue} />
+            ))}
+
+            {/* Display other ESLint issues */}
+            {otherIssues.map((issue, index) => (
               <Alert key={index} variant={issue.severity === 'error' ? 'destructive' : 'default'}>
                 <div className="flex items-start gap-3">
                   {getSeverityIcon(issue.severity)}
@@ -143,6 +218,7 @@ export const AnalysisResult = ({ result, isAnalyzing }: AnalysisResultProps) => 
               </Alert>
             ))}
             
+            {/* Display security issues */}
             {securityIssues.map((issue, index) => (
               <Alert key={`security-${index}`} variant="destructive">
                 <div className="flex items-start gap-3">
