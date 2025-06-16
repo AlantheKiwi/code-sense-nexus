@@ -1,8 +1,7 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Zap, accessibility, Code } from 'lucide-react';
+import { Shield, Zap, Accessibility, Code } from 'lucide-react';
 
 interface IssueFiltersProps {
   selectedFilters: string[];
@@ -13,7 +12,7 @@ export const IssueFilters = ({ selectedFilters, onFiltersChange }: IssueFiltersP
   const filterOptions = [
     { id: 'security', label: 'Security', icon: Shield, color: 'destructive' },
     { id: 'performance', label: 'Performance', icon: Zap, color: 'secondary' },
-    { id: 'accessibility', label: 'Accessibility', icon: accessibility, color: 'outline' },
+    { id: 'accessibility', label: 'Accessibility', icon: Accessibility, color: 'outline' },
     { id: 'code_quality', label: 'Code Quality', icon: Code, color: 'outline' },
   ];
 
