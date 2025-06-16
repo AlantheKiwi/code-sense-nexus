@@ -44,7 +44,7 @@ export function useESLintScheduler() {
       supabase.removeChannel(realtimeChannel);
     }
 
-    const channel = su pabase
+    const channel = supabase
       .channel(`eslint-jobs-${projectId}`)
       .on('broadcast', { event: 'job-update' }, (payload) => {
         const updatedJob = payload.payload;
@@ -75,6 +75,7 @@ export function useESLintScheduler() {
       setIsLoading(true);
       const response = await supabase.functions.invoke('eslint-scheduler', {
         body: {
+          action: 'schedule',
           project_id: projectId,
           trigger_type: triggerType,
           trigger_data: triggerData,
@@ -91,7 +92,7 @@ export function useESLintScheduler() {
       }
 
       toast.success('ESLint analysis scheduled successfully');
-      await fetchQueueStatus(); // Refresh queue
+      await fetchQueueStatus();
       return response.data.job;
     } catch (error: any) {
       console.error('Error scheduling ESLint analysis:', error);
@@ -106,8 +107,7 @@ export function useESLintScheduler() {
     try {
       setIsLoading(true);
       const response = await supabase.functions.invoke('eslint-scheduler', {
-        method: 'GET',
-        body: null,
+        body: { action: 'queue-status' },
         headers: {
           'Content-Type': 'application/json',
         },
@@ -132,8 +132,7 @@ export function useESLintScheduler() {
   const getJobStatus = async (jobId: string) => {
     try {
       const response = await supabase.functions.invoke('eslint-scheduler', {
-        method: 'GET',
-        body: null,
+        body: { action: 'job-status', job_id: jobId },
         headers: {
           'Content-Type': 'application/json',
         },
@@ -154,8 +153,7 @@ export function useESLintScheduler() {
   const cancelJob = async (jobId: string) => {
     try {
       const response = await supabase.functions.invoke('eslint-scheduler', {
-        method: 'POST',
-        body: null,
+        body: { action: 'cancel-job', job_id: jobId },
         headers: {
           'Content-Type': 'application/json',
         },
@@ -166,7 +164,7 @@ export function useESLintScheduler() {
       }
 
       toast.success('Job cancelled successfully');
-      await fetchQueueStatus(); // Refresh queue
+      await fetchQueueStatus();
       return response.data;
     } catch (error: any) {
       console.error('Error cancelling job:', error);
@@ -178,8 +176,7 @@ export function useESLintScheduler() {
   const retryJob = async (jobId: string) => {
     try {
       const response = await supabase.functions.invoke('eslint-scheduler', {
-        method: 'POST',
-        body: null,
+        body: { action: 'retry-job', job_id: jobId },
         headers: {
           'Content-Type': 'application/json',
         },
@@ -190,7 +187,7 @@ export function useESLintScheduler() {
       }
 
       toast.success('Job retry scheduled successfully');
-      await fetchQueueStatus(); // Refresh queue
+      await fetchQueueStatus();
       return response.data;
     } catch (error: any) {
       console.error('Error retrying job:', error);
@@ -202,8 +199,7 @@ export function useESLintScheduler() {
   const processQueue = async () => {
     try {
       const response = await supabase.functions.invoke('eslint-scheduler', {
-        method: 'POST',
-        body: null,
+        body: { action: 'process-queue' },
         headers: {
           'Content-Type': 'application/json',
         },
