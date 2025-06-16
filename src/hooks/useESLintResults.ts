@@ -135,131 +135,6 @@ export function useESLintResults() {
     }
   };
 
-  const fetchProjectSummary = async (projectId: string) => {
-    try {
-      setIsLoading(true);
-      const response = await supabase.functions.invoke('eslint-results-processor', {
-        method: 'GET',
-        body: null,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      setSummary(response.data.summary);
-      return response.data.summary;
-    } catch (error: any) {
-      console.error('Error fetching project summary:', error);
-      toast.error('Failed to fetch project summary');
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchProjectTrends = async (projectId: string, days: number = 30) => {
-    try {
-      const response = await supabase.functions.invoke('eslint-results-processor', {
-        method: 'GET',
-        body: null,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      setTrends(response.data.trends);
-      return response.data.trends;
-    } catch (error: any) {
-      console.error('Error fetching project trends:', error);
-      toast.error('Failed to fetch project trends');
-      throw error;
-    }
-  };
-
-  const fetchCriticalAlerts = async (projectId: string) => {
-    try {
-      const response = await supabase.functions.invoke('eslint-results-processor', {
-        method: 'GET',
-        body: null,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      setAlerts(response.data.alerts);
-      return response.data.alerts;
-    } catch (error: any) {
-      console.error('Error fetching critical alerts:', error);
-      toast.error('Failed to fetch critical alerts');
-      throw error;
-    }
-  };
-
-  const resolveAlert = async (alertId: string) => {
-    try {
-      const response = await supabase.functions.invoke('eslint-results-processor', {
-        method: 'POST',
-        body: null,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      // Update local state
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId 
-          ? { ...alert, is_resolved: true, resolved_at: new Date().toISOString() }
-          : alert
-      ));
-
-      toast.success('Alert resolved successfully');
-      return response.data.alert;
-    } catch (error: any) {
-      console.error('Error resolving alert:', error);
-      toast.error('Failed to resolve alert');
-      throw error;
-    }
-  };
-
-  const fetchFixSuggestions = async (resultId: string) => {
-    try {
-      const response = await supabase.functions.invoke('eslint-results-processor', {
-        method: 'GET',
-        body: null,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message);
-      }
-
-      setFixSuggestions(response.data.suggestions);
-      return response.data.suggestions;
-    } catch (error: any) {
-      console.error('Error fetching fix suggestions:', error);
-      toast.error('Failed to fetch fix suggestions');
-      throw error;
-    }
-  };
-
   const fetchProjectResults = async (projectId: string, limit: number = 50) => {
     try {
       setIsLoading(true);
@@ -274,12 +149,12 @@ export function useESLintResults() {
         throw new Error(error.message);
       }
 
-      // Transform the data to match our interface
+      // Transform and validate the data with proper type safety
       const transformedResults: ESLintResult[] = (data || []).map(item => ({
         id: item.id,
         project_id: item.project_id,
         file_path: item.file_path,
-        issues: Array.isArray(item.issues) ? item.issues as ESLintIssue[] : [],
+        issues: Array.isArray(item.issues) ? (item.issues as unknown as ESLintIssue[]) : [],
         severity_counts: typeof item.severity_counts === 'object' && item.severity_counts !== null 
           ? item.severity_counts as { error: number; warn: number; info: number; }
           : { error: 0, warn: 0, info: 0 },
@@ -309,11 +184,6 @@ export function useESLintResults() {
     fixSuggestions,
     isLoading,
     processResults,
-    fetchProjectSummary,
-    fetchProjectTrends,
-    fetchCriticalAlerts,
-    resolveAlert,
-    fetchFixSuggestions,
     fetchProjectResults,
   };
 }
