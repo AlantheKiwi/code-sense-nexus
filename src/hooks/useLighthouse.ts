@@ -1,3 +1,4 @@
+
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -87,7 +88,7 @@ const startLighthouseAuditWithConfig = async (request: LighthouseAuditRequest & 
   // Combine request with configuration settings
   const auditRequest = {
     ...request,
-    device: config.settings.device,
+    device: (config.settings as any).device,
     configuration: config.settings,
     auditCategories: config.audit_categories,
   };
@@ -119,11 +120,11 @@ const fetchLighthouseAudits = async (projectId?: string): Promise<LighthouseAudi
     throw new Error(error.message);
   }
 
-  // Transform the database data to match our interface
+  // Transform the database data to match our interface with proper type casting
   return (data || []).map(item => ({
     id: item.id,
     url: item.url,
-    device: item.device,
+    device: item.device as string,
     project_id: item.project_id,
     scores: item.scores as {
       performance: number;
