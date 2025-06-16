@@ -24,17 +24,18 @@ export const RealTimeAnalysisDashboard = ({
 }: RealTimeAnalysisDashboardProps) => {
   const [activeAnalyses, setActiveAnalyses] = useState<any[]>([]);
   const [criticalIssues, setCriticalIssues] = useState<any[]>([]);
-  const subscribedRef = useRef(false);
+  const hasInitializedRef = useRef(false);
   
   const { jobs, queueStats, fetchQueueStatus } = useESLintScheduler();
   const { subscribeToJobUpdates, unsubscribeFromJobUpdates } = useESLintRealtimeUpdates();
   const { data: lighthouseQueue } = useLighthouseQueue(projectId);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates only once
   useEffect(() => {
-    if (!projectId || subscribedRef.current) return;
+    if (!projectId || hasInitializedRef.current) return;
 
-    subscribedRef.current = true;
+    hasInitializedRef.current = true;
+    console.log('Initializing RealTimeAnalysisDashboard for project:', projectId);
     
     subscribeToJobUpdates(projectId, (updatedJob) => {
       setActiveAnalyses(prev => {
@@ -54,13 +55,16 @@ export const RealTimeAnalysisDashboard = ({
     });
 
     // Initial fetch
-    fetchQueueStatus();
+    fetchQueueStatus().catch(error => {
+      console.log('Queue status fetch failed, but continuing:', error.message);
+    });
 
     return () => {
-      subscribedRef.current = false;
+      console.log('Cleaning up RealTimeAnalysisDashboard');
+      hasInitializedRef.current = false;
       unsubscribeFromJobUpdates();
     };
-  }, [projectId, subscribeToJobUpdates, unsubscribeFromJobUpdates, fetchQueueStatus]);
+  }, [projectId]); // Only depend on projectId
 
   // Update active analyses from queue data
   useEffect(() => {

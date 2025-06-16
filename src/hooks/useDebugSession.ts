@@ -29,8 +29,8 @@ export function useDebugSession(sessionId: string, user: User | null) {
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [lastEvent, setLastEvent] = useState<BroadcastEvent | null>(null);
-  const isSubscribedRef = useRef(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const isInitializedRef = useRef(false);
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['debugSession', sessionId],
@@ -39,15 +39,11 @@ export function useDebugSession(sessionId: string, user: User | null) {
   });
 
   useEffect(() => {
-    if (!sessionId || !user) return;
+    if (!sessionId || !user || isInitializedRef.current) return;
 
-    // Prevent duplicate subscriptions
-    if (isSubscribedRef.current || channelRef.current) {
-      return;
-    }
-
+    isInitializedRef.current = true;
     const channelName = `debug_session:${sessionId}`;
-    console.log('Creating channel:', channelName);
+    console.log('Creating debug session channel:', channelName);
 
     const sessionChannel = supabase.channel(channelName, {
       config: {
@@ -64,18 +60,17 @@ export function useDebugSession(sessionId: string, user: User | null) {
         const presenceState = sessionChannel.presenceState();
         const collabs = Object.keys(presenceState).map((key) => presenceState[key][0]);
         setCollaborators(collabs);
-        console.log('Presence sync:', collabs);
+        console.log('Debug session presence sync:', collabs);
       })
       .on<BroadcastEvent>('broadcast', { event: 'debug_event' }, ({ payload }) => {
-        console.log('Received broadcast event:', payload);
+        console.log('Debug session broadcast received:', payload);
         if (payload.sender !== user.id) {
           setLastEvent(payload);
         }
       })
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('Debug session subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          isSubscribedRef.current = true;
           sessionChannel.track({ 
             user_id: user.id, 
             email: user.email, 
@@ -87,19 +82,19 @@ export function useDebugSession(sessionId: string, user: User | null) {
     setChannel(sessionChannel);
 
     return () => {
-      console.log('Cleaning up channel subscription');
-      isSubscribedRef.current = false;
-      channelRef.current = null;
-      if (sessionChannel) {
-        supabase.removeChannel(sessionChannel);
+      console.log('Cleaning up debug session channel');
+      isInitializedRef.current = false;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
-  }, [sessionId, user?.id]); // Stable dependencies
+  }, [sessionId, user?.id]);
 
   const broadcastEvent = (event: Omit<BroadcastEvent, 'sender'>) => {
-    if (channel && user && isSubscribedRef.current) {
+    if (channel && user) {
       const fullEvent: BroadcastEvent = { ...event, sender: user.id };
-      console.log('Broadcasting event:', fullEvent);
+      console.log('Broadcasting debug session event:', fullEvent);
       
       channel.send({
         type: 'broadcast',
@@ -114,7 +109,7 @@ export function useDebugSession(sessionId: string, user: User | null) {
         event_type: event.type,
         payload: event.payload,
       }).then(({ error }) => {
-        if (error) console.error("Error persisting event:", error);
+        if (error) console.error("Error persisting debug session event:", error);
       });
     }
   };
