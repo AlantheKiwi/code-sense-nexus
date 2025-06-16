@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect } from 'react';
 import { Session, User, Provider } from '@supabase/supabase-js';
 import { Tables } from '@/integrations/supabase/types';
@@ -36,11 +37,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isLoading = isSessionLoading || isPartnerLoading || isOperationLoading;
 
   useEffect(() => {
-    console.log(
-      `AuthContext: Combined isLoading: ${isLoading}`,
-      { isSessionLoading, isPartnerLoading, isOperationLoading }
-    );
-  }, [isLoading, isSessionLoading, isPartnerLoading, isOperationLoading]);
+    console.log('AuthContext Debug Info:', {
+      isLoading,
+      isSessionLoading,
+      isPartnerLoading,
+      isOperationLoading,
+      hasUser: !!user,
+      userId: user?.id,
+      hasPartner: !!partner,
+      partnerId: partner?.id,
+      partnerData: partner
+    });
+  }, [isLoading, isSessionLoading, isPartnerLoading, isOperationLoading, user, partner]);
+
+  // Debug log when partner data changes
+  useEffect(() => {
+    if (user?.id) {
+      console.log('AuthContext: User ID available:', user.id);
+      if (partner) {
+        console.log('AuthContext: Partner data loaded successfully:', {
+          partnerId: partner.id,
+          partnerUserId: partner.user_id,
+          companyName: partner.company_name
+        });
+      } else if (!isPartnerLoading) {
+        console.warn('AuthContext: No partner data found for user:', user.id);
+      }
+    }
+  }, [user, partner, isPartnerLoading]);
   
   return (
     <AuthContext.Provider value={{ 

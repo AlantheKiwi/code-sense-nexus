@@ -7,24 +7,47 @@ import { toast } from 'sonner';
 type Project = Tables<'projects'>;
 
 const fetchProjects = async (partnerId: string): Promise<Project[]> => {
+  console.log('fetchProjects: Attempting to fetch projects for partner ID:', partnerId);
+  
   const { data, error } = await supabase
     .from('projects')
     .select('*')
     .eq('partner_id', partnerId);
 
+  console.log('fetchProjects: Supabase query result:', { data, error, partnerId });
+
   if (error) {
-    console.error('Error fetching projects:', error);
+    console.error('fetchProjects: Error fetching projects:', error);
     toast.error('Failed to fetch projects: ' + error.message);
     throw new Error(error.message);
   }
 
+  console.log('fetchProjects: Successfully fetched', data?.length || 0, 'projects');
   return data || [];
 };
 
 export const useProjectsData = (partnerId: string | undefined) => {
+  console.log('useProjectsData: Hook called with partnerId:', partnerId);
+  
   return useQuery({
     queryKey: ['projects', partnerId],
-    queryFn: () => fetchProjects(partnerId!),
+    queryFn: () => {
+      if (!partnerId) {
+        console.error('useProjectsData: No partnerId provided to queryFn');
+        throw new Error('Partner ID is required to fetch projects');
+      }
+      return fetchProjects(partnerId);
+    },
     enabled: !!partnerId,
+    retry: (failureCount, error) => {
+      console.log('useProjectsData: Query retry attempt', failureCount, 'Error:', error);
+      return failureCount < 2; // Only retry twice
+    },
+    onError: (error: any) => {
+      console.error('useProjectsData: Query failed with error:', error);
+    },
+    onSuccess: (data) => {
+      console.log('useProjectsData: Query succeeded with data:', data);
+    }
   });
 };
