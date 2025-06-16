@@ -2,7 +2,7 @@
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { LoadingSkeleton } from '@/components/debug-session/LoadingSkeleton';
 import { SessionHeader } from '@/components/debug-session/SessionHeader';
 import { CodeEditor } from '@/components/debug-session/CodeEditor';
@@ -48,52 +48,56 @@ sayHello('World')`);
   const { cursors, handleMouseMove, updateCursor, cleanupCursors } = useDebugSessionCursor();
   const [showResultsSummary, setShowResultsSummary] = useState(false);
 
+  // Handle last event changes
   useEffect(() => {
-    if (lastEvent) {
-      if (lastEvent.type === 'CODE_UPDATE') {
-        setCode(lastEvent.payload.code);
+    if (!lastEvent) return;
+
+    console.log('Processing event:', lastEvent);
+
+    if (lastEvent.type === 'CODE_UPDATE') {
+      setCode(lastEvent.payload.code);
+    }
+    if (lastEvent.type === 'EXECUTION_RESULT') {
+      setResult(lastEvent.payload);
+      // Show results summary when analysis completes
+      if (lastEvent.payload && !lastEvent.payload.error) {
+        setShowResultsSummary(true);
       }
-      if (lastEvent.type === 'EXECUTION_RESULT') {
-        setResult(lastEvent.payload);
-        // Show results summary when analysis completes
-        if (lastEvent.payload && !lastEvent.payload.error) {
-          setShowResultsSummary(true);
-        }
-      }
-      if (lastEvent.type === 'CURSOR_UPDATE') {
-        const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
-        if (collaborator) {
-          updateCursor(lastEvent.sender, { ...lastEvent.payload, email: collaborator.email });
-        }
+    }
+    if (lastEvent.type === 'CURSOR_UPDATE') {
+      const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
+      if (collaborator) {
+        updateCursor(lastEvent.sender, { ...lastEvent.payload, email: collaborator.email });
       }
     }
   }, [lastEvent, collaborators, setResult, updateCursor]);
 
+  // Handle collaborators cleanup
   useEffect(() => {
     const activeCollaboratorIds = new Set(collaborators.map(c => c.user_id));
     cleanupCursors(activeCollaboratorIds);
   }, [collaborators, cleanupCursors]);
 
-  const handleCodeChange = (newCode: string) => {
+  const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
     broadcastEvent({
       type: 'CODE_UPDATE',
       payload: { code: newCode },
     });
-  };
+  }, [broadcastEvent]);
 
-  const handleAutomationSettingsChange = (settings: AutomationSettings) => {
+  const handleAutomationSettingsChange = useCallback((settings: AutomationSettings) => {
     setAutomationSettings(settings);
     console.log('Automation settings updated:', settings);
-  };
+  }, []);
 
-  const onAnalyze = (selectedTools: string[]) => {
+  const onAnalyze = useCallback((selectedTools: string[]) => {
     handleAnalyzeCode(selectedTools, code, broadcastEvent);
-  };
+  }, [handleAnalyzeCode, code, broadcastEvent]);
 
-  const onMouseMove = (e: React.MouseEvent) => {
+  const onMouseMove = useCallback((e: React.MouseEvent) => {
     handleMouseMove(e, broadcastEvent);
-  };
+  }, [handleMouseMove, broadcastEvent]);
 
   if (isLoading) {
     return <LoadingSkeleton />;
