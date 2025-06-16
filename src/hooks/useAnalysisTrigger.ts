@@ -18,6 +18,16 @@ export function useAnalysisTrigger() {
       return null;
     }
 
+    if (!code || code.trim().length === 0) {
+      toast.error('Code is required for analysis');
+      return null;
+    }
+
+    if (!selectedTools || selectedTools.length === 0) {
+      toast.error('At least one analysis tool must be selected');
+      return null;
+    }
+
     setIsTriggering(true);
     
     try {
@@ -30,10 +40,11 @@ export function useAnalysisTrigger() {
 
       // Create trigger data with code and tools
       const triggerData = {
-        code,
+        code: code.trim(),
         selectedTools,
         timestamp: new Date().toISOString(),
-        source: 'debug_session'
+        source: 'debug_session',
+        codePreview: code.substring(0, 100) + (code.length > 100 ? '...' : '')
       };
 
       // Schedule the analysis through the ESLint scheduler
@@ -45,12 +56,30 @@ export function useAnalysisTrigger() {
         undefined // immediate execution
       );
 
-      toast.success(`Analysis scheduled successfully (Job: ${job.id.slice(0, 8)})`);
-      
-      return job;
+      if (job) {
+        toast.success(`Analysis scheduled successfully`, {
+          description: `Job ${job.id.slice(0, 8)}... queued for ${selectedTools.join(', ')} analysis`
+        });
+        
+        return job;
+      } else {
+        throw new Error('Failed to create analysis job');
+      }
     } catch (error: any) {
       console.error('Failed to trigger analysis:', error);
-      toast.error(`Failed to schedule analysis: ${error.message}`);
+      
+      let errorMessage = 'Failed to schedule analysis';
+      if (error.message.includes('Authorization')) {
+        errorMessage = 'Authentication failed. Please refresh and try again.';
+      } else if (error.message.includes('Project access')) {
+        errorMessage = 'Access denied for this project.';
+      } else if (error.message.includes('Too many active')) {
+        errorMessage = 'Too many analyses running. Please wait and try again.';
+      } else if (error.message) {
+        errorMessage = `Failed to schedule analysis: ${error.message}`;
+      }
+      
+      toast.error(errorMessage);
       return null;
     } finally {
       setIsTriggering(false);
