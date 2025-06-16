@@ -1087,6 +1087,75 @@ export type Database = {
           },
         ]
       }
+      eslint_configuration_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          project_type: string
+          rules: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          project_type: string
+          rules?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          project_type?: string
+          rules?: Json
+        }
+        Relationships: []
+      }
+      eslint_configurations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_default: boolean
+          name: string
+          partner_id: string
+          project_type: string | null
+          rules: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          partner_id: string
+          project_type?: string | null
+          rules?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          partner_id?: string
+          project_type?: string | null
+          rules?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       github_app_installations: {
         Row: {
           created_at: string
