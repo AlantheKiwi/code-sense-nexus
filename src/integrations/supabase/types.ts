@@ -1156,6 +1156,234 @@ export type Database = {
         }
         Relationships: []
       }
+      eslint_critical_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          file_path: string
+          id: string
+          is_resolved: boolean
+          line_number: number | null
+          message: string
+          project_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          result_id: string
+          rule_id: string | null
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          file_path: string
+          id?: string
+          is_resolved?: boolean
+          line_number?: number | null
+          message: string
+          project_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          result_id: string
+          rule_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          file_path?: string
+          id?: string
+          is_resolved?: boolean
+          line_number?: number | null
+          message?: string
+          project_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          result_id?: string
+          rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eslint_critical_alerts_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "eslint_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eslint_fix_suggestions: {
+        Row: {
+          category: string
+          code_example: string | null
+          created_at: string
+          difficulty_level: string
+          estimated_time_minutes: number | null
+          fix_description: string
+          fixed_code_example: string | null
+          id: string
+          issue_description: string
+          priority: number
+          result_id: string
+          rule_id: string
+        }
+        Insert: {
+          category?: string
+          code_example?: string | null
+          created_at?: string
+          difficulty_level?: string
+          estimated_time_minutes?: number | null
+          fix_description: string
+          fixed_code_example?: string | null
+          id?: string
+          issue_description: string
+          priority?: number
+          result_id: string
+          rule_id: string
+        }
+        Update: {
+          category?: string
+          code_example?: string | null
+          created_at?: string
+          difficulty_level?: string
+          estimated_time_minutes?: number | null
+          fix_description?: string
+          fixed_code_example?: string | null
+          id?: string
+          issue_description?: string
+          priority?: number
+          result_id?: string
+          rule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eslint_fix_suggestions_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "eslint_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eslint_project_summaries: {
+        Row: {
+          average_quality_score: number | null
+          category_counts: Json
+          created_at: string
+          id: string
+          last_analysis_at: string
+          project_id: string
+          severity_counts: Json
+          total_files: number
+          total_issues: number
+          updated_at: string
+        }
+        Insert: {
+          average_quality_score?: number | null
+          category_counts?: Json
+          created_at?: string
+          id?: string
+          last_analysis_at?: string
+          project_id: string
+          severity_counts?: Json
+          total_files?: number
+          total_issues?: number
+          updated_at?: string
+        }
+        Update: {
+          average_quality_score?: number | null
+          category_counts?: Json
+          created_at?: string
+          id?: string
+          last_analysis_at?: string
+          project_id?: string
+          severity_counts?: Json
+          total_files?: number
+          total_issues?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      eslint_results: {
+        Row: {
+          configuration_used: string | null
+          created_at: string
+          file_path: string
+          id: string
+          issues: Json
+          project_id: string
+          quality_score: number | null
+          severity_counts: Json
+          total_issues: number
+          updated_at: string
+        }
+        Insert: {
+          configuration_used?: string | null
+          created_at?: string
+          file_path: string
+          id?: string
+          issues?: Json
+          project_id: string
+          quality_score?: number | null
+          severity_counts?: Json
+          total_issues?: number
+          updated_at?: string
+        }
+        Update: {
+          configuration_used?: string | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          issues?: Json
+          project_id?: string
+          quality_score?: number | null
+          severity_counts?: Json
+          total_issues?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eslint_results_configuration_used_fkey"
+            columns: ["configuration_used"]
+            isOneToOne: false
+            referencedRelation: "eslint_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eslint_trends: {
+        Row: {
+          analysis_date: string
+          category_counts: Json
+          created_at: string
+          files_analyzed: number
+          id: string
+          project_id: string
+          quality_score: number | null
+          severity_counts: Json
+          total_issues: number
+        }
+        Insert: {
+          analysis_date?: string
+          category_counts?: Json
+          created_at?: string
+          files_analyzed?: number
+          id?: string
+          project_id: string
+          quality_score?: number | null
+          severity_counts?: Json
+          total_issues?: number
+        }
+        Update: {
+          analysis_date?: string
+          category_counts?: Json
+          created_at?: string
+          files_analyzed?: number
+          id?: string
+          project_id?: string
+          quality_score?: number | null
+          severity_counts?: Json
+          total_issues?: number
+        }
+        Relationships: []
+      }
       github_app_installations: {
         Row: {
           created_at: string
