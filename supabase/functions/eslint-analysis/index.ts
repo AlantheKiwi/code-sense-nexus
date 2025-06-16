@@ -8,46 +8,44 @@ console.log('Secure analysis function booting up');
 
 const linter = new Linter();
 
-// ESLint v9 flat config array format
-const eslintFlatConfig = [
-  {
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: {
-        // Common browser globals
-        window: 'readonly',
-        document: 'readonly',
-        console: 'readonly',
-        // Common Node.js globals for modules
-        require: 'readonly',
-        module: 'readonly',
-        exports: 'readonly',
-        // ES6+
-        Promise: 'readonly',
-        Set: 'readonly',
-        Map: 'readonly',
-        // React globals
-        React: 'readonly',
-        JSX: 'readonly',
-      },
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
+// Legacy ESLint configuration format that works with linter.verify()
+const eslintConfig = {
+  languageOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+    globals: {
+      // Common browser globals
+      window: 'readonly',
+      document: 'readonly',
+      console: 'readonly',
+      // Common Node.js globals for modules
+      require: 'readonly',
+      module: 'readonly',
+      exports: 'readonly',
+      // ES6+
+      Promise: 'readonly',
+      Set: 'readonly',
+      Map: 'readonly',
+      // React globals
+      React: 'readonly',
+      JSX: 'readonly',
+    },
+    parserOptions: {
+      ecmaFeatures: {
+        jsx: true,
       },
     },
-    rules: {
-      'no-undef': 'error',
-      'no-unused-vars': 'warn',
-      'prefer-const': 'warn',
-      'semi': ['error', 'always'],
-      'no-console': 'warn',
-      'eqeqeq': 'warn',
-      'no-var': 'warn',
-    },
-  }
-];
+  },
+  rules: {
+    'no-undef': 'error',
+    'no-unused-vars': 'warn',
+    'prefer-const': 'warn',
+    'semi': ['error', 'always'],
+    'no-console': 'warn',
+    'eqeqeq': 'warn',
+    'no-var': 'warn',
+  },
+};
 
 const securityCheck = (_ast: any) => {
     // Placeholder for security rule checking
@@ -105,8 +103,8 @@ serve(async (req: Request) => {
     
     let messages;
     try {
-      // Use the flat config with ESLint v9
-      messages = linter.verify(code, eslintFlatConfig, {
+      // Use the single config object with ESLint v9
+      messages = linter.verify(code, eslintConfig, {
         filename: 'analysis.js',
       });
       console.log(`ESLint analysis completed successfully with ${messages.length} issues found.`);
