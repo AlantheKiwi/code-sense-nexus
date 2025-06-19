@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,10 +49,10 @@ export const IssuesRecommendationsDashboard = ({
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
-  // Mock data - in real implementation, this would come from hooks/API
+  // Mock data with proper UUIDs - in real implementation, this would come from hooks/API
   const mockIssues: Issue[] = [
     {
-      id: '1',
+      id: '550e8400-e29b-41d4-a716-446655440001',
       title: 'Unused CSS rules detected',
       description: 'Multiple unused CSS rules found that increase bundle size',
       severity: 'medium',
@@ -64,7 +65,7 @@ export const IssuesRecommendationsDashboard = ({
       status: 'open'
     },
     {
-      id: '2',
+      id: '550e8400-e29b-41d4-a716-446655440002',
       title: 'Missing alt attributes on images',
       description: 'Images without alt text reduce accessibility',
       severity: 'high',
@@ -77,7 +78,7 @@ export const IssuesRecommendationsDashboard = ({
       status: 'open'
     },
     {
-      id: '3',
+      id: '550e8400-e29b-41d4-a716-446655440003',
       title: 'Potential XSS vulnerability',
       description: 'Unsafe HTML rendering detected',
       severity: 'critical',
@@ -93,8 +94,8 @@ export const IssuesRecommendationsDashboard = ({
 
   const mockRecommendations: Recommendation[] = [
     {
-      id: '1',
-      issue_id: '1',
+      id: '660e8400-e29b-41d4-a716-446655440001',
+      issue_id: '550e8400-e29b-41d4-a716-446655440001',
       title: 'Implement CSS purging',
       description: 'Remove unused CSS rules to reduce bundle size',
       action_steps: [
@@ -109,8 +110,8 @@ export const IssuesRecommendationsDashboard = ({
       is_automated: true
     },
     {
-      id: '2',
-      issue_id: '2',
+      id: '660e8400-e29b-41d4-a716-446655440002',
+      issue_id: '550e8400-e29b-41d4-a716-446655440002',
       title: 'Add descriptive alt text',
       description: 'Improve accessibility with proper image descriptions',
       action_steps: [
