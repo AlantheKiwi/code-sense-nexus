@@ -23,16 +23,29 @@ export const RealTimeAnalysisDashboard = ({
   const [activeAnalyses, setActiveAnalyses] = useState<any[]>([]);
   const [criticalIssues, setCriticalIssues] = useState<any[]>([]);
   const hasInitializedRef = useRef(false);
+  const projectIdRef = useRef<string | undefined>(undefined);
   
   const { jobs, queueStats, fetchQueueStatus } = useESLintScheduler();
   const { subscribeToJobUpdates, unsubscribeFromJobUpdates } = useESLintRealtimeUpdates();
   const { data: lighthouseQueue } = useLighthouseQueue(projectId);
 
-  // Subscribe to real-time updates only once
+  // Subscribe to real-time updates only once per projectId
   useEffect(() => {
-    if (!projectId || hasInitializedRef.current) return;
+    // Only initialize if projectId exists and has changed
+    if (!projectId || (hasInitializedRef.current && projectIdRef.current === projectId)) {
+      return;
+    }
+
+    // Clean up previous subscription if projectId changed
+    if (hasInitializedRef.current && projectIdRef.current !== projectId) {
+      console.log('Project ID changed, cleaning up previous subscription');
+      unsubscribeFromJobUpdates();
+      hasInitializedRef.current = false;
+    }
 
     hasInitializedRef.current = true;
+    projectIdRef.current = projectId;
+    
     console.log('Initializing RealTimeAnalysisDashboard for project:', projectId);
     
     subscribeToJobUpdates(projectId, (updatedJob) => {
@@ -69,17 +82,19 @@ export const RealTimeAnalysisDashboard = ({
       }
     });
 
-    // Initial fetch
+    // Initial fetch with error handling
     fetchQueueStatus().catch(error => {
       console.log('Queue status fetch failed, but continuing:', error.message);
+      // Don't show toast for initial fetch failures to avoid spam
     });
 
     return () => {
       console.log('Cleaning up RealTimeAnalysisDashboard');
       hasInitializedRef.current = false;
+      projectIdRef.current = undefined;
       unsubscribeFromJobUpdates();
     };
-  }, [projectId, subscribeToJobUpdates, unsubscribeFromJobUpdates, fetchQueueStatus]);
+  }, [projectId]); // Only depend on projectId
 
   // Update active analyses from queue data
   useEffect(() => {
@@ -89,6 +104,19 @@ export const RealTimeAnalysisDashboard = ({
     setActiveAnalyses(runningJobs);
   }, [jobs]);
 
+  // Don't render if no projectId
+  if (!projectId) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Zap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Project Selected</h3>
+          <p className="text-muted-foreground">Please select a project to view real-time analysis.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -96,11 +124,9 @@ export const RealTimeAnalysisDashboard = ({
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
             Real-Time Analysis Dashboard
-            {projectId && (
-              <span className="text-sm font-normal text-muted-foreground">
-                Project: {projectId.slice(0, 8)}...
-              </span>
-            )}
+            <span className="text-sm font-normal text-muted-foreground">
+              Project: {projectId.slice(0, 8)}...
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
