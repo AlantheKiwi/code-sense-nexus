@@ -3,25 +3,29 @@ import { useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
-// Simplified global channel registry with better cleanup
+// Global channel registry with better cleanup
 const globalChannels = new Map<string, { channel: RealtimeChannel; refCount: number; lastUsed: number }>();
 
 // Cleanup old unused channels periodically
 const cleanupOldChannels = () => {
   const now = Date.now();
-  const CLEANUP_THRESHOLD = 60000; // 1 minute
+  const CLEANUP_THRESHOLD = 120000; // 2 minutes
   
   for (const [channelName, entry] of globalChannels.entries()) {
     if (entry.refCount <= 0 && now - entry.lastUsed > CLEANUP_THRESHOLD) {
       console.log('Cleaning up old channel:', channelName);
-      supabase.removeChannel(entry.channel);
+      try {
+        supabase.removeChannel(entry.channel);
+      } catch (error) {
+        console.warn('Error removing channel:', error);
+      }
       globalChannels.delete(channelName);
     }
   }
 };
 
-// Run cleanup every 2 minutes
-setInterval(cleanupOldChannels, 120000);
+// Run cleanup every 5 minutes
+setInterval(cleanupOldChannels, 300000);
 
 export function useChannelManager() {
   const localChannelsRef = useRef<Set<string>>(new Set());
@@ -50,11 +54,10 @@ export function useChannelManager() {
   const removeChannel = useCallback((channelName: string) => {
     const existing = globalChannels.get(channelName);
     if (existing) {
-      existing.refCount--;
+      existing.refCount = Math.max(0, existing.refCount - 1);
       existing.lastUsed = Date.now();
       console.log(`Decreasing ref count for channel ${channelName}: ${existing.refCount}`);
       
-      // Mark for cleanup but don't immediately remove
       localChannelsRef.current.delete(channelName);
     }
   }, []);

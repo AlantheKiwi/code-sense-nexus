@@ -44,30 +44,32 @@ serve(async (req: Request) => {
 
     console.log(`ESLint Scheduler: Authenticated user ${user.id}`);
 
-    // Handle different request methods and extract action
-    let action: string = 'queue-status'; // Default action
-    let requestData: any = {};
+    // Only handle POST requests with JSON body
+    if (req.method !== 'POST') {
+      console.error(`ESLint Scheduler: Invalid method: ${req.method}`);
+      return new Response(JSON.stringify({ error: 'Only POST requests are supported' }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (req.method === 'POST') {
-      try {
-        const body = await req.text();
-        console.log('ESLint Scheduler: Request body:', body);
-        
-        if (body && body.trim()) {
-          requestData = JSON.parse(body);
-          action = requestData.action || 'queue-status';
-        }
-      } catch (parseError) {
-        console.error('ESLint Scheduler: JSON parse error:', parseError);
-        return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    let requestData: any = {};
+    let action: string = 'queue-status'; // Default action
+
+    try {
+      const body = await req.text();
+      console.log('ESLint Scheduler: Request body:', body);
+      
+      if (body && body.trim()) {
+        requestData = JSON.parse(body);
+        action = requestData.action || 'queue-status';
       }
-    } else if (req.method === 'GET') {
-      const url = new URL(req.url);
-      action = url.searchParams.get('action') || 'queue-status';
-      console.log(`ESLint Scheduler: GET action: ${action}`);
+    } catch (parseError) {
+      console.error('ESLint Scheduler: JSON parse error:', parseError);
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log(`ESLint Scheduler: Processing action: ${action}`);
