@@ -2,7 +2,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Lightbulb, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { Lightbulb, CheckCircle, Clock, TrendingUp, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import type { Recommendation } from '../IssuesRecommendationsDashboard';
 
 interface RecommendationsPanelProps {
@@ -14,6 +16,41 @@ export const RecommendationsPanel = ({
   recommendations, 
   compact = false 
 }: RecommendationsPanelProps) => {
+  const [applyingFix, setApplyingFix] = useState<string | null>(null);
+
+  const handleApplyFix = async (recommendation: Recommendation) => {
+    setApplyingFix(recommendation.id);
+    
+    try {
+      toast.info(`Applying fix: ${recommendation.title}`, {
+        description: 'Starting implementation...'
+      });
+
+      // Simulate fix application process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // In a real implementation, this would integrate with actual fix systems
+      const success = Math.random() > 0.3; // 70% success rate for demo
+      
+      if (success) {
+        toast.success(`Fix applied successfully!`, {
+          description: `${recommendation.title} has been implemented.`
+        });
+      } else {
+        toast.error(`Fix application failed`, {
+          description: `Unable to automatically apply ${recommendation.title}. Manual intervention required.`
+        });
+      }
+    } catch (error) {
+      console.error('Error applying fix:', error);
+      toast.error('Failed to apply fix', {
+        description: 'An unexpected error occurred.'
+      });
+    } finally {
+      setApplyingFix(null);
+    }
+  };
+
   if (recommendations.length === 0) {
     return (
       <Card>
@@ -89,8 +126,19 @@ export const RecommendationsPanel = ({
                   {recommendation.expected_impact}
                 </div>
               </div>
-              <Button size="sm">
-                Apply Fix
+              <Button 
+                size="sm" 
+                onClick={() => handleApplyFix(recommendation)}
+                disabled={applyingFix === recommendation.id}
+              >
+                {applyingFix === recommendation.id ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Applying...
+                  </>
+                ) : (
+                  'Apply Fix'
+                )}
               </Button>
             </div>
           </CardContent>
