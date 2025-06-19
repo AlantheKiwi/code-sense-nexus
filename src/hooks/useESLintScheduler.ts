@@ -35,7 +35,6 @@ export interface QueueStats {
 // Simple request cache to prevent duplicate requests
 const requestCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 3000; // 3 seconds cache
-const SUPABASE_URL = "https://dtwgnqzuskdfuypigaor.supabase.co";
 
 export function useESLintScheduler() {
   const [jobs, setJobs] = useState<ESLintJob[]>([]);
@@ -97,38 +96,18 @@ export function useESLintScheduler() {
     try {
       setIsLoading(true);
       
-      // Use GET request with query parameter - fix the URL construction
-      const url = new URL(`${SUPABASE_URL}/functions/v1/eslint-scheduler`);
-      url.searchParams.set('action', 'queue-status');
-      
-      const { data: session } = await supabase.auth.getSession();
-      if (!session.session) {
-        throw new Error('No valid session found');
-      }
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.session.access_token}`,
-          'Content-Type': 'application/json',
+      // Use Supabase functions.invoke instead of manual fetch
+      const response = await supabase.functions.invoke('eslint-scheduler', {
+        body: {
+          action: 'queue-status'
         },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`HTTP ${response.status}: ${response.statusText}`, errorText);
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (response.error) {
+        throw new Error(response.error.message);
       }
 
-      const responseText = await response.text();
-      let data;
-      
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSON parse error. Response text:', responseText);
-        throw new Error('Invalid JSON response from server');
-      }
+      const data = response.data;
 
       // Cache the successful response
       requestCache.set(cacheKey, { data, timestamp: now });
@@ -142,9 +121,9 @@ export function useESLintScheduler() {
     } catch (error: any) {
       console.error('Error fetching queue status:', error);
       
-      // Only show user-facing errors for actual network/server issues
-      if (error.message.includes('Failed to fetch') || error.message.includes('HTTP 50')) {
-        toast.error('Unable to connect to analysis service. Please try again.');
+      // Only show user-facing errors for actual issues
+      if (!error.message.includes('aborted')) {
+        toast.error('Unable to fetch queue status. Please try again.');
       }
       
       throw error;
