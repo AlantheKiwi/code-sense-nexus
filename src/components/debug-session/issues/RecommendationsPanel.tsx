@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Lightbulb, CheckCircle, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useLighthouseRecommendationActions } from '@/hooks/useLighthouseRecommendationActions';
 import type { Recommendation } from '../IssuesRecommendationsDashboard';
 
 interface RecommendationsPanelProps {
@@ -17,6 +18,7 @@ export const RecommendationsPanel = ({
   compact = false 
 }: RecommendationsPanelProps) => {
   const [applyingFix, setApplyingFix] = useState<string | null>(null);
+  const { executeAutomatedFix, updateRecommendationStatus } = useLighthouseRecommendationActions();
 
   const handleApplyFix = async (recommendation: Recommendation) => {
     setApplyingFix(recommendation.id);
@@ -26,25 +28,42 @@ export const RecommendationsPanel = ({
         description: 'Starting implementation...'
       });
 
-      // Simulate fix application process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In a real implementation, this would integrate with actual fix systems
-      const success = Math.random() > 0.3; // 70% success rate for demo
-      
-      if (success) {
-        toast.success(`Fix applied successfully!`, {
-          description: `${recommendation.title} has been implemented.`
-        });
+      // Update status to in_progress
+      await updateRecommendationStatus(recommendation.id, 'in_progress');
+
+      // Check if this is an automated fix
+      if (recommendation.is_automated) {
+        // Execute automated fix through the lighthouse recommendation engine
+        const result = await executeAutomatedFix(recommendation.id);
+        
+        if (result.success) {
+          await updateRecommendationStatus(recommendation.id, 'completed');
+          toast.success(`Fix applied successfully!`, {
+            description: `${recommendation.title} has been automatically implemented.`
+          });
+        } else {
+          await updateRecommendationStatus(recommendation.id, 'pending');
+          toast.error(`Automated fix failed`, {
+            description: result.message || 'Manual intervention required.'
+          });
+        }
       } else {
-        toast.error(`Fix application failed`, {
-          description: `Unable to automatically apply ${recommendation.title}. Manual intervention required.`
+        // For manual fixes, provide implementation guidance
+        toast.info(`Manual implementation required`, {
+          description: `${recommendation.title} requires manual implementation. Check the action steps provided.`
         });
+        
+        // Mark as in_progress since user needs to implement manually
+        await updateRecommendationStatus(recommendation.id, 'in_progress');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error applying fix:', error);
+      
+      // Reset status back to pending on error
+      await updateRecommendationStatus(recommendation.id, 'pending').catch(console.error);
+      
       toast.error('Failed to apply fix', {
-        description: 'An unexpected error occurred.'
+        description: error.message || 'An unexpected error occurred.'
       });
     } finally {
       setApplyingFix(null);
@@ -77,9 +96,16 @@ export const RecommendationsPanel = ({
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <CardTitle className="text-base">{recommendation.title}</CardTitle>
-              <Badge variant="outline" className="text-xs">
-                Priority {recommendation.priority}
-              </Badge>
+              <div className="flex gap-2">
+                <Badge variant="outline" className="text-xs">
+                  Priority {recommendation.priority}
+                </Badge>
+                {recommendation.is_automated && (
+                  <Badge variant="secondary" className="text-xs">
+                    Auto-fixable
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -130,14 +156,17 @@ export const RecommendationsPanel = ({
                 size="sm" 
                 onClick={() => handleApplyFix(recommendation)}
                 disabled={applyingFix === recommendation.id}
+                variant={recommendation.is_automated ? "default" : "outline"}
               >
                 {applyingFix === recommendation.id ? (
                   <>
                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                    Applying...
+                    {recommendation.is_automated ? 'Applying...' : 'Processing...'}
                   </>
                 ) : (
-                  'Apply Fix'
+                  <>
+                    {recommendation.is_automated ? 'Auto-Fix' : 'Implement'}
+                  </>
                 )}
               </Button>
             </div>
