@@ -22,46 +22,41 @@ export const RealTimeAnalysisDashboard = ({
 }: RealTimeAnalysisDashboardProps) => {
   const [activeAnalyses, setActiveAnalyses] = useState<any[]>([]);
   const [criticalIssues, setCriticalIssues] = useState<any[]>([]);
-  const currentProjectIdRef = useRef<string | undefined>(undefined);
-  const subscriptionActiveRef = useRef(false);
+  const initializationRef = useRef<string | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
   
   const { jobs, queueStats, fetchQueueStatus } = useESLintScheduler();
   const { subscribeToJobUpdates, unsubscribeFromJobUpdates } = useESLintRealtimeUpdates();
   const { data: lighthouseQueue } = useLighthouseQueue(projectId);
 
-  // Subscribe to real-time updates with proper cleanup
+  // Single initialization effect with proper cleanup
   useEffect(() => {
-    // Don't initialize if no projectId or already subscribed to same project
-    if (!projectId || (subscriptionActiveRef.current && currentProjectIdRef.current === projectId)) {
+    // Prevent re-initialization for the same project
+    if (!projectId || initializationRef.current === projectId) {
       return;
     }
 
-    // Clean up previous subscription if projectId changed
-    if (subscriptionActiveRef.current && currentProjectIdRef.current !== projectId) {
-      console.log('Project ID changed from', currentProjectIdRef.current, 'to', projectId);
-      unsubscribeFromJobUpdates();
-      subscriptionActiveRef.current = false;
+    // Clean up previous subscription if project changed
+    if (cleanupRef.current) {
+      console.log('Cleaning up previous subscription for project change');
+      cleanupRef.current();
+      cleanupRef.current = null;
     }
 
     console.log('Initializing RealTimeAnalysisDashboard for project:', projectId);
-    currentProjectIdRef.current = projectId;
-    subscriptionActiveRef.current = true;
+    initializationRef.current = projectId;
     
-    subscribeToJobUpdates(projectId, (updatedJob) => {
+    const handleJobUpdate = (updatedJob: any) => {
       console.log('Job update received:', updatedJob);
       
-      // Show toast notifications for job status changes (limited)
-      if (updatedJob.status === 'running' && updatedJob.trigger_data?.source === 'debug_session') {
-        toast.info(`Analysis started (${updatedJob.trigger_data.selectedTools?.join(', ') || 'ESLint'})`, {
-          description: `Job ${updatedJob.id.slice(0, 8)}... is now processing`
-        });
-      } else if (updatedJob.status === 'completed') {
-        toast.success(`Analysis completed successfully`, {
-          description: `Job ${updatedJob.id.slice(0, 8)}... finished with ${updatedJob.result_summary?.totalIssues || 0} issues found`
+      // Throttled toast notifications
+      if (updatedJob.status === 'completed') {
+        toast.success(`Analysis completed`, {
+          description: `${updatedJob.result_summary?.totalIssues || 0} issues found`
         });
       } else if (updatedJob.status === 'failed') {
         toast.error(`Analysis failed`, {
-          description: `Job ${updatedJob.id.slice(0, 8)}... failed: ${updatedJob.error_message || 'Unknown error'}`
+          description: updatedJob.error_message || 'Unknown error'
         });
       }
 
@@ -75,19 +70,27 @@ export const RealTimeAnalysisDashboard = ({
         return [...prev, updatedJob];
       });
 
-      // Check for critical issues in completed analyses
+      // Handle critical issues
       if (updatedJob.status === 'completed' && updatedJob.result_summary?.criticalIssues) {
         setCriticalIssues(prev => [...prev, ...updatedJob.result_summary.criticalIssues]);
       }
-    });
+    };
+
+    subscribeToJobUpdates(projectId, handleJobUpdate);
+    
+    // Store cleanup function
+    cleanupRef.current = () => {
+      unsubscribeFromJobUpdates();
+      initializationRef.current = null;
+    };
 
     return () => {
-      console.log('Cleaning up RealTimeAnalysisDashboard subscription');
-      subscriptionActiveRef.current = false;
-      currentProjectIdRef.current = undefined;
-      unsubscribeFromJobUpdates();
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
     };
-  }, [projectId, subscribeToJobUpdates, unsubscribeFromJobUpdates]);
+  }, [projectId]); // Only depend on projectId
 
   // Update active analyses from queue data
   useEffect(() => {

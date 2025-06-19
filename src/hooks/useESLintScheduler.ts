@@ -32,17 +32,16 @@ export interface QueueStats {
   retrying: number;
 }
 
-// Global request deduplication
-const activeRequests = new Map<string, Promise<any>>();
-const requestCooldowns = new Map<string, number>();
+// Simplified global request management
+const requestCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5000; // 5 seconds cache
 
 export function useESLintScheduler() {
   const [jobs, setJobs] = useState<ESLintJob[]>([]);
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
 
   const scheduleAnalysis = async (
     projectId: string, 
@@ -82,114 +81,102 @@ export function useESLintScheduler() {
   };
 
   const fetchQueueStatus = useCallback(async () => {
-    const requestKey = 'queue-status';
-    
-    // Check cooldown period (minimum 2 seconds between requests)
+    const cacheKey = 'queue-status';
     const now = Date.now();
-    const lastRequest = requestCooldowns.get(requestKey);
-    if (lastRequest && now - lastRequest < 2000) {
-      console.log('Request throttled, waiting for cooldown');
-      return;
+    
+    // Check cache first
+    const cached = requestCache.get(cacheKey);
+    if (cached && now - cached.timestamp < CACHE_TTL) {
+      console.log('Using cached queue status');
+      return cached.data;
     }
 
-    // Check if there's already an active request
-    if (activeRequests.has(requestKey)) {
-      console.log('Request already in progress, waiting for completion');
-      return activeRequests.get(requestKey);
-    }
-
-    // Abort any previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new abort controller
-    abortControllerRef.current = new AbortController();
-
-    const requestPromise = (async () => {
-      try {
-        setIsLoading(true);
-        requestCooldowns.set(requestKey, now);
-
-        const response = await supabase.functions.invoke('eslint-scheduler', {
-          body: { action: 'queue-status' },
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.error) {
-          throw new Error(response.error.message);
-        }
-
-        if (!response.data) {
-          throw new Error('No data received from queue status');
-        }
-
-        setJobs(response.data.jobs || []);
-        setQueueStats(response.data.stats || null);
-        setRetryCount(0); // Reset retry count on success
-        
-        return response.data;
-      } catch (error: any) {
-        console.error('Error fetching queue status:', error);
-        
-        // Implement exponential backoff for retries
-        if (retryCount < 3) {
-          const backoffDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
-          console.log(`Retrying queue status fetch in ${backoffDelay}ms (attempt ${retryCount + 1})`);
-          
-          setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-            fetchQueueStatus();
-          }, backoffDelay);
-        } else {
-          console.log('Max retries reached for queue status fetch');
-          setRetryCount(0);
-        }
-        
-        throw error;
-      } finally {
-        setIsLoading(false);
-        activeRequests.delete(requestKey);
+    try {
+      setIsLoading(true);
+      
+      // Use GET request with query parameter - matching what the edge function expects
+      const url = new URL(supabase.supabaseUrl + '/functions/v1/eslint-scheduler');
+      url.searchParams.set('action', 'queue-status');
+      
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        throw new Error('No valid session found');
       }
-    })();
 
-    activeRequests.set(requestKey, requestPromise);
-    return requestPromise;
-  }, [retryCount]);
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-  // Auto-refresh with proper cleanup and rate limiting
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON parse error. Response text:', responseText);
+        throw new Error('Invalid JSON response from server');
+      }
+
+      // Cache the successful response
+      requestCache.set(cacheKey, { data, timestamp: now });
+
+      if (mountedRef.current) {
+        setJobs(data.jobs || []);
+        setQueueStats(data.stats || null);
+      }
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error fetching queue status:', error);
+      
+      // Only show user-facing errors for actual network/server issues
+      if (error.message.includes('Failed to fetch') || error.message.includes('HTTP 50')) {
+        toast.error('Unable to connect to analysis service. Please try again.');
+      }
+      
+      throw error;
+    } finally {
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  // Auto-refresh with cleanup
   useEffect(() => {
+    mountedRef.current = true;
+    
     // Initial fetch
     fetchQueueStatus().catch(error => {
       console.log('Initial queue status fetch failed:', error.message);
     });
     
-    // Set up auto-refresh with longer interval to reduce load
+    // Set up auto-refresh with longer interval
     refreshIntervalRef.current = setInterval(() => {
-      fetchQueueStatus().catch(error => {
-        console.log('Auto-refresh queue status fetch failed:', error.message);
-      });
-    }, 30000); // 30 seconds interval
+      if (mountedRef.current) {
+        fetchQueueStatus().catch(error => {
+          console.log('Auto-refresh failed:', error.message);
+        });
+      }
+    }, 30000); // 30 seconds
 
     return () => {
-      // Cleanup on unmount
+      mountedRef.current = false;
+      
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
         refreshIntervalRef.current = null;
       }
-      
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-        abortControllerRef.current = null;
-      }
-
-      // Clear active requests for this hook instance
-      activeRequests.clear();
-      requestCooldowns.clear();
     };
-  }, []); // Empty dependency array to run only once
+  }, []); // No dependencies to prevent re-initialization
 
   return {
     jobs,
