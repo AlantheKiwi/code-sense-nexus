@@ -30,7 +30,8 @@ export function useDebugSession(sessionId: string, user: User | null) {
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [lastEvent, setLastEvent] = useState<BroadcastEvent | null>(null);
   const isInitializedRef = useRef(false);
-  const { createChannel, cleanup } = useChannelManager();
+  const currentChannelRef = useRef<string | null>(null);
+  const { createChannel, cleanup, markChannelSubscribed } = useChannelManager();
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['debugSession', sessionId],
@@ -53,6 +54,13 @@ export function useDebugSession(sessionId: string, user: User | null) {
       },
     });
 
+    // Check if already subscribed
+    if (sessionChannel.state === 'joined' || sessionChannel.state === 'joining') {
+      console.log('Debug session channel already subscribed');
+      currentChannelRef.current = channelName;
+      return;
+    }
+
     sessionChannel
       .on('presence', { event: 'sync' }, () => {
         const presenceState = sessionChannel.presenceState();
@@ -69,28 +77,33 @@ export function useDebugSession(sessionId: string, user: User | null) {
       .subscribe((status) => {
         console.log('Debug session subscription status:', status);
         if (status === 'SUBSCRIBED') {
+          markChannelSubscribed(channelName);
+          currentChannelRef.current = channelName;
           sessionChannel.track({ 
             user_id: user.id, 
             email: user.email, 
             joined_at: new Date().toISOString() 
           });
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.warn('Debug session subscription failed:', status);
+          currentChannelRef.current = null;
         }
       });
 
     return () => {
       console.log('Cleaning up debug session');
       isInitializedRef.current = false;
+      currentChannelRef.current = null;
       cleanup();
     };
-  }, [sessionId, user?.id, createChannel, cleanup]);
+  }, [sessionId, user?.id, createChannel, cleanup, markChannelSubscribed]);
 
   const broadcastEvent = (event: Omit<BroadcastEvent, 'sender'>) => {
-    if (user) {
+    if (user && currentChannelRef.current) {
       const fullEvent: BroadcastEvent = { ...event, sender: user.id };
       console.log('Broadcasting debug session event:', fullEvent);
       
-      const channelName = `debug_session:${sessionId}`;
-      const channel = createChannel(channelName);
+      const channel = createChannel(currentChannelRef.current);
       
       channel.send({
         type: 'broadcast',

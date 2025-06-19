@@ -3,8 +3,13 @@ import { useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
-// Global channel registry with better cleanup
-const globalChannels = new Map<string, { channel: RealtimeChannel; refCount: number; lastUsed: number }>();
+// Global channel registry with subscription state tracking
+const globalChannels = new Map<string, { 
+  channel: RealtimeChannel; 
+  refCount: number; 
+  lastUsed: number;
+  isSubscribed: boolean;
+}>();
 
 // Cleanup old unused channels periodically
 const cleanupOldChannels = () => {
@@ -15,7 +20,9 @@ const cleanupOldChannels = () => {
     if (entry.refCount <= 0 && now - entry.lastUsed > CLEANUP_THRESHOLD) {
       console.log('Cleaning up old channel:', channelName);
       try {
-        supabase.removeChannel(entry.channel);
+        if (entry.isSubscribed) {
+          supabase.removeChannel(entry.channel);
+        }
       } catch (error) {
         console.warn('Error removing channel:', error);
       }
@@ -35,7 +42,7 @@ export function useChannelManager() {
     const now = Date.now();
     
     if (existing) {
-      console.log('Reusing existing channel:', channelName);
+      console.log('Reusing existing channel:', channelName, 'subscribed:', existing.isSubscribed);
       existing.refCount++;
       existing.lastUsed = now;
       localChannelsRef.current.add(channelName);
@@ -45,10 +52,23 @@ export function useChannelManager() {
     console.log('Creating new channel:', channelName);
     const channel = supabase.channel(channelName, config);
     
-    globalChannels.set(channelName, { channel, refCount: 1, lastUsed: now });
+    globalChannels.set(channelName, { 
+      channel, 
+      refCount: 1, 
+      lastUsed: now,
+      isSubscribed: false
+    });
     localChannelsRef.current.add(channelName);
 
     return channel;
+  }, []);
+
+  const markChannelSubscribed = useCallback((channelName: string) => {
+    const existing = globalChannels.get(channelName);
+    if (existing) {
+      existing.isSubscribed = true;
+      console.log('Marked channel as subscribed:', channelName);
+    }
   }, []);
 
   const removeChannel = useCallback((channelName: string) => {
@@ -59,6 +79,17 @@ export function useChannelManager() {
       console.log(`Decreasing ref count for channel ${channelName}: ${existing.refCount}`);
       
       localChannelsRef.current.delete(channelName);
+      
+      // If no more references and subscribed, unsubscribe
+      if (existing.refCount === 0 && existing.isSubscribed) {
+        console.log('Unsubscribing channel with 0 refs:', channelName);
+        try {
+          supabase.removeChannel(existing.channel);
+          existing.isSubscribed = false;
+        } catch (error) {
+          console.warn('Error unsubscribing channel:', error);
+        }
+      }
     }
   }, []);
 
@@ -72,5 +103,5 @@ export function useChannelManager() {
     localChannelsRef.current.clear();
   }, [removeChannel]);
 
-  return { createChannel, removeChannel, cleanup };
+  return { createChannel, removeChannel, cleanup, markChannelSubscribed };
 }
