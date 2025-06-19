@@ -18,7 +18,7 @@ import { IssuesRecommendationsDashboard } from '@/components/debug-session/Issue
 import { ResultsSummaryDashboard } from '@/components/debug-session/results/ResultsSummaryDashboard';
 
 const DebugSessionPage = () => {
-  const { sessionId } = useParams<{ sessionId: string; projectId: string }>();
+  const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
   const { user } = useAuth();
   const { session, isLoading, error, collaborators, broadcastEvent, lastEvent } = useDebugSession(sessionId!, user);
   
@@ -114,24 +114,24 @@ sayHello('World')`);
 
       {/* Real-Time Analysis Dashboard */}
       <RealTimeAnalysisDashboard 
-        projectId={session?.id} 
+        projectId={projectId} 
         sessionId={sessionId}
       />
 
       {/* Issues Recommendations Dashboard */}
       <IssuesRecommendationsDashboard 
-        projectId={session?.id} 
+        projectId={projectId} 
         sessionId={sessionId}
       />
 
       {/* Results Summary Dashboard - Show after analysis completes */}
       {showResultsSummary && result && !result.error && (
         <ResultsSummaryDashboard
-          projectId={session?.id || ''}
+          projectId={projectId || ''}
           sessionId={sessionId}
           results={{
             id: 'current-analysis',
-            projectId: session?.id || '',
+            projectId: projectId || '',
             sessionId: sessionId || '',
             timestamp: new Date().toISOString(),
             overallHealthScore: result.analysis?.overallScore || 75,
@@ -178,7 +178,7 @@ sayHello('World')`);
         <div className="space-y-4">
           <CollaboratorsList collaborators={collaborators} />
           <AutomationControlPanel
-            projectId={session?.id}
+            projectId={projectId}
             availableTools={['eslint', 'lighthouse', 'snyk', 'sonarqube', 'accessibility', 'bundle-analyzer']}
             onSettingsChange={handleAutomationSettingsChange}
           />
