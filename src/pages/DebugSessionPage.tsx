@@ -1,4 +1,3 @@
-
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
@@ -104,7 +103,29 @@ sayHello('World')`);
   }
 
   if (error) {
-    return <div className="text-red-500 text-center p-8">Error loading session: {error.message}</div>;
+    console.error('Debug session error:', error);
+    return (
+      <div className="text-red-500 text-center p-8">
+        <h2 className="text-xl font-semibold mb-2">Error loading session</h2>
+        <p className="mb-4">{error.message}</p>
+        <p className="text-sm text-gray-600">
+          This could be due to network issues or database problems. Please try refreshing the page.
+        </p>
+      </div>
+    );
+  }
+
+  // Handle case where session is null (not found)
+  if (!session) {
+    return (
+      <div className="text-yellow-600 text-center p-8">
+        <h2 className="text-xl font-semibold mb-2">Session not found</h2>
+        <p className="mb-4">The debug session you're looking for doesn't exist or you don't have access to it.</p>
+        <p className="text-sm text-gray-600">
+          Please check the URL or contact your team administrator.
+        </p>
+      </div>
+    );
   }
   
   return (

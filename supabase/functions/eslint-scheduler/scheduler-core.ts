@@ -34,24 +34,36 @@ export async function scheduleAnalysis(supabase: any, data: any, userId: string)
     // Continue anyway for debug sessions
   }
 
-  // Check for resource limits
+  // Check for resource limits with better error handling
   console.log('Scheduler Core: Checking active jobs limit');
-  const { data: activeJobs, error: jobsError } = await supabase
-    .from('eslint_analysis_queue')
-    .select('id')
-    .eq('project_id', project_id)
-    .in('status', ['queued', 'running']);
+  try {
+    const { data: activeJobs, error: jobsError } = await supabase
+      .from('eslint_analysis_queue')
+      .select('id')
+      .eq('project_id', project_id)
+      .in('status', ['queued', 'running']);
 
-  if (jobsError) {
-    console.error('Scheduler Core: Failed to check active jobs:', jobsError);
-    throw new Error(`Failed to check active jobs: ${jobsError.message}`);
+    if (jobsError) {
+      console.error('Scheduler Core: Failed to check active jobs:', jobsError);
+      if (jobsError.message.includes('multiple rows')) {
+        console.warn('Scheduler Core: Multiple rows detected in active jobs check, continuing...');
+        // Don't throw error, just log and continue
+      } else {
+        throw new Error(`Failed to check active jobs: ${jobsError.message}`);
+      }
+    }
+
+    if (activeJobs && activeJobs.length >= 10) { // Increased limit for testing
+      throw new Error('Too many active jobs for this project');
+    }
+  } catch (error: any) {
+    if (error.message.includes('Too many active jobs')) {
+      throw error; // Re-throw resource limit errors
+    }
+    console.warn('Scheduler Core: Active jobs check failed, continuing anyway:', error.message);
   }
 
-  if (activeJobs && activeJobs.length >= 10) { // Increased limit for testing
-    throw new Error('Too many active jobs for this project');
-  }
-
-  // Create job
+  // Create job with better error handling
   const job = {
     project_id,
     trigger_type: trigger_type || 'manual',
@@ -66,23 +78,41 @@ export async function scheduleAnalysis(supabase: any, data: any, userId: string)
 
   console.log('Scheduler Core: Creating job:', job);
 
-  const { data: createdJob, error: createError } = await supabase
-    .from('eslint_analysis_queue')
-    .insert(job)
-    .select()
-    .single();
+  try {
+    const { data: createdJob, error: createError } = await supabase
+      .from('eslint_analysis_queue')
+      .insert(job)
+      .select()
+      .single();
 
-  if (createError) {
-    console.error('Scheduler Core: Failed to create job:', createError);
-    throw new Error(`Failed to create job: ${createError.message}`);
+    if (createError) {
+      console.error('Scheduler Core: Failed to create job:', createError);
+      
+      // Handle specific error cases
+      if (createError.message.includes('duplicate key')) {
+        throw new Error('A similar analysis job is already queued');
+      } else if (createError.message.includes('foreign key')) {
+        throw new Error('Invalid project reference');
+      } else {
+        throw new Error(`Failed to create job: ${createError.message}`);
+      }
+    }
+
+    console.log('Scheduler Core: Job created successfully:', createdJob.id);
+
+    // Notify via WebSocket with error handling
+    try {
+      await notifyJobUpdate(supabase, createdJob);
+    } catch (notifyError) {
+      console.warn('Scheduler Core: Failed to send notification, but job was created:', notifyError);
+      // Don't fail the entire operation if notification fails
+    }
+
+    return createdJob;
+  } catch (error: any) {
+    console.error('Scheduler Core: Exception creating job:', error);
+    throw error;
   }
-
-  console.log('Scheduler Core: Job created successfully:', createdJob.id);
-
-  // Notify via WebSocket
-  await notifyJobUpdate(supabase, createdJob);
-
-  return createdJob;
 }
 
 export async function notifyJobUpdate(supabase: any, job: any) {
@@ -100,5 +130,6 @@ export async function notifyJobUpdate(supabase: any, job: any) {
     console.log('Scheduler Core: Job update notification sent successfully');
   } catch (error) {
     console.error('Scheduler Core: Failed to send job update notification:', error);
+    // Don't throw error, just log it
   }
 }

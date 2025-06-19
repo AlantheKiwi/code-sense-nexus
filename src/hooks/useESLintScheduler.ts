@@ -51,6 +51,7 @@ export function useESLintScheduler() {
       setIsLoading(true);
       
       console.log('Scheduling ESLint analysis for project:', projectId);
+      
       const response = await supabase.functions.invoke('eslint-scheduler', {
         body: {
           action: 'schedule',
@@ -66,7 +67,15 @@ export function useESLintScheduler() {
 
       if (response.error) {
         console.error('Schedule analysis error:', response.error);
-        throw new Error(response.error.message || 'Failed to schedule analysis');
+        
+        // Handle specific error cases
+        if (response.error.message?.includes('multiple rows')) {
+          throw new Error('Database integrity issue detected. Please contact support.');
+        } else if (response.error.message?.includes('Too many active jobs')) {
+          throw new Error('Too many active analysis jobs. Please wait for some to complete.');
+        } else {
+          throw new Error(response.error.message || 'Failed to schedule analysis');
+        }
       }
 
       toast.success('ESLint analysis scheduled successfully');
@@ -102,14 +111,29 @@ export function useESLintScheduler() {
 
       if (response.error) {
         console.error('Queue status error:', response.error);
+        
+        // Handle specific error cases
+        if (response.error.message?.includes('multiple rows')) {
+          console.warn('Multiple rows detected in queue status, using first result');
+          // Continue processing if we have data despite the error
+          if (response.data) {
+            const data = response.data;
+            if (mountedRef.current) {
+              setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+              setQueueStats(data.stats || null);
+            }
+            return data;
+          }
+        }
+        
         throw new Error(response.error.message || 'Failed to fetch queue status');
       }
 
       const data = response.data;
       console.log('Queue status data:', data);
 
-      if (mountedRef.current) {
-        setJobs(data.jobs || []);
+      if (mountedRef.current && data) {
+        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
         setQueueStats(data.stats || null);
       }
       
@@ -119,7 +143,11 @@ export function useESLintScheduler() {
       
       // Only show user-facing errors for actual issues, not abort errors
       if (!error.message.includes('aborted') && !error.message.includes('cancelled')) {
-        toast.error(`Unable to fetch queue status: ${error.message}`);
+        if (error.message.includes('multiple rows')) {
+          toast.error('Database integrity issue detected. Some data may be duplicated.');
+        } else {
+          toast.error(`Unable to fetch queue status: ${error.message}`);
+        }
       }
       
       throw error;
@@ -135,10 +163,11 @@ export function useESLintScheduler() {
   useEffect(() => {
     mountedRef.current = true;
     
-    // Initial fetch
+    // Initial fetch with error handling
     console.log('Starting initial queue status fetch...');
     fetchQueueStatus().catch(error => {
       console.log('Initial queue status fetch failed:', error.message);
+      // Don't show error toast on initial load failure
     });
     
     // Set up auto-refresh
