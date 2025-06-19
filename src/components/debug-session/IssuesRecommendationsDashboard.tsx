@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,6 +33,7 @@ export interface Recommendation {
   estimated_effort: string;
   expected_impact: string;
   tools_needed?: string[];
+  is_automated?: boolean;
 }
 
 interface IssuesRecommendationsDashboardProps {
@@ -105,7 +105,8 @@ export const IssuesRecommendationsDashboard = ({
       priority: 1,
       estimated_effort: '2-4 hours',
       expected_impact: 'Reduce bundle size by 30-50%',
-      tools_needed: ['PurgeCSS', 'Webpack']
+      tools_needed: ['PurgeCSS', 'Webpack'],
+      is_automated: true
     },
     {
       id: '2',
@@ -119,7 +120,8 @@ export const IssuesRecommendationsDashboard = ({
       ],
       priority: 2,
       estimated_effort: '1-2 hours',
-      expected_impact: 'Improve accessibility score by 15-20 points'
+      expected_impact: 'Improve accessibility score by 15-20 points',
+      is_automated: false
     }
   ];
 
