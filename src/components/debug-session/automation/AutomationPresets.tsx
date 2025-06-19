@@ -5,7 +5,7 @@ import { Code, Target, Shield } from 'lucide-react';
 const automationPresets = {
   development: {
     name: 'Development Mode',
-    description: 'Frequent analysis with focus on code quality',
+    description: 'Frequent analysis for code quality',
     icon: Code,
     settings: {
       eslint: { enabled: true, frequency: 'on-change' as const },
@@ -18,7 +18,7 @@ const automationPresets = {
   },
   production: {
     name: 'Production Monitoring',
-    description: 'Regular monitoring with performance focus',
+    description: 'Regular monitoring for performance',
     icon: Target,
     settings: {
       eslint: { enabled: true, frequency: 'daily' as const },
@@ -31,7 +31,7 @@ const automationPresets = {
   },
   security: {
     name: 'Security Focus',
-    description: 'Enhanced security scanning and monitoring',
+    description: 'Enhanced security scanning',
     icon: Shield,
     settings: {
       eslint: { enabled: true, frequency: 'daily' as const },
@@ -52,7 +52,7 @@ interface AutomationPresetsProps {
 export const AutomationPresets = ({ activePreset, onApplyPreset }: AutomationPresetsProps) => (
   <div>
     <h3 className="font-medium mb-3">Quick Presets</h3>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
       {Object.entries(automationPresets).map(([key, preset]) => {
         const IconComponent = preset.icon;
         const isActive = activePreset === key;
@@ -61,15 +61,16 @@ export const AutomationPresets = ({ activePreset, onApplyPreset }: AutomationPre
           <Button
             key={key}
             variant={isActive ? "default" : "outline"}
-            size="sm"
             onClick={() => onApplyPreset(key as keyof typeof automationPresets)}
-            className="h-auto p-3 flex flex-col items-start gap-1"
+            className="h-16 p-3 flex flex-col items-start justify-center gap-1 text-left whitespace-normal min-w-0"
           >
-            <div className="flex items-center gap-2 w-full">
-              <IconComponent className="h-4 w-4" />
-              <span className="font-medium">{preset.name}</span>
+            <div className="flex items-center gap-2 w-full min-w-0">
+              <IconComponent className="h-4 w-4 flex-shrink-0" />
+              <span className="font-medium text-sm truncate">{preset.name}</span>
             </div>
-            <span className="text-xs text-left opacity-80">{preset.description}</span>
+            <span className="text-xs opacity-80 leading-tight line-clamp-2 w-full text-left">
+              {preset.description}
+            </span>
           </Button>
         );
       })}
