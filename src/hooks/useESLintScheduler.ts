@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -32,10 +32,17 @@ export interface QueueStats {
   retrying: number;
 }
 
+// Global request deduplication
+const activeRequests = new Map<string, Promise<any>>();
+const requestCooldowns = new Map<string, number>();
+
 export function useESLintScheduler() {
   const [jobs, setJobs] = useState<ESLintJob[]>([]);
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const scheduleAnalysis = async (
     projectId: string, 
@@ -46,6 +53,7 @@ export function useESLintScheduler() {
   ) => {
     try {
       setIsLoading(true);
+      
       const response = await supabase.functions.invoke('eslint-scheduler', {
         body: {
           action: 'schedule',
@@ -54,9 +62,6 @@ export function useESLintScheduler() {
           trigger_data: triggerData,
           priority,
           scheduled_at: scheduledAt?.toISOString(),
-        },
-        headers: {
-          'Content-Type': 'application/json',
         },
       });
 
@@ -76,49 +81,115 @@ export function useESLintScheduler() {
     }
   };
 
-  const fetchQueueStatus = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Use the direct Supabase URL constants
-      const url = new URL(`https://dtwgnqzuskdfuypigaor.supabase.co/functions/v1/eslint-scheduler`);
-      url.searchParams.append('action', 'queue-status');
+  const fetchQueueStatus = useCallback(async () => {
+    const requestKey = 'queue-status';
+    
+    // Check cooldown period (minimum 2 seconds between requests)
+    const now = Date.now();
+    const lastRequest = requestCooldowns.get(requestKey);
+    if (lastRequest && now - lastRequest < 2000) {
+      console.log('Request throttled, waiting for cooldown');
+      return;
+    }
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-          'Content-Type': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0d2ducXp1c2tkZnV5cGlnYW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNzY3NDcsImV4cCI6MjA2NDc1Mjc0N30.D_Ms-plmjx82XAw4MdCYQMh03X6nzFnAajVMKIJLCVQ',
-        },
+    // Check if there's already an active request
+    if (activeRequests.has(requestKey)) {
+      console.log('Request already in progress, waiting for completion');
+      return activeRequests.get(requestKey);
+    }
+
+    // Abort any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
+    const requestPromise = (async () => {
+      try {
+        setIsLoading(true);
+        requestCooldowns.set(requestKey, now);
+
+        const response = await supabase.functions.invoke('eslint-scheduler', {
+          body: { action: 'queue-status' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.error) {
+          throw new Error(response.error.message);
+        }
+
+        if (!response.data) {
+          throw new Error('No data received from queue status');
+        }
+
+        setJobs(response.data.jobs || []);
+        setQueueStats(response.data.stats || null);
+        setRetryCount(0); // Reset retry count on success
+        
+        return response.data;
+      } catch (error: any) {
+        console.error('Error fetching queue status:', error);
+        
+        // Implement exponential backoff for retries
+        if (retryCount < 3) {
+          const backoffDelay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+          console.log(`Retrying queue status fetch in ${backoffDelay}ms (attempt ${retryCount + 1})`);
+          
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            fetchQueueStatus();
+          }, backoffDelay);
+        } else {
+          console.log('Max retries reached for queue status fetch');
+          setRetryCount(0);
+        }
+        
+        throw error;
+      } finally {
+        setIsLoading(false);
+        activeRequests.delete(requestKey);
+      }
+    })();
+
+    activeRequests.set(requestKey, requestPromise);
+    return requestPromise;
+  }, [retryCount]);
+
+  // Auto-refresh with proper cleanup and rate limiting
+  useEffect(() => {
+    // Initial fetch
+    fetchQueueStatus().catch(error => {
+      console.log('Initial queue status fetch failed:', error.message);
+    });
+    
+    // Set up auto-refresh with longer interval to reduce load
+    refreshIntervalRef.current = setInterval(() => {
+      fetchQueueStatus().catch(error => {
+        console.log('Auto-refresh queue status fetch failed:', error.message);
       });
+    }, 30000); // 30 seconds interval
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    return () => {
+      // Cleanup on unmount
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+      
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
       }
 
-      const data = await response.json();
-      setJobs(data.jobs || []);
-      setQueueStats(data.stats || null);
-      return data;
-    } catch (error: any) {
-      console.error('Error fetching queue status:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Auto-refresh queue status
-  useEffect(() => {
-    fetchQueueStatus().catch(console.error);
-    
-    const interval = setInterval(() => {
-      fetchQueueStatus().catch(console.error);
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
+      // Clear active requests for this hook instance
+      activeRequests.clear();
+      requestCooldowns.clear();
+    };
+  }, []); // Empty dependency array to run only once
 
   return {
     jobs,

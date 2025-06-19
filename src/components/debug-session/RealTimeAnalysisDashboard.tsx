@@ -22,36 +22,35 @@ export const RealTimeAnalysisDashboard = ({
 }: RealTimeAnalysisDashboardProps) => {
   const [activeAnalyses, setActiveAnalyses] = useState<any[]>([]);
   const [criticalIssues, setCriticalIssues] = useState<any[]>([]);
-  const hasInitializedRef = useRef(false);
-  const projectIdRef = useRef<string | undefined>(undefined);
+  const currentProjectIdRef = useRef<string | undefined>(undefined);
+  const subscriptionActiveRef = useRef(false);
   
   const { jobs, queueStats, fetchQueueStatus } = useESLintScheduler();
   const { subscribeToJobUpdates, unsubscribeFromJobUpdates } = useESLintRealtimeUpdates();
   const { data: lighthouseQueue } = useLighthouseQueue(projectId);
 
-  // Subscribe to real-time updates only once per projectId
+  // Subscribe to real-time updates with proper cleanup
   useEffect(() => {
-    // Only initialize if projectId exists and has changed
-    if (!projectId || (hasInitializedRef.current && projectIdRef.current === projectId)) {
+    // Don't initialize if no projectId or already subscribed to same project
+    if (!projectId || (subscriptionActiveRef.current && currentProjectIdRef.current === projectId)) {
       return;
     }
 
     // Clean up previous subscription if projectId changed
-    if (hasInitializedRef.current && projectIdRef.current !== projectId) {
-      console.log('Project ID changed, cleaning up previous subscription');
+    if (subscriptionActiveRef.current && currentProjectIdRef.current !== projectId) {
+      console.log('Project ID changed from', currentProjectIdRef.current, 'to', projectId);
       unsubscribeFromJobUpdates();
-      hasInitializedRef.current = false;
+      subscriptionActiveRef.current = false;
     }
 
-    hasInitializedRef.current = true;
-    projectIdRef.current = projectId;
-    
     console.log('Initializing RealTimeAnalysisDashboard for project:', projectId);
+    currentProjectIdRef.current = projectId;
+    subscriptionActiveRef.current = true;
     
     subscribeToJobUpdates(projectId, (updatedJob) => {
       console.log('Job update received:', updatedJob);
       
-      // Show toast notifications for job status changes
+      // Show toast notifications for job status changes (limited)
       if (updatedJob.status === 'running' && updatedJob.trigger_data?.source === 'debug_session') {
         toast.info(`Analysis started (${updatedJob.trigger_data.selectedTools?.join(', ') || 'ESLint'})`, {
           description: `Job ${updatedJob.id.slice(0, 8)}... is now processing`
@@ -82,19 +81,13 @@ export const RealTimeAnalysisDashboard = ({
       }
     });
 
-    // Initial fetch with error handling
-    fetchQueueStatus().catch(error => {
-      console.log('Queue status fetch failed, but continuing:', error.message);
-      // Don't show toast for initial fetch failures to avoid spam
-    });
-
     return () => {
-      console.log('Cleaning up RealTimeAnalysisDashboard');
-      hasInitializedRef.current = false;
-      projectIdRef.current = undefined;
+      console.log('Cleaning up RealTimeAnalysisDashboard subscription');
+      subscriptionActiveRef.current = false;
+      currentProjectIdRef.current = undefined;
       unsubscribeFromJobUpdates();
     };
-  }, [projectId]); // Only depend on projectId
+  }, [projectId, subscribeToJobUpdates, unsubscribeFromJobUpdates]);
 
   // Update active analyses from queue data
   useEffect(() => {
