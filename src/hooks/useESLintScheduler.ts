@@ -53,6 +53,7 @@ export function useESLintScheduler() {
     try {
       setIsLoading(true);
       
+      console.log('Scheduling analysis with supabase.functions.invoke...');
       const response = await supabase.functions.invoke('eslint-scheduler', {
         body: {
           action: 'schedule',
@@ -64,16 +65,19 @@ export function useESLintScheduler() {
         },
       });
 
+      console.log('Schedule analysis response:', response);
+
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error('Schedule analysis error:', response.error);
+        throw new Error(response.error.message || 'Failed to schedule analysis');
       }
 
       toast.success('ESLint analysis scheduled successfully');
       await fetchQueueStatus();
-      return response.data.job;
+      return response.data?.job;
     } catch (error: any) {
       console.error('Error scheduling ESLint analysis:', error);
-      toast.error('Failed to schedule ESLint analysis');
+      toast.error(`Failed to schedule ESLint analysis: ${error.message}`);
       throw error;
     } finally {
       setIsLoading(false);
@@ -96,18 +100,31 @@ export function useESLintScheduler() {
     try {
       setIsLoading(true);
       
-      // Use Supabase functions.invoke instead of manual fetch
-      const response = await supabase.functions.invoke('eslint-scheduler', {
-        body: {
-          action: 'queue-status'
-        },
-      });
+      console.log('Fetching queue status with supabase.functions.invoke...');
+      
+      // Try different approaches to see which works
+      let response;
+      try {
+        // First try: Use GET approach (no body)
+        response = await supabase.functions.invoke('eslint-scheduler');
+        console.log('GET response:', response);
+      } catch (getError) {
+        console.log('GET failed, trying POST with body:', getError);
+        
+        // Second try: Use POST with body
+        response = await supabase.functions.invoke('eslint-scheduler', {
+          body: { action: 'queue-status' }
+        });
+        console.log('POST response:', response);
+      }
 
       if (response.error) {
-        throw new Error(response.error.message);
+        console.error('Queue status error:', response.error);
+        throw new Error(response.error.message || 'Failed to fetch queue status');
       }
 
       const data = response.data;
+      console.log('Queue status data:', data);
 
       // Cache the successful response
       requestCache.set(cacheKey, { data, timestamp: now });
@@ -120,10 +137,15 @@ export function useESLintScheduler() {
       return data;
     } catch (error: any) {
       console.error('Error fetching queue status:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       
-      // Only show user-facing errors for actual issues
-      if (!error.message.includes('aborted')) {
-        toast.error('Unable to fetch queue status. Please try again.');
+      // Only show user-facing errors for actual issues, not abort errors
+      if (!error.message.includes('aborted') && !error.message.includes('cancelled')) {
+        toast.error(`Unable to fetch queue status: ${error.message}`);
       }
       
       throw error;
@@ -138,7 +160,8 @@ export function useESLintScheduler() {
   useEffect(() => {
     mountedRef.current = true;
     
-    // Initial fetch
+    // Initial fetch with detailed error logging
+    console.log('Starting initial queue status fetch...');
     fetchQueueStatus().catch(error => {
       console.log('Initial queue status fetch failed:', error.message);
     });
@@ -146,6 +169,7 @@ export function useESLintScheduler() {
     // Set up auto-refresh with longer interval
     refreshIntervalRef.current = setInterval(() => {
       if (mountedRef.current) {
+        console.log('Auto-refresh queue status...');
         fetchQueueStatus().catch(error => {
           console.log('Auto-refresh failed:', error.message);
         });

@@ -10,7 +10,9 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req: Request) => {
   console.log(`ESLint Scheduler: ${req.method} request received`);
+  console.log(`ESLint Scheduler: URL: ${req.url}`);
 
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -42,8 +44,8 @@ serve(async (req: Request) => {
 
     console.log(`ESLint Scheduler: Authenticated user ${user.id}`);
 
-    // Handle different request methods and body formats
-    let action: string | null = null;
+    // Handle different request methods and extract action
+    let action: string = 'queue-status'; // Default action
     let requestData: any = {};
 
     if (req.method === 'POST') {
@@ -51,9 +53,9 @@ serve(async (req: Request) => {
         const body = await req.text();
         console.log('ESLint Scheduler: Request body:', body);
         
-        if (body) {
+        if (body && body.trim()) {
           requestData = JSON.parse(body);
-          action = requestData.action;
+          action = requestData.action || 'queue-status';
         }
       } catch (parseError) {
         console.error('ESLint Scheduler: JSON parse error:', parseError);
@@ -65,14 +67,7 @@ serve(async (req: Request) => {
     } else if (req.method === 'GET') {
       const url = new URL(req.url);
       action = url.searchParams.get('action') || 'queue-status';
-    }
-
-    if (!action) {
-      console.error('ESLint Scheduler: No action specified');
-      return new Response(JSON.stringify({ error: 'Action parameter required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      console.log(`ESLint Scheduler: GET action: ${action}`);
     }
 
     console.log(`ESLint Scheduler: Processing action: ${action}`);
