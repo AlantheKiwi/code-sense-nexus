@@ -4,7 +4,7 @@ import { useChannelManager } from './useChannelManager';
 import { ESLintJob } from './useESLintScheduler';
 
 export function useESLintRealtimeUpdates() {
-  const { createChannel, removeChannel, markChannelSubscribed } = useChannelManager();
+  const { createChannel, subscribeChannel, removeChannel } = useChannelManager();
   const currentSubscriptionRef = useRef<string | null>(null);
 
   const subscribeToJobUpdates = useCallback((projectId: string, onJobUpdate: (job: ESLintJob) => void) => {
@@ -16,41 +16,42 @@ export function useESLintRealtimeUpdates() {
     }
 
     const channelName = `eslint-jobs-${projectId}`;
-    console.log('Subscribing to ESLint updates:', channelName);
+    console.log('Setting up ESLint updates subscription:', channelName);
     
     const channel = createChannel(channelName);
-    
-    // Check if already subscribed to prevent double subscription
-    const existingState = channel.state;
-    if (existingState === 'joined' || existingState === 'joining') {
-      console.log('Channel already subscribed, skipping subscription');
-      currentSubscriptionRef.current = channelName;
-      return;
-    }
+    currentSubscriptionRef.current = channelName;
 
-    channel
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'eslint_analysis_queue',
-        filter: `project_id=eq.${projectId}`
-      }, (payload) => {
-        console.log('ESLint job update received:', payload);
-        if (payload.new) {
-          onJobUpdate(payload.new as ESLintJob);
-        }
-      })
-      .subscribe((status) => {
-        console.log('ESLint channel subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          markChannelSubscribed(channelName);
-          currentSubscriptionRef.current = channelName;
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          console.warn('ESLint subscription failed with status:', status);
-          currentSubscriptionRef.current = null;
-        }
+    // Use the new subscribeChannel method to prevent multiple subscriptions
+    subscribeChannel(channelName, async (channel) => {
+      return new Promise((resolve, reject) => {
+        channel
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'eslint_analysis_queue',
+            filter: `project_id=eq.${projectId}`
+          }, (payload) => {
+            console.log('ESLint job update received:', payload);
+            if (payload.new) {
+              onJobUpdate(payload.new as ESLintJob);
+            }
+          })
+          .subscribe((status) => {
+            console.log('ESLint channel subscription status:', status);
+            if (status === 'SUBSCRIBED') {
+              resolve();
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+              console.warn('ESLint subscription failed with status:', status);
+              currentSubscriptionRef.current = null;
+              reject(new Error(`Subscription failed: ${status}`));
+            }
+          });
       });
-  }, [createChannel, removeChannel, markChannelSubscribed]);
+    }).catch(error => {
+      console.error('Failed to subscribe to ESLint updates:', error);
+      currentSubscriptionRef.current = null;
+    });
+  }, [createChannel, subscribeChannel, removeChannel]);
 
   const unsubscribeFromJobUpdates = useCallback(() => {
     if (currentSubscriptionRef.current) {

@@ -9,6 +9,7 @@ const globalChannels = new Map<string, {
   refCount: number; 
   lastUsed: number;
   isSubscribed: boolean;
+  subscriptionPromise?: Promise<void>;
 }>();
 
 // Cleanup old unused channels periodically
@@ -63,12 +64,38 @@ export function useChannelManager() {
     return channel;
   }, []);
 
-  const markChannelSubscribed = useCallback((channelName: string) => {
+  const subscribeChannel = useCallback((channelName: string, subscriptionCallback: (channel: RealtimeChannel) => Promise<void>) => {
     const existing = globalChannels.get(channelName);
-    if (existing) {
-      existing.isSubscribed = true;
-      console.log('Marked channel as subscribed:', channelName);
+    if (!existing) {
+      console.warn('Cannot subscribe to non-existent channel:', channelName);
+      return Promise.resolve();
     }
+
+    // If already subscribed, return immediately
+    if (existing.isSubscribed) {
+      console.log('Channel already subscribed:', channelName);
+      return Promise.resolve();
+    }
+
+    // If subscription is in progress, wait for it
+    if (existing.subscriptionPromise) {
+      console.log('Waiting for existing subscription:', channelName);
+      return existing.subscriptionPromise;
+    }
+
+    // Start new subscription
+    console.log('Starting subscription for channel:', channelName);
+    existing.subscriptionPromise = subscriptionCallback(existing.channel).then(() => {
+      existing.isSubscribed = true;
+      existing.subscriptionPromise = undefined;
+      console.log('Channel subscribed successfully:', channelName);
+    }).catch((error) => {
+      console.error('Channel subscription failed:', channelName, error);
+      existing.subscriptionPromise = undefined;
+      throw error;
+    });
+
+    return existing.subscriptionPromise;
   }, []);
 
   const removeChannel = useCallback((channelName: string) => {
@@ -103,5 +130,5 @@ export function useChannelManager() {
     localChannelsRef.current.clear();
   }, [removeChannel]);
 
-  return { createChannel, removeChannel, cleanup, markChannelSubscribed };
+  return { createChannel, subscribeChannel, removeChannel, cleanup };
 }

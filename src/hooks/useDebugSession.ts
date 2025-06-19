@@ -31,7 +31,7 @@ export function useDebugSession(sessionId: string, user: User | null) {
   const [lastEvent, setLastEvent] = useState<BroadcastEvent | null>(null);
   const isInitializedRef = useRef(false);
   const currentChannelRef = useRef<string | null>(null);
-  const { createChannel, cleanup, markChannelSubscribed } = useChannelManager();
+  const { createChannel, subscribeChannel, cleanup } = useChannelManager();
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ['debugSession', sessionId],
@@ -54,41 +54,44 @@ export function useDebugSession(sessionId: string, user: User | null) {
       },
     });
 
-    // Check if already subscribed
-    if (sessionChannel.state === 'joined' || sessionChannel.state === 'joining') {
-      console.log('Debug session channel already subscribed');
-      currentChannelRef.current = channelName;
-      return;
-    }
+    currentChannelRef.current = channelName;
 
-    sessionChannel
-      .on('presence', { event: 'sync' }, () => {
-        const presenceState = sessionChannel.presenceState();
-        const collabs = Object.keys(presenceState).map((key) => presenceState[key][0]);
-        setCollaborators(collabs);
-        console.log('Debug session presence sync:', collabs);
-      })
-      .on<BroadcastEvent>('broadcast', { event: 'debug_event' }, ({ payload }) => {
-        console.log('Debug session broadcast received:', payload);
-        if (payload.sender !== user.id) {
-          setLastEvent(payload);
-        }
-      })
-      .subscribe((status) => {
-        console.log('Debug session subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          markChannelSubscribed(channelName);
-          currentChannelRef.current = channelName;
-          sessionChannel.track({ 
-            user_id: user.id, 
-            email: user.email, 
-            joined_at: new Date().toISOString() 
+    // Use the new subscribeChannel method to prevent multiple subscriptions
+    subscribeChannel(channelName, async (channel) => {
+      return new Promise((resolve, reject) => {
+        channel
+          .on('presence', { event: 'sync' }, () => {
+            const presenceState = channel.presenceState();
+            const collabs = Object.keys(presenceState).map((key) => presenceState[key][0]);
+            setCollaborators(collabs);
+            console.log('Debug session presence sync:', collabs);
+          })
+          .on<BroadcastEvent>('broadcast', { event: 'debug_event' }, ({ payload }) => {
+            console.log('Debug session broadcast received:', payload);
+            if (payload.sender !== user.id) {
+              setLastEvent(payload);
+            }
+          })
+          .subscribe((status) => {
+            console.log('Debug session subscription status:', status);
+            if (status === 'SUBSCRIBED') {
+              channel.track({ 
+                user_id: user.id, 
+                email: user.email, 
+                joined_at: new Date().toISOString() 
+              });
+              resolve();
+            } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+              console.warn('Debug session subscription failed:', status);
+              currentChannelRef.current = null;
+              reject(new Error(`Subscription failed: ${status}`));
+            }
           });
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-          console.warn('Debug session subscription failed:', status);
-          currentChannelRef.current = null;
-        }
       });
+    }).catch(error => {
+      console.error('Failed to subscribe to debug session:', error);
+      currentChannelRef.current = null;
+    });
 
     return () => {
       console.log('Cleaning up debug session');
@@ -96,7 +99,7 @@ export function useDebugSession(sessionId: string, user: User | null) {
       currentChannelRef.current = null;
       cleanup();
     };
-  }, [sessionId, user?.id, createChannel, cleanup, markChannelSubscribed]);
+  }, [sessionId, user?.id, createChannel, subscribeChannel, cleanup]);
 
   const broadcastEvent = (event: Omit<BroadcastEvent, 'sender'>) => {
     if (user && currentChannelRef.current) {
