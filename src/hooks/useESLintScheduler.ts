@@ -32,9 +32,10 @@ export interface QueueStats {
   retrying: number;
 }
 
-// Simplified global request management
+// Simple request cache to prevent duplicate requests
 const requestCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5000; // 5 seconds cache
+const CACHE_TTL = 3000; // 3 seconds cache
+const SUPABASE_URL = "https://dtwgnqzuskdfuypigaor.supabase.co";
 
 export function useESLintScheduler() {
   const [jobs, setJobs] = useState<ESLintJob[]>([]);
@@ -88,14 +89,16 @@ export function useESLintScheduler() {
     const cached = requestCache.get(cacheKey);
     if (cached && now - cached.timestamp < CACHE_TTL) {
       console.log('Using cached queue status');
+      setJobs(cached.data.jobs || []);
+      setQueueStats(cached.data.stats || null);
       return cached.data;
     }
 
     try {
       setIsLoading(true);
       
-      // Use GET request with query parameter - matching what the edge function expects
-      const url = new URL(supabase.supabaseUrl + '/functions/v1/eslint-scheduler');
+      // Use GET request with query parameter - fix the URL construction
+      const url = new URL(`${SUPABASE_URL}/functions/v1/eslint-scheduler`);
       url.searchParams.set('action', 'queue-status');
       
       const { data: session } = await supabase.auth.getSession();
@@ -112,6 +115,8 @@ export function useESLintScheduler() {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`HTTP ${response.status}: ${response.statusText}`, errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
