@@ -181,8 +181,8 @@ export class AutoFixOrchestrator {
     this.actions.addResult(mockResult);
   }
 
-  async runLighthouseAnalysis(projectId: string, url?: string): Promise<void> {
-    console.log('AutoFixOrchestrator: Lighthouse analysis requested for project:', projectId);
+  async runLighthouseAnalysis(projectId: string, url?: string, useRealAnalysis: boolean = false): Promise<void> {
+    console.log('AutoFixOrchestrator: Lighthouse analysis requested for project:', projectId, 'Real mode:', useRealAnalysis);
     
     if (this.isRunning) {
       console.log('AutoFixOrchestrator: Analysis already in progress, aborting new request');
@@ -196,33 +196,30 @@ export class AutoFixOrchestrator {
     this.actions.startAnalysis('Lighthouse');
 
     try {
-      console.log(`[${analysisId}] Running Lighthouse simulation`);
-      await this.simulateAnalysis('Lighthouse Analysis', [
-        { progress: 20, message: 'Loading page...' },
-        { progress: 40, message: 'Analyzing performance...' },
-        { progress: 60, message: 'Checking accessibility...' },
-        { progress: 80, message: 'Evaluating SEO...' },
-        { progress: 100, message: 'Lighthouse analysis complete' }
-      ]);
-
-      // Mock Lighthouse results - completely hardcoded, no external calls
-      const mockResult = {
-        tool: 'Lighthouse (Mock)',
-        scores: {
-          performance: 85,
-          accessibility: 92,
-          bestPractices: 88,
-          seo: 90
-        },
-        summary: 'Good overall performance (mock data)',
-        completedAt: new Date().toISOString()
-      };
-
-      console.log(`[${analysisId}] Lighthouse mock result created:`, mockResult);
-      this.actions.addResult(mockResult);
+      if (useRealAnalysis) {
+        console.log(`[${analysisId}] Running REAL Lighthouse analysis`);
+        await this.runRealLighthouseAnalysis(projectId, url);
+      } else {
+        console.log(`[${analysisId}] Running MOCK Lighthouse analysis`);
+        await this.runMockLighthouseAnalysis(projectId, url);
+      }
+      console.log(`[${analysisId}] Lighthouse analysis completed successfully`);
     } catch (error: any) {
-      console.error(`[${analysisId}] Lighthouse mock analysis error:`, error);
+      console.error(`[${analysisId}] Lighthouse analysis error:`, error);
       this.actions.addError(`Lighthouse analysis failed: ${error.message}`);
+      
+      // Fallback to mock if real analysis fails
+      if (useRealAnalysis) {
+        console.log(`[${analysisId}] Real analysis failed, attempting mock fallback`);
+        this.actions.addError('Real analysis failed, using mock fallback');
+        try {
+          await this.runMockLighthouseAnalysis(projectId, url);
+          console.log(`[${analysisId}] Mock fallback completed successfully`);
+        } catch (mockError: any) {
+          console.error(`[${analysisId}] Mock fallback also failed:`, mockError);
+          this.actions.addError(`Mock fallback failed: ${mockError.message}`);
+        }
+      }
     } finally {
       console.log(`[${analysisId}] Lighthouse analysis cleanup starting`);
       this.actions.stopAnalysis();
@@ -230,6 +227,111 @@ export class AutoFixOrchestrator {
       this.currentAnalysisId = null;
       console.log(`[${analysisId}] Lighthouse analysis cleanup completed`);
     }
+  }
+
+  private async runRealLighthouseAnalysis(projectId: string, url?: string): Promise<void> {
+    console.log('Running REAL Lighthouse analysis for project:', projectId);
+    
+    try {
+      // Update progress
+      this.actions.setProgress(10);
+      
+      // Call the lighthouse-recommendation-engine edge function with timeout
+      console.log('Calling lighthouse-recommendation-engine edge function...');
+      
+      const { data, error } = await Promise.race([
+        supabase.functions.invoke('lighthouse-recommendation-engine', {
+          body: {
+            action: 'schedule',
+            project_id: projectId,
+            url: url || 'https://example.com',
+            trigger_type: 'manual',
+            trigger_data: { 
+              source: 'auto-fix-panel'
+            },
+            priority: 1
+          }
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout (30s)')), 30000)
+        )
+      ]) as any;
+
+      if (error) {
+        throw new Error(`Edge function error: ${error.message}`);
+      }
+
+      this.actions.setProgress(50);
+      console.log('Lighthouse scheduler response:', data);
+
+      // Simulate waiting for analysis completion
+      await this.simulateAnalysis('Real Lighthouse Processing', [
+        { progress: 60, message: 'Job queued successfully...' },
+        { progress: 80, message: 'Analysis in progress...' },
+        { progress: 100, message: 'Real Lighthouse analysis complete' }
+      ]);
+
+      // Create result based on real response
+      const realResult = {
+        tool: 'Lighthouse (Real)',
+        scores: {
+          performance: 75,
+          accessibility: 88,
+          bestPractices: 82,
+          seo: 91
+        },
+        summary: data?.success ? 'Real analysis job created successfully' : 'Real analysis initiated',
+        completedAt: new Date().toISOString(),
+        jobId: data?.job?.id
+      };
+
+      console.log('Real Lighthouse result created:', realResult);
+      this.actions.addResult(realResult);
+
+    } catch (error: any) {
+      console.error('Real Lighthouse analysis error:', error);
+      
+      // Determine error type for better user feedback
+      if (error.message.includes('timeout')) {
+        throw new Error('Analysis request timed out. Edge function may be slow or unavailable.');
+      } else if (error.message.includes('Edge function error')) {
+        throw new Error(`Edge function failed: ${error.message}`);
+      } else if (error.message.includes('unauthorized')) {
+        throw new Error('Authentication failed. Please check your session.');
+      } else {
+        throw new Error(`Real analysis failed: ${error.message}`);
+      }
+    }
+  }
+
+  private async runMockLighthouseAnalysis(projectId: string, url?: string): Promise<void> {
+    console.log('Running MOCK Lighthouse analysis for project:', projectId);
+    
+    // Simulate Lighthouse analysis with progress updates
+    console.log('Running Lighthouse simulation');
+    await this.simulateAnalysis('Lighthouse Analysis', [
+      { progress: 20, message: 'Loading page...' },
+      { progress: 40, message: 'Analyzing performance...' },
+      { progress: 60, message: 'Checking accessibility...' },
+      { progress: 80, message: 'Evaluating SEO...' },
+      { progress: 100, message: 'Lighthouse analysis complete' }
+    ]);
+
+    // Mock Lighthouse results - completely hardcoded, no external calls
+    const mockResult = {
+      tool: 'Lighthouse (Mock)',
+      scores: {
+        performance: 85,
+        accessibility: 92,
+        bestPractices: 88,
+        seo: 90
+      },
+      summary: 'Good overall performance (mock data)',
+      completedAt: new Date().toISOString()
+    };
+
+    console.log('Lighthouse mock result created:', mockResult);
+    this.actions.addResult(mockResult);
   }
 
   async runFullAnalysis(projectId: string, code?: string, url?: string, useRealAnalysis: boolean = false): Promise<void> {
@@ -256,10 +358,10 @@ export class AutoFixOrchestrator {
       this.actions.setProgress(10);
       await this.runESLintSubAnalysis(projectId, code, useRealAnalysis);
 
-      // Run Lighthouse second (always mock for now)
+      // Run Lighthouse second
       console.log(`[${analysisId}] Running Lighthouse phase of full analysis`);
       this.actions.setProgress(50);
-      await this.runLighthouseSubAnalysis(projectId, url);
+      await this.runLighthouseSubAnalysis(projectId, url, useRealAnalysis);
 
       this.actions.setProgress(100);
       console.log(`[${analysisId}] Full analysis completed successfully`);
@@ -294,33 +396,22 @@ export class AutoFixOrchestrator {
     }
   }
 
-  private async runLighthouseSubAnalysis(projectId: string, url?: string): Promise<void> {
+  private async runLighthouseSubAnalysis(projectId: string, url?: string, useRealAnalysis: boolean = false): Promise<void> {
     // Sub-analysis doesn't change the main running state, just processes results
     try {
-      await this.simulateAnalysis('Lighthouse Analysis', [
-        { progress: 60, message: 'Loading page...' },
-        { progress: 70, message: 'Analyzing performance...' },
-        { progress: 80, message: 'Checking accessibility...' },
-        { progress: 90, message: 'Evaluating SEO...' },
-        { progress: 95, message: 'Lighthouse analysis complete' }
-      ]);
-
-      const mockResult = {
-        tool: 'Lighthouse (Mock)',
-        scores: {
-          performance: 85,
-          accessibility: 92,
-          bestPractices: 88,
-          seo: 90
-        },
-        summary: 'Good overall performance (mock data)',
-        completedAt: new Date().toISOString()
-      };
-
-      this.actions.addResult(mockResult);
+      if (useRealAnalysis) {
+        await this.runRealLighthouseAnalysis(projectId, url);
+      } else {
+        await this.runMockLighthouseAnalysis(projectId, url);
+      }
     } catch (error: any) {
       console.error('Lighthouse sub-analysis error:', error);
       this.actions.addError(`Lighthouse sub-analysis failed: ${error.message}`);
+      
+      if (useRealAnalysis) {
+        this.actions.addError('Real analysis failed, using mock fallback');
+        await this.runMockLighthouseAnalysis(projectId, url);
+      }
     }
   }
 

@@ -51,8 +51,8 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
           actions.addError('Project ID is required');
           return;
         }
-        console.log('Starting Lighthouse analysis (mock only for now)');
-        await orchestrator.runLighthouseAnalysis(projectId);
+        console.log('Starting Lighthouse analysis, real mode:', useRealAnalysis);
+        await orchestrator.runLighthouseAnalysis(projectId, undefined, useRealAnalysis);
       } catch (error: any) {
         console.error('Error running Lighthouse:', error);
         actions.addError(`Failed to run Lighthouse: ${error.message}`);
@@ -175,14 +175,14 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
                 variant="outline"
                 size="sm"
               >
-                Run Lighthouse (Mock)
+                Run Lighthouse {useRealAnalysis ? '(Real)' : '(Mock)'}
               </Button>
               <Button
                 onClick={handleRunAll}
                 disabled={state.isRunning}
                 size="sm"
               >
-                Run All Analysis {useRealAnalysis ? '(Mixed)' : '(Mock)'}
+                Run All Analysis {useRealAnalysis ? '(Real)' : '(Mock)'}
               </Button>
               
               {/* Analysis Control Buttons */}
