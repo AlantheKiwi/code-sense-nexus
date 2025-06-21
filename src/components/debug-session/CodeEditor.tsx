@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { LLMSelector } from '@/components/ai/LLMSelector';
 import { AIAnalysisResults } from '@/components/ai/AIAnalysisResults';
-import { BillingWrapper } from '@/components/billing/BillingWrapper';
 import { useLLMAnalysis } from '@/hooks/useLLMAnalysis';
 
 interface CodeEditorProps {
@@ -35,15 +34,6 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Usage Meter */}
-      <BillingWrapper 
-        analysisType="basic"
-        featureName="Code Analysis"
-        showUsageMeter={true}
-      >
-        <div></div>
-      </BillingWrapper>
-
       {/* Code Editor */}
       <Card>
         <CardHeader>

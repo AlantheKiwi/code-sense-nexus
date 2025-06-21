@@ -3,19 +3,23 @@ import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertTriangle, Zap } from 'lucide-react';
+import { AlertTriangle, Zap, ExternalLink } from 'lucide-react';
 import { UsageData, UserSubscription, SUBSCRIPTION_TIERS } from '@/types/billing';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface UsageMeterProps {
   usage: UsageData | null;
   subscription: UserSubscription | null;
   showDetails?: boolean;
+  showPricingLink?: boolean;
 }
 
 export const UsageMeter: React.FC<UsageMeterProps> = ({
   usage,
   subscription,
-  showDetails = true
+  showDetails = true,
+  showPricingLink = false
 }) => {
   const userTier = subscription?.tier || 'free';
   const tierConfig = SUBSCRIPTION_TIERS.find(t => t.id === userTier);
@@ -27,14 +31,23 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
     return (
       <Card className="border-green-200 bg-green-50">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium text-green-800">
-              Unlimited Analyses
-            </span>
-            <Badge className="bg-green-100 text-green-800">
-              {tierConfig.name}
-            </Badge>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-800">
+                Unlimited Analyses
+              </span>
+              <Badge className="bg-green-100 text-green-800">
+                {tierConfig.name}
+              </Badge>
+            </div>
+            {showPricingLink && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/pricing" className="flex items-center gap-1">
+                  View Plans <ExternalLink className="h-3 w-3" />
+                </Link>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -74,9 +87,18 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
               {tierConfig.name}
             </Badge>
           </div>
-          <span className={`text-sm font-semibold ${getStatusColor()}`}>
-            {currentUsage}/{dailyLimit}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-semibold ${getStatusColor()}`}>
+              {currentUsage}/{dailyLimit}
+            </span>
+            {showPricingLink && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/pricing" className="flex items-center gap-1">
+                  Upgrade <ExternalLink className="h-3 w-3" />
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
 
         <Progress 

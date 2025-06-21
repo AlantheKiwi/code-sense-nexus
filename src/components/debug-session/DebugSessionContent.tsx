@@ -16,6 +16,7 @@ import { SystemStatusNotice } from './SystemStatusNotice';
 import { DebugSessionMainGrid } from './DebugSessionMainGrid';
 import { SimpleAutoFixPanel } from '@/components/debug-session/SimpleAutoFixPanel';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
+import { BillingWrapper } from '@/components/billing/BillingWrapper';
 
 export interface AutomationSettings {
   allAutomatic: boolean;
@@ -183,6 +184,16 @@ sayHello('World')`);
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8 relative" onMouseMove={onMouseMove}>
       <SessionHeader sessionId={session?.id} />
+      
+      {/* Usage Meter at the top */}
+      <BillingWrapper 
+        analysisType="basic"
+        featureName="Code Analysis"
+        showUsageMeter={true}
+        showPricingLink={true}
+      >
+        <div></div>
+      </BillingWrapper>
       
       {/* Instructions immediately followed by Code Editor for better workflow */}
       <DebugSessionInstructions />
