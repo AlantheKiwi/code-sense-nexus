@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,9 +20,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onAnalyze,
   isAnalyzing
 }) => {
-  const [selectedTools, setSelectedTools] = React.useState<string[]>(['eslint', 'lighthouse']);
-
-  const handleAnalyzeClick = () => {
+  const handleAnalyzeClick = (selectedTools: string[]) => {
     onAnalyze(selectedTools);
   };
 
@@ -50,33 +49,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           />
           
           <ToolSelectionGrid
-            selectedTools={selectedTools}
-            onSelectionChange={setSelectedTools}
+            onAnalyze={handleAnalyzeClick}
+            isAnalyzing={isAnalyzing}
           />
-          
-          <BillingWrapper
-            analysisType="basic"
-            featureName="Code Analysis"
-            onAnalysisAttempt={handleAnalyzeClick}
-            showUsageMeter={false}
-          >
-            <Button
-              className="w-full"
-              disabled={isAnalyzing || selectedTools.length === 0}
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 mr-2" />
-                  Analyze Code
-                </>
-              )}
-            </Button>
-          </BillingWrapper>
         </CardContent>
       </Card>
     </div>

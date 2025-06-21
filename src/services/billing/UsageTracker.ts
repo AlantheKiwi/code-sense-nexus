@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { UsageData, UserSubscription, ConversionEvent, SUBSCRIPTION_TIERS } from '@/types/billing';
 import { toast } from 'sonner';
@@ -48,7 +47,7 @@ export class UsageTracker {
         };
       }
 
-      return data;
+      return null;
     } catch (error) {
       console.error('Exception in getUserSubscription:', error);
       return null;
