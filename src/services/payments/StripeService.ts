@@ -165,14 +165,19 @@ export class StripeService {
   }
 
   static async getPaymentHistory(userId: string) {
-    const { data, error } = await supabase
-      .from('payment_transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('payment_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+      return [];
+    }
   }
 
   static async getSubsidiaryRevenue(startDate: string, endDate: string) {

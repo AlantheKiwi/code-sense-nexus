@@ -2957,6 +2957,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_transactions: {
+        Row: {
+          amount_cents: number | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          status: string
+          stripe_customer_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_session_completed_at: string | null
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_completed_at?: string | null
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_completed_at?: string | null
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       performance_alerts: {
         Row: {
           alert_type: string
@@ -3767,6 +3809,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subsidiary_revenue: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          parent_company: string
+          stripe_payment_intent_id: string | null
+          stripe_subscription_id: string | null
+          subsidiary: string
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          parent_company: string
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          subsidiary: string
+          transaction_date?: string
+          transaction_type: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          parent_company?: string
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          subsidiary?: string
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {
