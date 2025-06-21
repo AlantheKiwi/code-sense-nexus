@@ -72,6 +72,12 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
               </Badge>
             </div>
             <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600">
+                <Link to="/pricing" className="flex items-center gap-1">
+                  <Crown className="h-3 w-3" />
+                  Upgrade
+                </Link>
+              </Button>
               {showPricingLink && (
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/pricing" className="flex items-center gap-1">
@@ -134,13 +140,6 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
                 Upgrade
               </Link>
             </Button>
-            {showPricingLink && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/pricing" className="flex items-center gap-1">
-                  View Plans <ExternalLink className="h-3 w-3" />
-                </Link>
-              </Button>
-            )}
           </div>
         </div>
 
