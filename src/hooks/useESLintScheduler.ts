@@ -47,139 +47,38 @@ export function useESLintScheduler() {
     priority: number = 5,
     scheduledAt?: Date
   ) => {
-    try {
-      setIsLoading(true);
-      
-      console.log('Scheduling ESLint analysis for project:', projectId);
-      
-      const response = await supabase.functions.invoke('eslint-scheduler', {
-        body: {
-          action: 'schedule',
-          project_id: projectId,
-          trigger_type: triggerType,
-          trigger_data: triggerData,
-          priority,
-          scheduled_at: scheduledAt?.toISOString(),
-        },
-      });
-
-      console.log('Schedule analysis response:', response);
-
-      if (response.error) {
-        console.error('Schedule analysis error:', response.error);
-        
-        // Handle specific error cases
-        if (response.error.message?.includes('multiple rows')) {
-          throw new Error('Database integrity issue detected. Please contact support.');
-        } else if (response.error.message?.includes('Too many active jobs')) {
-          throw new Error('Too many active analysis jobs. Please wait for some to complete.');
-        } else {
-          throw new Error(response.error.message || 'Failed to schedule analysis');
-        }
-      }
-
-      toast.success('ESLint analysis scheduled successfully');
-      await fetchQueueStatus();
-      return response.data?.job;
-    } catch (error: any) {
-      console.error('Error scheduling ESLint analysis:', error);
-      toast.error(`Failed to schedule ESLint analysis: ${error.message}`);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
+    // DISABLED: Auto-scheduling during system rebuild
+    console.log('ESLint auto-scheduling disabled during system rebuild');
+    toast.error('Auto-fix scheduling temporarily disabled during system rebuild');
+    throw new Error('Auto-fix scheduling disabled during system rebuild');
   };
 
   const fetchQueueStatus = useCallback(async () => {
-    // Prevent concurrent requests
-    if (isRequestingRef.current) {
-      console.log('Request already in progress, skipping');
-      return;
-    }
-
-    try {
-      isRequestingRef.current = true;
-      setIsLoading(true);
-      
-      console.log('Fetching queue status...');
-      
-      const response = await supabase.functions.invoke('eslint-scheduler', {
-        body: { action: 'queue-status' }
+    // DISABLED: Queue status fetching during rebuild
+    console.log('Queue status fetching disabled during system rebuild');
+    
+    if (mountedRef.current) {
+      setJobs([]);
+      setQueueStats({
+        total: 0,
+        queued: 0,
+        running: 0,
+        completed: 0,
+        failed: 0,
+        retrying: 0
       });
-
-      console.log('Queue status response:', response);
-
-      if (response.error) {
-        console.error('Queue status error:', response.error);
-        
-        // Handle specific error cases
-        if (response.error.message?.includes('multiple rows')) {
-          console.warn('Multiple rows detected in queue status, using first result');
-          // Continue processing if we have data despite the error
-          if (response.data) {
-            const data = response.data;
-            if (mountedRef.current) {
-              setJobs(Array.isArray(data.jobs) ? data.jobs : []);
-              setQueueStats(data.stats || null);
-            }
-            return data;
-          }
-        }
-        
-        throw new Error(response.error.message || 'Failed to fetch queue status');
-      }
-
-      const data = response.data;
-      console.log('Queue status data:', data);
-
-      if (mountedRef.current && data) {
-        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
-        setQueueStats(data.stats || null);
-      }
-      
-      return data;
-    } catch (error: any) {
-      console.error('Error fetching queue status:', error);
-      
-      // Only show user-facing errors for actual issues, not abort errors
-      if (!error.message.includes('aborted') && !error.message.includes('cancelled')) {
-        if (error.message.includes('multiple rows')) {
-          toast.error('Database integrity issue detected. Some data may be duplicated.');
-        } else {
-          toast.error(`Unable to fetch queue status: ${error.message}`);
-        }
-      }
-      
-      throw error;
-    } finally {
-      if (mountedRef.current) {
-        setIsLoading(false);
-      }
-      isRequestingRef.current = false;
+      setIsLoading(false);
     }
+    
+    return { jobs: [], stats: null };
   }, []);
 
-  // Auto-refresh with proper cleanup
+  // DISABLED: Auto-refresh during rebuild
   useEffect(() => {
     mountedRef.current = true;
     
-    // Initial fetch with error handling
-    console.log('Starting initial queue status fetch...');
-    fetchQueueStatus().catch(error => {
-      console.log('Initial queue status fetch failed:', error.message);
-      // Don't show error toast on initial load failure
-    });
+    console.log('ESLint scheduler auto-refresh disabled during system rebuild');
     
-    // Set up auto-refresh
-    refreshIntervalRef.current = setInterval(() => {
-      if (mountedRef.current && !isRequestingRef.current) {
-        console.log('Auto-refresh queue status...');
-        fetchQueueStatus().catch(error => {
-          console.log('Auto-refresh failed:', error.message);
-        });
-      }
-    }, 30000); // 30 seconds
-
     return () => {
       mountedRef.current = false;
       
@@ -188,7 +87,7 @@ export function useESLintScheduler() {
         refreshIntervalRef.current = null;
       }
     };
-  }, []); // Empty dependency array to prevent re-initialization
+  }, []);
 
   return {
     jobs,

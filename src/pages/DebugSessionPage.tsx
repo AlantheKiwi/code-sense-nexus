@@ -12,9 +12,11 @@ import { AutomationControlPanel, AutomationSettings } from '@/components/debug-s
 import { DebugSessionInstructions } from '@/components/debug-session/DebugSessionInstructions';
 import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
-import { RealTimeAnalysisDashboard } from '@/components/debug-session/RealTimeAnalysisDashboard';
+// import { RealTimeAnalysisDashboard } from '@/components/debug-session/RealTimeAnalysisDashboard';
 import { IssuesRecommendationsDashboard } from '@/components/debug-session/IssuesRecommendationsDashboard';
-import { ResultsSummaryDashboard } from '@/components/debug-session/results/ResultsSummaryDashboard';
+// import { ResultsSummaryDashboard } from '@/components/debug-session/results/ResultsSummaryDashboard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
 
 const DebugSessionPage = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
@@ -45,7 +47,7 @@ sayHello('World')`);
 
   const { result, isAnalyzing, handleAnalyzeCode, setResult } = useDebugSessionAnalysis(sessionId);
   const { cursors, handleMouseMove, updateCursor, cleanupCursors } = useDebugSessionCursor();
-  const [showResultsSummary, setShowResultsSummary] = useState(false);
+  // const [showResultsSummary, setShowResultsSummary] = useState(false);
 
   // Handle last event changes
   useEffect(() => {
@@ -58,10 +60,10 @@ sayHello('World')`);
     }
     if (lastEvent.type === 'EXECUTION_RESULT') {
       setResult(lastEvent.payload);
-      // Show results summary when analysis completes
-      if (lastEvent.payload && !lastEvent.payload.error) {
-        setShowResultsSummary(true);
-      }
+      // Auto-fix results disabled during rebuild
+      // if (lastEvent.payload && !lastEvent.payload.error) {
+      //   setShowResultsSummary(true);
+      // }
     }
     if (lastEvent.type === 'CURSOR_UPDATE') {
       const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
@@ -133,19 +135,39 @@ sayHello('World')`);
       <SessionHeader sessionId={session?.id} />
       <DebugSessionInstructions />
 
-      {/* Real-Time Analysis Dashboard */}
+      {/* System Rebuild Notice */}
+      <Card className="border-yellow-200 bg-yellow-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-yellow-800">
+            <AlertTriangle className="h-5 w-5" />
+            Auto-Fix System Temporarily Disabled
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-yellow-700">
+            We are rebuilding the auto-fix system for better reliability. 
+            Manual analysis and recommendations are still available below.
+            Real-time analysis and automated fixes will return soon.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Disabled: Real-Time Analysis Dashboard */}
+      {/* 
       <RealTimeAnalysisDashboard 
         projectId={projectId} 
         sessionId={sessionId}
       />
+      */}
 
-      {/* Issues Recommendations Dashboard */}
+      {/* Issues Recommendations Dashboard - Keep basic recommendations */}
       <IssuesRecommendationsDashboard 
         projectId={projectId} 
         sessionId={sessionId}
       />
 
-      {/* Results Summary Dashboard - Show after analysis completes */}
+      {/* Disabled: Results Summary Dashboard */}
+      {/* 
       {showResultsSummary && result && !result.error && (
         <ResultsSummaryDashboard
           projectId={projectId || ''}
@@ -184,6 +206,7 @@ sayHello('World')`);
           }}
         />
       )}
+      */}
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-4">
@@ -198,11 +221,14 @@ sayHello('World')`);
         
         <div className="space-y-4">
           <CollaboratorsList collaborators={collaborators} />
+          {/* Auto-fix control panel disabled during rebuild */}
+          {/* 
           <AutomationControlPanel
             projectId={projectId}
             availableTools={['eslint', 'lighthouse', 'snyk', 'sonarqube', 'accessibility', 'bundle-analyzer']}
             onSettingsChange={handleAutomationSettingsChange}
           />
+          */}
         </div>
       </div>
       <CursorOverlay cursors={cursors} currentUserId={user?.id} />
