@@ -47,6 +47,13 @@ export function useAnalysisTrigger() {
         codePreview: code.substring(0, 100) + (code.length > 100 ? '...' : '')
       };
 
+      // DISABLED: Analysis scheduling during system rebuild
+      console.log('Analysis scheduling disabled during system rebuild');
+      toast.error('Auto-fix scheduling temporarily disabled during system rebuild');
+      return null;
+
+      // The following code is commented out during the rebuild phase
+      /*
       // Schedule the analysis through the ESLint scheduler
       const job = await scheduleAnalysis(
         projectId,
@@ -65,6 +72,7 @@ export function useAnalysisTrigger() {
       } else {
         throw new Error('Failed to create analysis job');
       }
+      */
     } catch (error: any) {
       console.error('Failed to trigger analysis:', error);
       
