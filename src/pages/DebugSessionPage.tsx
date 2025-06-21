@@ -13,7 +13,6 @@ import { AutomationControlPanel, AutomationSettings } from '@/components/debug-s
 import { DebugSessionInstructions } from '@/components/debug-session/DebugSessionInstructions';
 import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
-// import { IssuesRecommendationsDashboard } from '@/components/debug-session/IssuesRecommendationsDashboard';
 import { AutoFixProvider } from '@/contexts/AutoFixProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -22,10 +21,26 @@ import { SimpleAutoFixPanel } from '@/components/debug-session/SimpleAutoFixPane
 const DebugSessionPageContent = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
   const { user } = useAuth();
-  const { session, isLoading, error, collaborators, broadcastEvent, lastEvent } = useDebugSession(sessionId!, user);
+  
+  // Early return if missing required params
+  if (!sessionId || !projectId) {
+    console.error('Missing required URL parameters:', { sessionId, projectId });
+    return (
+      <div className="text-red-500 text-center p-8">
+        <h2 className="text-xl font-semibold mb-2">Invalid URL</h2>
+        <p className="mb-4">Missing required session or project ID in URL</p>
+        <p className="text-sm text-gray-600">
+          Please check the URL and try again.
+        </p>
+      </div>
+    );
+  }
+
+  const { session, isLoading, error, collaborators, broadcastEvent, lastEvent } = useDebugSession(sessionId, user);
   
   // Debug logging
   console.log('DebugSessionPageContent rendering with:', { sessionId, projectId, user: user?.id });
+  console.log('Session data:', { session, isLoading, error });
   
   const [code, setCode] = useState(`// Welcome to the Live Debugging Session!
 // 1. This is a shared code editor. Any changes you make will be seen by your team in real-time.
@@ -58,32 +73,44 @@ sayHello('World')`);
 
     console.log('Processing event:', lastEvent);
 
-    if (lastEvent.type === 'CODE_UPDATE') {
-      setCode(lastEvent.payload.code);
-    }
-    if (lastEvent.type === 'EXECUTION_RESULT') {
-      setResult(lastEvent.payload);
-    }
-    if (lastEvent.type === 'CURSOR_UPDATE') {
-      const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
-      if (collaborator) {
-        updateCursor(lastEvent.sender, { ...lastEvent.payload, email: collaborator.email });
+    try {
+      if (lastEvent.type === 'CODE_UPDATE') {
+        setCode(lastEvent.payload.code);
       }
+      if (lastEvent.type === 'EXECUTION_RESULT') {
+        setResult(lastEvent.payload);
+      }
+      if (lastEvent.type === 'CURSOR_UPDATE') {
+        const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
+        if (collaborator) {
+          updateCursor(lastEvent.sender, { ...lastEvent.payload, email: collaborator.email });
+        }
+      }
+    } catch (eventError) {
+      console.error('Error processing event:', eventError);
     }
   }, [lastEvent, collaborators, setResult, updateCursor]);
 
   // Handle collaborators cleanup
   useEffect(() => {
-    const activeCollaboratorIds = new Set(collaborators.map(c => c.user_id));
-    cleanupCursors(activeCollaboratorIds);
+    try {
+      const activeCollaboratorIds = new Set(collaborators.map(c => c.user_id));
+      cleanupCursors(activeCollaboratorIds);
+    } catch (cleanupError) {
+      console.error('Error cleaning up cursors:', cleanupError);
+    }
   }, [collaborators, cleanupCursors]);
 
   const handleCodeChange = useCallback((newCode: string) => {
-    setCode(newCode);
-    broadcastEvent({
-      type: 'CODE_UPDATE',
-      payload: { code: newCode },
-    });
+    try {
+      setCode(newCode);
+      broadcastEvent({
+        type: 'CODE_UPDATE',
+        payload: { code: newCode },
+      });
+    } catch (broadcastError) {
+      console.error('Error broadcasting code change:', broadcastError);
+    }
   }, [broadcastEvent]);
 
   const handleAutomationSettingsChange = useCallback((settings: AutomationSettings) => {
@@ -92,14 +119,23 @@ sayHello('World')`);
   }, []);
 
   const onAnalyze = useCallback((selectedTools: string[]) => {
-    handleAnalyzeCode(selectedTools, code, broadcastEvent);
+    try {
+      handleAnalyzeCode(selectedTools, code, broadcastEvent);
+    } catch (analyzeError) {
+      console.error('Error analyzing code:', analyzeError);
+    }
   }, [handleAnalyzeCode, code, broadcastEvent]);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
-    handleMouseMove(e, broadcastEvent);
+    try {
+      handleMouseMove(e, broadcastEvent);
+    } catch (mouseMoveError) {
+      console.error('Error handling mouse move:', mouseMoveError);
+    }
   }, [handleMouseMove, broadcastEvent]);
 
   if (isLoading) {
+    console.log('Debug session loading...');
     return <LoadingSkeleton />;
   }
 
@@ -118,6 +154,7 @@ sayHello('World')`);
 
   // Handle case where session is null (not found)
   if (!session) {
+    console.warn('Debug session not found:', sessionId);
     return (
       <div className="text-yellow-600 text-center p-8">
         <h2 className="text-xl font-semibold mb-2">Session not found</h2>
@@ -128,42 +165,35 @@ sayHello('World')`);
       </div>
     );
   }
+
+  console.log('Rendering debug session page content');
   
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8 relative" onMouseMove={onMouseMove}>
       <SessionHeader sessionId={session?.id} />
       <DebugSessionInstructions />
 
-      {/* System Rebuild Notice */}
-      <Card className="border-yellow-200 bg-yellow-50">
+      {/* System Status Notice */}
+      <Card className="border-blue-200 bg-blue-50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-yellow-800">
+          <CardTitle className="flex items-center gap-2 text-blue-800">
             <AlertTriangle className="h-5 w-5" />
-            Auto-Fix System with New State Management
+            Auto-Fix System Ready
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-yellow-700">
-            New centralized state management system is now active! 
-            The Auto-Fix panel below demonstrates the new architecture with mock analysis.
-            Real integrations will be added incrementally. Database queries temporarily disabled for debugging.
+          <p className="text-blue-700">
+            New centralized state management system is active! 
+            You can now use both mock and real analysis modes. Toggle between them in the panel below.
           </p>
         </CardContent>
       </Card>
 
-      {/* New Simple Auto-Fix Panel */}
+      {/* Auto-Fix Panel */}
       <SimpleAutoFixPanel 
         projectId={projectId} 
         sessionId={sessionId}
       />
-
-      {/* Temporarily commenting out IssuesRecommendationsDashboard to isolate database query issues */}
-      {/*
-      <IssuesRecommendationsDashboard 
-        projectId={projectId} 
-        sessionId={sessionId}
-      />
-      */}
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-4">
@@ -188,11 +218,24 @@ sayHello('World')`);
 const DebugSessionPage = () => {
   console.log('DebugSessionPage wrapper rendering');
   
-  return (
-    <AutoFixProvider>
-      <DebugSessionPageContent />
-    </AutoFixProvider>
-  );
+  try {
+    return (
+      <AutoFixProvider>
+        <DebugSessionPageContent />
+      </AutoFixProvider>
+    );
+  } catch (providerError) {
+    console.error('Error in AutoFixProvider:', providerError);
+    return (
+      <div className="text-red-500 text-center p-8">
+        <h2 className="text-xl font-semibold mb-2">Application Error</h2>
+        <p className="mb-4">There was an error initializing the debug session</p>
+        <p className="text-sm text-gray-600">
+          Please refresh the page and try again.
+        </p>
+      </div>
+    );
+  }
 };
 
 export default DebugSessionPage;
