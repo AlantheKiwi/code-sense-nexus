@@ -3,12 +3,15 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useAnalysisTrigger } from './useAnalysisTrigger';
+import { useUsageTracking } from '@/hooks/useUsageTracking';
+import { toast } from 'sonner';
 
 export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
   const [result, setResult] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { track } = useAnalytics();
   const { triggerAnalysis, isTriggering } = useAnalysisTrigger();
+  const { checkUsageLimit, incrementUsage } = useUsageTracking();
 
   const handleAnalyzeCode = async (selectedTools: string[], code: string, broadcastEvent: (event: any) => void) => {
     setIsAnalyzing(true);
@@ -21,6 +24,25 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
     });
 
     try {
+      // Check if analysis is allowed (considers credits and limits)
+      const usageCheck = await checkUsageLimit('basic');
+      
+      if (!usageCheck.allowed) {
+        toast.error(usageCheck.reason || 'Analysis not allowed. Please check your subscription or credits.');
+        setIsAnalyzing(false);
+        return;
+      }
+
+      console.log('Usage check passed:', usageCheck);
+
+      // Increment usage before running analysis
+      const usageIncremented = await incrementUsage('basic');
+      if (!usageIncremented) {
+        toast.error('Failed to track usage. Please try again.');
+        setIsAnalyzing(false);
+        return;
+      }
+
       // If we have a session ID, try to use the scheduler for better tracking
       if (sessionId) {
         console.log('Using scheduler for analysis with session:', sessionId);
@@ -54,6 +76,8 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
             issueCount: data.analysis?.issues?.length || 0,
             jobId: job.id
           });
+
+          toast.success('Analysis completed successfully!');
         } else {
           throw new Error('Failed to schedule analysis');
         }
@@ -81,6 +105,8 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
           success: true, 
           issueCount: data.analysis?.issues?.length || 0 
         });
+
+        toast.success('Analysis completed successfully!');
       }
 
     } catch (e: any) {
@@ -98,6 +124,7 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
         toolCount: selectedTools.length,
         success: false 
       });
+      toast.error(`Analysis failed: ${e.message}`);
     } finally {
       setIsAnalyzing(false);
     }

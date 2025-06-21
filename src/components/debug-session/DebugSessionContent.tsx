@@ -17,6 +17,7 @@ import { DebugSessionMainGrid } from './DebugSessionMainGrid';
 import { SimpleAutoFixPanel } from '@/components/debug-session/SimpleAutoFixPanel';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 import { BillingWrapper } from '@/components/billing/BillingWrapper';
+import { useUsageTracking } from '@/hooks/useUsageTracking';
 
 export interface AutomationSettings {
   allAutomatic: boolean;
@@ -28,6 +29,7 @@ export interface AutomationSettings {
 const DebugSessionContent = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
   const { user } = useAuth();
+  const { loadUsageData } = useUsageTracking();
   
   // Early return if missing required params
   if (!sessionId || !projectId) {
@@ -73,6 +75,13 @@ sayHello('World')`);
 
   const { result, isAnalyzing, handleAnalyzeCode, setResult } = useDebugSessionAnalysis(sessionId);
   const { cursors, handleMouseMove, updateCursor, cleanupCursors } = useDebugSessionCursor();
+
+  // Load usage data when component mounts
+  useEffect(() => {
+    if (user?.id) {
+      loadUsageData();
+    }
+  }, [user?.id, loadUsageData]);
 
   // Handle last event changes
   useEffect(() => {
