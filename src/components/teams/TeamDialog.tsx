@@ -58,8 +58,8 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
       addTeamMutation.mutate(
         { 
           name: values.name, 
-          partner_id: partnerId,
-          created_by: null // Let the database handle this
+          partner_id: partnerId
+          // Don't include created_by - let the mutation handle it
         },
         { onSuccess: () => onOpenChange(false) }
       );

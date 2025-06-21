@@ -8,7 +8,7 @@ type TeamInsert = TablesInsert<'teams'>;
 type TeamUpdate = TablesUpdate<'teams'>;
 
 // --- Add Team ---
-const addTeam = async (newTeam: TeamInsert) => {
+const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
   console.log('Creating team with data:', newTeam);
   
   // Verify user is authenticated
@@ -34,7 +34,13 @@ const addTeam = async (newTeam: TeamInsert) => {
   
   console.log('Partner verification passed, creating team...');
   
-  const { data, error } = await supabase.from('teams').insert(newTeam).select().single();
+  // Include the authenticated user's ID as created_by
+  const teamData: TeamInsert = {
+    ...newTeam,
+    created_by: user.id
+  };
+  
+  const { data, error } = await supabase.from('teams').insert(teamData).select().single();
   if (error) {
     console.error('Team creation error:', error);
     throw new Error(error.message);
