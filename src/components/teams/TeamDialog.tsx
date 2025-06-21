@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,6 +41,14 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
   }, [teamToEdit, form]);
 
   const onSubmit = (values: z.infer<typeof teamSchema>) => {
+    console.log('Submitting team with partnerId:', partnerId);
+    console.log('Form values:', values);
+    
+    if (!partnerId) {
+      console.error('No partnerId provided');
+      return;
+    }
+
     if (teamToEdit) {
       updateTeamMutation.mutate(
         { id: teamToEdit.id, ...values },
@@ -47,7 +56,11 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
       );
     } else {
       addTeamMutation.mutate(
-        { name: values.name, partner_id: partnerId },
+        { 
+          name: values.name, 
+          partner_id: partnerId,
+          created_by: null // Let the database handle this
+        },
         { onSuccess: () => onOpenChange(false) }
       );
     }

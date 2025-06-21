@@ -9,8 +9,36 @@ type TeamUpdate = TablesUpdate<'teams'>;
 
 // --- Add Team ---
 const addTeam = async (newTeam: TeamInsert) => {
+  console.log('Creating team with data:', newTeam);
+  
+  // Verify user is authenticated
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error('You must be logged in to create a team');
+  }
+  
+  // Verify the partner exists and user has access
+  const { data: partner, error: partnerError } = await supabase
+    .from('partners')
+    .select('id, user_id')
+    .eq('id', newTeam.partner_id)
+    .single();
+    
+  if (partnerError || !partner) {
+    throw new Error('Partner not found or access denied');
+  }
+  
+  if (partner.user_id !== user.id) {
+    throw new Error('You can only create teams for your own partner account');
+  }
+  
+  console.log('Partner verification passed, creating team...');
+  
   const { data, error } = await supabase.from('teams').insert(newTeam).select().single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('Team creation error:', error);
+    throw new Error(error.message);
+  }
   return data;
 };
 
@@ -23,6 +51,7 @@ export const useAddTeam = () => {
       queryClient.invalidateQueries({ queryKey: ['teams', data.partner_id] });
     },
     onError: (error) => {
+      console.error('Team creation failed:', error);
       toast.error(`Failed to create team: ${error.message}`);
     },
   });
