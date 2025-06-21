@@ -3,6 +3,7 @@ import React from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { InteractiveDemo } from '@/components/demo/InteractiveDemo';
 import { Github, Zap, FileCode } from 'lucide-react';
 
 const steps = [
@@ -35,7 +36,7 @@ const HowItWorksPage = () => {
               Transform your Lovable development workflow in three simple steps.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
             {steps.map((step) => (
               <Card key={step.title} className="text-center shadow-lg hover:shadow-xl transition-shadow">
                 <CardHeader>
@@ -50,12 +51,15 @@ const HowItWorksPage = () => {
               </Card>
             ))}
           </div>
-          <div className="text-center mt-16">
-            <h2 className="text-3xl font-bold mb-4">See it in Action</h2>
-            <p className="text-muted-foreground mb-8">Watch a quick demo of CodeSense debugging a real Lovable project.</p>
-            <div className="aspect-video bg-muted rounded-lg max-w-4xl mx-auto flex items-center justify-center">
-              <p className="text-muted-foreground">[Demo Video Placeholder]</p>
+          <div className="mb-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">See CodeSense in Action</h2>
+              <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+                Watch how CodeSense analyzes a real Lovable component, identifies issues, and provides 
+                clear fixes that improve performance and maintainability.
+              </p>
             </div>
+            <InteractiveDemo />
           </div>
         </div>
       </main>
