@@ -9,15 +9,56 @@ type TeamUpdate = TablesUpdate<'teams'>;
 
 // --- Add Team ---
 const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
-  console.log('Creating team with data:', newTeam);
+  console.log('=== TEAM CREATION DEBUG START ===');
+  console.log('Original team data received:', newTeam);
   
   // Verify user is authenticated
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
+    console.error('Authentication failed:', authError);
     throw new Error('You must be logged in to create a team');
   }
   
-  console.log('User authenticated:', user.id);
+  console.log('✓ User authenticated successfully:', {
+    userId: user.id,
+    email: user.email
+  });
+  
+  // Debug: Check partner relationship
+  const { data: partnerData, error: partnerError } = await supabase
+    .from('partners')
+    .select('id, user_id, company_name')
+    .eq('user_id', user.id)
+    .maybeSingle();
+    
+  console.log('Partner lookup result:', { partnerData, partnerError });
+  
+  if (partnerError) {
+    console.error('Partner lookup error:', partnerError);
+    throw new Error(`Partner lookup failed: ${partnerError.message}`);
+  }
+  
+  if (!partnerData) {
+    console.error('No partner found for user:', user.id);
+    throw new Error('No partner account found for this user');
+  }
+  
+  console.log('✓ Partner found:', {
+    partnerId: partnerData.id,
+    partnerUserId: partnerData.user_id,
+    companyName: partnerData.company_name
+  });
+  
+  // Verify the partner_id matches
+  if (newTeam.partner_id !== partnerData.id) {
+    console.error('Partner ID mismatch:', {
+      requestedPartnerId: newTeam.partner_id,
+      actualPartnerId: partnerData.id
+    });
+    throw new Error('Partner ID mismatch - you can only create teams for your own partner account');
+  }
+  
+  console.log('✓ Partner ID validation passed');
   
   // Include the authenticated user's ID as created_by
   const teamData: TeamInsert = {
@@ -25,15 +66,32 @@ const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
     created_by: user.id
   };
   
-  console.log('Inserting team data:', teamData);
+  console.log('Final team data to insert:', teamData);
+  
+  // Debug: Test the RLS policy logic manually
+  const { data: rlsTest, error: rlsTestError } = await supabase.rpc('get_my_partner_id');
+  console.log('RLS function test (get_my_partner_id):', { rlsTest, rlsTestError });
+  
+  console.log('=== ATTEMPTING INSERT ===');
   
   const { data, error } = await supabase.from('teams').insert(teamData).select().single();
+  
   if (error) {
-    console.error('Team creation error:', error);
+    console.error('=== INSERT FAILED ===');
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
+    });
+    console.error('Data that failed to insert:', teamData);
     throw new Error(error.message);
   }
   
+  console.log('=== INSERT SUCCESSFUL ===');
   console.log('Team created successfully:', data);
+  console.log('=== TEAM CREATION DEBUG END ===');
+  
   return data;
 };
 
@@ -74,7 +132,6 @@ export const useUpdateTeam = () => {
     });
 };
 
-// --- Delete Team ---
 const deleteTeam = async (teamId: string) => {
     const { error } = await supabase.from('teams').delete().eq('id', teamId);
     if (error) throw new Error(error.message);
