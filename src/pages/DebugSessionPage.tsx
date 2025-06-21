@@ -178,7 +178,27 @@ sayHello('World')`);
   return (
     <div className="container mx-auto p-4 md:p-8 space-y-8 relative" onMouseMove={onMouseMove}>
       <SessionHeader sessionId={session?.id} />
+      
+      {/* Instructions immediately followed by Code Editor for better workflow */}
       <DebugSessionInstructions />
+      
+      <div className="grid md:grid-cols-4 gap-8">
+        {/* Main content area with Code Editor prominently placed */}
+        <div className="md:col-span-3 space-y-6">
+          <CodeEditor 
+            code={code}
+            onCodeChange={handleCodeChange}
+            onAnalyze={onAnalyze}
+            isAnalyzing={isAnalyzing}
+          />
+          <AnalysisResult result={result} isAnalyzing={isAnalyzing} />
+        </div>
+        
+        {/* Sidebar with collaborators and supporting panels */}
+        <div className="space-y-6">
+          <CollaboratorsList collaborators={collaborators} />
+        </div>
+      </div>
 
       {/* System Status Notice */}
       <Card className="border-blue-200 bg-blue-50">
@@ -211,21 +231,6 @@ sayHello('World')`);
         sessionId={sessionId}
       />
 
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 space-y-4">
-          <CodeEditor 
-            code={code}
-            onCodeChange={handleCodeChange}
-            onAnalyze={onAnalyze}
-            isAnalyzing={isAnalyzing}
-          />
-          <AnalysisResult result={result} isAnalyzing={isAnalyzing} />
-        </div>
-        
-        <div className="space-y-4">
-          <CollaboratorsList collaborators={collaborators} />
-        </div>
-      </div>
       <CursorOverlay cursors={cursors} currentUserId={user?.id} />
     </div>
   );
