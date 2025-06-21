@@ -57,7 +57,10 @@ export const TeamList: React.FC<TeamListProps> = ({ teams, partnerId }) => {
                         <CardTitle>Teams</CardTitle>
                         <CardDescription>Collaborate with your team members on projects.</CardDescription>
                     </div>
-                    <Button onClick={handleAdd} size="sm"><PlusCircle className="mr-2 h-4 w-4" /> Add Team</Button>
+                    <Button onClick={handleAdd} size="sm">
+                        <PlusCircle className="mr-2 h-4 w-4" /> 
+                        {teams.length === 0 ? 'Create Your First Team' : 'Add Team'}
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     {teams.length > 0 ? (
@@ -98,10 +101,7 @@ export const TeamList: React.FC<TeamListProps> = ({ teams, partnerId }) => {
                         </div>
                     ) : (
                         <div className="text-center py-6">
-                            <p className="text-sm text-muted-foreground mb-4">You haven't created any teams yet.</p>
-                            <Button onClick={handleAdd}>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Team
-                            </Button>
+                            <p className="text-sm text-muted-foreground">You haven't created any teams yet.</p>
                         </div>
                     )}
                 </CardContent>

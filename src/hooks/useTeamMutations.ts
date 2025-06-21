@@ -1,4 +1,3 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -68,31 +67,48 @@ const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
   
   console.log('Final team data to insert:', teamData);
   
-  // Debug: Test the RLS policy logic manually
-  const { data: rlsTest, error: rlsTestError } = await supabase.rpc('get_my_partner_id');
-  console.log('RLS function test (get_my_partner_id):', { rlsTest, rlsTestError });
+  // First, create the team
+  const { data: teamResult, error: teamError } = await supabase
+    .from('teams')
+    .insert(teamData)
+    .select()
+    .single();
   
-  console.log('=== ATTEMPTING INSERT ===');
-  
-  const { data, error } = await supabase.from('teams').insert(teamData).select().single();
-  
-  if (error) {
-    console.error('=== INSERT FAILED ===');
+  if (teamError) {
+    console.error('=== TEAM INSERT FAILED ===');
     console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      details: error.details,
-      hint: error.hint
+      message: teamError.message,
+      code: teamError.code,
+      details: teamError.details,
+      hint: teamError.hint
     });
     console.error('Data that failed to insert:', teamData);
-    throw new Error(error.message);
+    throw new Error(teamError.message);
   }
   
-  console.log('=== INSERT SUCCESSFUL ===');
-  console.log('Team created successfully:', data);
+  console.log('=== TEAM INSERT SUCCESSFUL ===');
+  console.log('Team created successfully:', teamResult);
+  
+  // Now add the creator as an admin member of the team
+  const { error: memberError } = await supabase
+    .from('team_members')
+    .insert({
+      team_id: teamResult.id,
+      user_id: user.id,
+      role: 'admin'
+    });
+  
+  if (memberError) {
+    console.error('Failed to add creator as team admin:', memberError);
+    // Don't throw here - the team was created successfully
+    // We'll just log the error and continue
+  } else {
+    console.log('✓ Creator added as team admin');
+  }
+  
   console.log('=== TEAM CREATION DEBUG END ===');
   
-  return data;
+  return teamResult;
 };
 
 export const useAddTeam = () => {

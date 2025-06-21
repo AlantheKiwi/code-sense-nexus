@@ -46,6 +46,7 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
     
     if (!partnerId) {
       console.error('No partnerId provided');
+      toast.error('Missing partner information. Please refresh the page and try again.');
       return;
     }
 
@@ -59,7 +60,7 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
         { 
           name: values.name, 
           partner_id: partnerId
-          // Don't include created_by - let the mutation handle it
+          // created_by will be set automatically in the mutation
         },
         { onSuccess: () => onOpenChange(false) }
       );
