@@ -28,45 +28,56 @@ import TeamSettingsPage from "./pages/TeamSettingsPage";
 import AppLayout from "./components/layout/AppLayout";
 import InstructionsPage from "./pages/InstructionsPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/how-it-works" element={<HowItWorksPage />} />
-            <Route path="/instructions" element={<InstructionsPage />} />
-            <Route path="/demo" element={<DemoPage />} />
-            <Route path="/useful-prompts" element={<UsefulPromptsPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/help" element={<HelpPage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsOfServicePage />} />
-            <Route path="/stats" element={<StatsPage />} />
-            <Route path="/best-practices" element={<BestPracticesPage />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route element={<AppLayout />}>
-                <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
-                <Route path="/team/:teamId/settings" element={<TeamSettingsPage />} />
-                <Route path="/project/:projectId/debug/:sessionId" element={<DebugSessionPage />} />
-                <Route path="/updates" element={<UpdatesPage />} />
+const App = () => {
+  console.log('App component is rendering');
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
+              <Route path="/instructions" element={<InstructionsPage />} />
+              <Route path="/demo" element={<DemoPage />} />
+              <Route path="/useful-prompts" element={<UsefulPromptsPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/stats" element={<StatsPage />} />
+              <Route path="/best-practices" element={<BestPracticesPage />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route element={<AppLayout />}>
+                  <Route path="/project/:projectId/settings" element={<ProjectSettingsPage />} />
+                  <Route path="/team/:teamId/settings" element={<TeamSettingsPage />} />
+                  <Route path="/project/:projectId/debug/:sessionId" element={<DebugSessionPage />} />
+                  <Route path="/updates" element={<UpdatesPage />} />
+                </Route>
               </Route>
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
