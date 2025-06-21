@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_logs: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+        }
+        Relationships: []
+      }
       ai_analysis_results: {
         Row: {
           analysis_result: Json | null
@@ -1684,6 +1708,33 @@ export type Database = {
           },
         ]
       }
+      legal_documents: {
+        Row: {
+          content: string
+          created_at: string | null
+          document_type: string
+          id: string
+          is_active: boolean | null
+          version: number
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          document_type: string
+          id?: string
+          is_active?: boolean | null
+          version?: number
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          document_type?: string
+          id?: string
+          is_active?: boolean | null
+          version?: number
+        }
+        Relationships: []
+      }
       lighthouse_audits: {
         Row: {
           audit_id: string | null
@@ -3164,6 +3215,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_config: {
+        Row: {
+          created_at: string | null
+          credits_included: number | null
+          id: string
+          is_active: boolean | null
+          item_name: string
+          item_type: string
+          price_cents: number
+        }
+        Insert: {
+          created_at?: string | null
+          credits_included?: number | null
+          id?: string
+          is_active?: boolean | null
+          item_name: string
+          item_type: string
+          price_cents: number
+        }
+        Update: {
+          created_at?: string | null
+          credits_included?: number | null
+          id?: string
+          is_active?: boolean | null
+          item_name?: string
+          item_type?: string
+          price_cents?: number
+        }
+        Relationships: []
+      }
       productivity_metrics: {
         Row: {
           bugs_fixed: number | null
@@ -3686,6 +3767,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       team_members: {
         Row: {
