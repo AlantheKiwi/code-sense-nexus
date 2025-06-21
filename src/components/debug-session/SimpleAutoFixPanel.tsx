@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -212,7 +213,7 @@ export default MyComponent;`);
 
     return (
       <div className="space-y-4">
-        {/* Lovable Assistant */}
+        {/* Lovable Assistant - Now with smart fixes and guidance */}
         <LovableAssistant 
           code={currentCode}
           onFixIssues={handleLovableFixes}
