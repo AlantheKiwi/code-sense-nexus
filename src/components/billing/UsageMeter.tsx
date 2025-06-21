@@ -3,7 +3,7 @@ import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertTriangle, Zap, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Zap, ExternalLink, CreditCard } from 'lucide-react';
 import { UsageData, UserSubscription, SUBSCRIPTION_TIERS } from '@/types/billing';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 interface UsageMeterProps {
   usage: UsageData | null;
   subscription: UserSubscription | null;
+  credits?: number;
   showDetails?: boolean;
   showPricingLink?: boolean;
 }
@@ -18,6 +19,7 @@ interface UsageMeterProps {
 export const UsageMeter: React.FC<UsageMeterProps> = ({
   usage,
   subscription,
+  credits = 0,
   showDetails = true,
   showPricingLink = false
 }) => {
@@ -49,6 +51,39 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
               </Button>
             )}
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show credits if available
+  if (credits > 0) {
+    return (
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                {credits} Credits Available
+              </span>
+              <Badge className="bg-blue-100 text-blue-800">
+                Credit Balance
+              </Badge>
+            </div>
+            {showPricingLink && (
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/pricing" className="flex items-center gap-1">
+                  Buy More <ExternalLink className="h-3 w-3" />
+                </Link>
+              </Button>
+            )}
+          </div>
+          {showDetails && (
+            <div className="mt-2 text-xs text-blue-600">
+              Credits bypass daily limits. Basic analysis costs 1 credit, AI analysis costs 10 credits.
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -118,8 +153,8 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
         {showDetails && usagePercentage >= 80 && (
           <div className="text-xs text-yellow-700 bg-yellow-100 p-2 rounded">
             {remaining === 0 
-              ? "You've reached your daily limit. Upgrade to Premium for unlimited analyses!"
-              : `Only ${remaining} analysis${remaining === 1 ? '' : 'es'} left today. Consider upgrading for unlimited access.`
+              ? "You've reached your daily limit. Buy credits or upgrade to Premium for unlimited analyses!"
+              : `Only ${remaining} analysis${remaining === 1 ? '' : 'es'} left today. Consider buying credits or upgrading for unlimited access.`
             }
           </div>
         )}

@@ -54,27 +54,97 @@ export class UsageTracker {
     }
   }
 
+  async getUserCredits(userId: string): Promise<number> {
+    try {
+      const { data, error } = await supabase
+        .from('user_credits')
+        .select('balance')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching user credits:', error);
+        return 0;
+      }
+
+      return data?.balance || 0;
+    } catch (error) {
+      console.error('Exception in getUserCredits:', error);
+      return 0;
+    }
+  }
+
   async incrementUsage(
     userId: string, 
     analysisType: 'basic' | 'ai' | 'premium_attempt' = 'basic',
     partnerId?: string
   ): Promise<boolean> {
     try {
-      const { data, error } = await supabase.rpc('increment_usage_counter', {
-        p_user_id: userId,
-        p_analysis_type: analysisType,
-        p_partner_id: partnerId
-      });
+      // Check if user has credits before incrementing usage
+      const credits = await this.getUserCredits(userId);
+      const creditCost = this.getAnalysisCreditCost(analysisType);
+      
+      if (credits >= creditCost) {
+        // Deduct credits first
+        const { data: deductSuccess, error: deductError } = await supabase.rpc('deduct_user_credits', {
+          p_user_id: userId,
+          p_amount: creditCost,
+          p_description: `${analysisType} analysis`,
+          p_metadata: { analysis_type: analysisType }
+        });
 
-      if (error) {
-        console.error('Error incrementing usage:', error);
-        return false;
+        if (deductError || !deductSuccess) {
+          console.error('Error deducting credits:', deductError);
+          return false;
+        }
+
+        // Then increment usage counter
+        const { data, error } = await supabase.rpc('increment_usage_counter', {
+          p_user_id: userId,
+          p_analysis_type: analysisType,
+          p_partner_id: partnerId
+        });
+
+        if (error) {
+          console.error('Error incrementing usage:', error);
+          // Try to refund credits if usage increment fails
+          await supabase.rpc('add_user_credits', {
+            p_user_id: userId,
+            p_amount: creditCost,
+            p_description: `Refund for failed ${analysisType} analysis`,
+            p_metadata: { refund: true, analysis_type: analysisType }
+          });
+          return false;
+        }
+
+        return data;
+      } else {
+        // Fall back to regular usage tracking if no credits
+        const { data, error } = await supabase.rpc('increment_usage_counter', {
+          p_user_id: userId,
+          p_analysis_type: analysisType,
+          p_partner_id: partnerId
+        });
+
+        if (error) {
+          console.error('Error incrementing usage:', error);
+          return false;
+        }
+
+        return data;
       }
-
-      return data;
     } catch (error) {
       console.error('Exception in incrementUsage:', error);
       return false;
+    }
+  }
+
+  private getAnalysisCreditCost(analysisType: 'basic' | 'ai' | 'premium_attempt'): number {
+    switch (analysisType) {
+      case 'ai': return 10;
+      case 'premium_attempt': return 5;
+      case 'basic': return 1;
+      default: return 1;
     }
   }
 
@@ -111,23 +181,41 @@ export class UsageTracker {
   async checkUsageLimit(
     userId: string, 
     analysisType: 'basic' | 'ai' = 'basic'
-  ): Promise<{ allowed: boolean; usage?: UsageData; subscription?: UserSubscription }> {
+  ): Promise<{ allowed: boolean; usage?: UsageData; subscription?: UserSubscription; credits?: number; reason?: string }> {
     try {
-      const [usage, subscription] = await Promise.all([
+      const [usage, subscription, credits] = await Promise.all([
         this.getCurrentUsage(userId),
-        this.getUserSubscription(userId)
+        this.getUserSubscription(userId),
+        this.getUserCredits(userId)
       ]);
 
       const userTier = subscription?.tier || 'free';
       const tierConfig = SUBSCRIPTION_TIERS.find(t => t.id === userTier);
       
       if (!tierConfig) {
-        return { allowed: false };
+        return { allowed: false, reason: 'Invalid subscription tier' };
       }
 
       // Premium and Enterprise have unlimited usage
       if (userTier === 'premium' || userTier === 'enterprise') {
-        return { allowed: true, usage: usage || undefined, subscription: subscription || undefined };
+        return { 
+          allowed: true, 
+          usage: usage || undefined, 
+          subscription: subscription || undefined,
+          credits 
+        };
+      }
+
+      // Check if user has credits for this analysis
+      const creditCost = this.getAnalysisCreditCost(analysisType);
+      if (credits >= creditCost) {
+        return { 
+          allowed: true, 
+          usage: usage || undefined, 
+          subscription: subscription || undefined,
+          credits,
+          reason: 'Credits available' 
+        };
       }
 
       // Check limits for free tier
@@ -138,20 +226,37 @@ export class UsageTracker {
       } as UsageData;
 
       if (analysisType === 'ai') {
-        // Free tier doesn't allow AI analyses
-        return { allowed: false, usage: currentUsage, subscription: subscription || undefined };
+        // Free tier doesn't allow AI analyses without credits
+        return { 
+          allowed: false, 
+          usage: currentUsage, 
+          subscription: subscription || undefined,
+          credits,
+          reason: 'AI analysis requires credits or premium subscription'
+        };
       }
 
       // Check daily analysis limit
       const dailyLimit = tierConfig.limits.dailyAnalyses;
       if (dailyLimit > 0 && currentUsage.analysis_count >= dailyLimit) {
-        return { allowed: false, usage: currentUsage, subscription: subscription || undefined };
+        return { 
+          allowed: false, 
+          usage: currentUsage, 
+          subscription: subscription || undefined,
+          credits,
+          reason: 'Daily limit reached'
+        };
       }
 
-      return { allowed: true, usage: currentUsage, subscription: subscription || undefined };
+      return { 
+        allowed: true, 
+        usage: currentUsage, 
+        subscription: subscription || undefined,
+        credits 
+      };
     } catch (error) {
       console.error('Exception in checkUsageLimit:', error);
-      return { allowed: false };
+      return { allowed: false, reason: 'System error' };
     }
   }
 

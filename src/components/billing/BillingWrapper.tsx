@@ -19,7 +19,7 @@ export const BillingWrapper: React.FC<BillingWrapperProps> = ({
   showUsageMeter = false,
   showPricingLink = false
 }) => {
-  const { usage, subscription, isLoading, checkUsageLimit } = useUsageTracking();
+  const { usage, subscription, credits, isLoading, checkUsageLimit } = useUsageTracking();
 
   // Show usage meter if requested
   if (showUsageMeter && !isLoading) {
@@ -27,6 +27,7 @@ export const BillingWrapper: React.FC<BillingWrapperProps> = ({
       <UsageMeter 
         usage={usage} 
         subscription={subscription} 
+        credits={credits}
         showPricingLink={showPricingLink}
       />
     );

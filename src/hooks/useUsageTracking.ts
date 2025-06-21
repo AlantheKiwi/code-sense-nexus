@@ -9,6 +9,7 @@ export function useUsageTracking() {
   const { user } = useAuth();
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
+  const [credits, setCredits] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -22,13 +23,15 @@ export function useUsageTracking() {
 
     setIsLoading(true);
     try {
-      const [usageData, subscriptionData] = await Promise.all([
+      const [usageData, subscriptionData, creditsData] = await Promise.all([
         usageTracker.getCurrentUsage(user.id),
-        usageTracker.getUserSubscription(user.id)
+        usageTracker.getUserSubscription(user.id),
+        usageTracker.getUserCredits(user.id)
       ]);
 
       setUsage(usageData);
       setSubscription(subscriptionData);
+      setCredits(creditsData);
     } catch (error) {
       console.error('Error loading usage data:', error);
       toast.error('Failed to load usage information');
@@ -44,6 +47,7 @@ export function useUsageTracking() {
     
     if (result.usage) setUsage(result.usage);
     if (result.subscription) setSubscription(result.subscription);
+    if (result.credits !== undefined) setCredits(result.credits);
 
     return result;
   };
@@ -58,8 +62,12 @@ export function useUsageTracking() {
     
     if (success) {
       // Refresh usage data
-      const updatedUsage = await usageTracker.getCurrentUsage(user.id);
+      const [updatedUsage, updatedCredits] = await Promise.all([
+        usageTracker.getCurrentUsage(user.id),
+        usageTracker.getUserCredits(user.id)
+      ]);
       if (updatedUsage) setUsage(updatedUsage);
+      setCredits(updatedCredits);
     }
 
     return success;
@@ -86,14 +94,23 @@ export function useUsageTracking() {
     setSubscription(subscriptionData);
   };
 
+  const refreshCredits = async () => {
+    if (!user?.id) return;
+
+    const creditsData = await usageTracker.getUserCredits(user.id);
+    setCredits(creditsData);
+  };
+
   return {
     usage,
     subscription,
+    credits,
     isLoading,
     checkUsageLimit,
     incrementUsage,
     trackConversion,
     refreshSubscription,
+    refreshCredits,
     loadUsageData
   };
 }
