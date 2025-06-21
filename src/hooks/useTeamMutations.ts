@@ -17,22 +17,7 @@ const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
     throw new Error('You must be logged in to create a team');
   }
   
-  // Verify the partner exists and user has access
-  const { data: partner, error: partnerError } = await supabase
-    .from('partners')
-    .select('id, user_id')
-    .eq('id', newTeam.partner_id)
-    .single();
-    
-  if (partnerError || !partner) {
-    throw new Error('Partner not found or access denied');
-  }
-  
-  if (partner.user_id !== user.id) {
-    throw new Error('You can only create teams for your own partner account');
-  }
-  
-  console.log('Partner verification passed, creating team...');
+  console.log('User authenticated:', user.id);
   
   // Include the authenticated user's ID as created_by
   const teamData: TeamInsert = {
@@ -40,11 +25,15 @@ const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
     created_by: user.id
   };
   
+  console.log('Inserting team data:', teamData);
+  
   const { data, error } = await supabase.from('teams').insert(teamData).select().single();
   if (error) {
     console.error('Team creation error:', error);
     throw new Error(error.message);
   }
+  
+  console.log('Team created successfully:', data);
   return data;
 };
 
