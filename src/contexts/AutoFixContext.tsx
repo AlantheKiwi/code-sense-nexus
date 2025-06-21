@@ -16,6 +16,7 @@ export interface AutoFixActions {
   addError: (error: string) => void;
   addResult: (result: any) => void;
   clearState: () => void;
+  getResults: () => any[];
 }
 
 export interface AutoFixContextType {

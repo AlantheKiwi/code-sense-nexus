@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { useAutoFix } from '@/hooks/useAutoFix';
 import { AutoFixOrchestrator } from '@/services/AutoFixOrchestrator';
 import { FixReviewPanel } from './FixReviewPanel';
 import { CodeFix, FixResult } from '@/services/CodeFixEngine';
+import { LovableAssistant } from './LovableAssistant';
 
 interface SimpleAutoFixPanelProps {
   projectId?: string;
@@ -29,6 +29,23 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
   const [fixes, setFixes] = useState<CodeFix[]>([]);
   const [isGeneratingFixes, setIsGeneratingFixes] = useState(false);
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
+
+  // Mock code for Lovable analysis
+  const [currentCode] = useState(`// Sample Lovable-generated code
+import React from 'react';
+
+const MyComponent = () => {
+  const data = fetchData();
+  
+  return (
+    <div className="w-96">
+      <h1>Hello World</h1>
+      {/* TODO: Add error handling */}
+    </div>
+  );
+};
+
+export default MyComponent;`);
 
   try {
     const { state, actions } = useAutoFix();
@@ -166,6 +183,12 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
       }
     };
 
+    const handleLovableFixes = (lovableFixes: any[]) => {
+      console.log('Received Lovable fixes:', lovableFixes);
+      // Convert Lovable fixes to CodeFix format if needed
+      // This is where you'd integrate with actual fix application
+    };
+
     if (hasError) {
       return (
         <Card className="border-red-200 bg-red-50">
@@ -189,6 +212,12 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
 
     return (
       <div className="space-y-4">
+        {/* Lovable Assistant */}
+        <LovableAssistant 
+          code={currentCode}
+          onFixIssues={handleLovableFixes}
+        />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

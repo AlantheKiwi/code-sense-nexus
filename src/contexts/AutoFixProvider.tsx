@@ -1,4 +1,3 @@
-
 import React, { useReducer, useMemo, ReactNode } from 'react';
 import { AutoFixContext, AutoFixState, AutoFixActions, initialState } from './AutoFixContext';
 
@@ -80,8 +79,11 @@ export const AutoFixProvider = ({ children }: AutoFixProviderProps) => {
     clearState: () => {
       console.log('AutoFix: Clearing state');
       dispatch({ type: 'CLEAR_STATE' });
+    },
+    getResults: () => {
+      return state.results;
     }
-  }), []);
+  }), [state.results]);
 
   const value = useMemo(() => ({
     state,

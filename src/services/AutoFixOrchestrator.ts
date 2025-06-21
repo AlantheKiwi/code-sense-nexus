@@ -450,7 +450,7 @@ export class AutoFixOrchestrator {
     
     try {
       // Get current analysis results from the context
-      const results = this.actions.getResults ? this.actions.getResults() : [];
+      const results = this.actions.getResults();
       console.log('Analysis results for fix generation:', results);
       
       if (results.length === 0) {
