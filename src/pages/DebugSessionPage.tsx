@@ -12,13 +12,12 @@ import { AutomationControlPanel, AutomationSettings } from '@/components/debug-s
 import { DebugSessionInstructions } from '@/components/debug-session/DebugSessionInstructions';
 import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
-// import { RealTimeAnalysisDashboard } from '@/components/debug-session/RealTimeAnalysisDashboard';
 import { IssuesRecommendationsDashboard } from '@/components/debug-session/IssuesRecommendationsDashboard';
-// import { ResultsSummaryDashboard } from '@/components/debug-session/results/ResultsSummaryDashboard';
+import { AutoFixProvider } from '@/contexts/AutoFixProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 
-const DebugSessionPage = () => {
+const DebugSessionPageContent = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
   const { user } = useAuth();
   const { session, isLoading, error, collaborators, broadcastEvent, lastEvent } = useDebugSession(sessionId!, user);
@@ -47,7 +46,6 @@ sayHello('World')`);
 
   const { result, isAnalyzing, handleAnalyzeCode, setResult } = useDebugSessionAnalysis(sessionId);
   const { cursors, handleMouseMove, updateCursor, cleanupCursors } = useDebugSessionCursor();
-  // const [showResultsSummary, setShowResultsSummary] = useState(false);
 
   // Handle last event changes
   useEffect(() => {
@@ -60,10 +58,6 @@ sayHello('World')`);
     }
     if (lastEvent.type === 'EXECUTION_RESULT') {
       setResult(lastEvent.payload);
-      // Auto-fix results disabled during rebuild
-      // if (lastEvent.payload && !lastEvent.payload.error) {
-      //   setShowResultsSummary(true);
-      // }
     }
     if (lastEvent.type === 'CURSOR_UPDATE') {
       const collaborator = collaborators.find(c => c.user_id === lastEvent.sender);
@@ -140,73 +134,23 @@ sayHello('World')`);
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-yellow-800">
             <AlertTriangle className="h-5 w-5" />
-            Auto-Fix System Temporarily Disabled
+            Auto-Fix System Rebuilding with New State Management
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-yellow-700">
-            We are rebuilding the auto-fix system for better reliability. 
-            Manual analysis and recommendations are still available below.
-            Real-time analysis and automated fixes will return soon.
+            We've implemented a new centralized state management foundation for improved reliability. 
+            Analysis features are being rebuilt incrementally with this new architecture.
+            Manual analysis and recommendations remain available below.
           </p>
         </CardContent>
       </Card>
-
-      {/* Disabled: Real-Time Analysis Dashboard */}
-      {/* 
-      <RealTimeAnalysisDashboard 
-        projectId={projectId} 
-        sessionId={sessionId}
-      />
-      */}
 
       {/* Issues Recommendations Dashboard - Keep basic recommendations */}
       <IssuesRecommendationsDashboard 
         projectId={projectId} 
         sessionId={sessionId}
       />
-
-      {/* Disabled: Results Summary Dashboard */}
-      {/* 
-      {showResultsSummary && result && !result.error && (
-        <ResultsSummaryDashboard
-          projectId={projectId || ''}
-          sessionId={sessionId}
-          results={{
-            id: 'current-analysis',
-            projectId: projectId || '',
-            sessionId: sessionId || '',
-            timestamp: new Date().toISOString(),
-            overallHealthScore: result.analysis?.overallScore || 75,
-            toolsUsed: result.analyzedTools || [],
-            issues: result.analysis?.issues?.map((issue: any, index: number) => ({
-              id: `issue-${index}`,
-              title: issue.message || 'Code issue detected',
-              description: issue.description || issue.message || '',
-              severity: issue.severity === 2 ? 'critical' : issue.severity === 1 ? 'high' : 'medium',
-              category: issue.ruleId?.includes('security') ? 'security' : 
-                       issue.ruleId?.includes('performance') ? 'performance' : 
-                       issue.ruleId?.includes('a11y') ? 'accessibility' : 'code_quality',
-              impact: issue.severity === 2 ? 'high' : 'medium',
-              effort: 'low',
-              estimatedTimeHours: 2,
-              businessImpact: `Resolving this ${issue.ruleId || 'issue'} will improve code quality and maintainability`,
-              technicalDebt: true,
-              quickWin: issue.severity !== 2,
-              status: 'open' as const,
-            })) || [],
-            recommendations: [],
-            metrics: {
-              codeQualityScore: result.analysis?.codeQualityScore || 75,
-              securityScore: result.analysis?.securityScore || 80,
-              performanceScore: result.analysis?.performanceScore || 70,
-              accessibilityScore: result.analysis?.accessibilityScore || 85,
-              technicalDebtIndex: result.analysis?.technicalDebtIndex || 25,
-            }
-          }}
-        />
-      )}
-      */}
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-4">
@@ -221,18 +165,18 @@ sayHello('World')`);
         
         <div className="space-y-4">
           <CollaboratorsList collaborators={collaborators} />
-          {/* Auto-fix control panel disabled during rebuild */}
-          {/* 
-          <AutomationControlPanel
-            projectId={projectId}
-            availableTools={['eslint', 'lighthouse', 'snyk', 'sonarqube', 'accessibility', 'bundle-analyzer']}
-            onSettingsChange={handleAutomationSettingsChange}
-          />
-          */}
         </div>
       </div>
       <CursorOverlay cursors={cursors} currentUserId={user?.id} />
     </div>
+  );
+};
+
+const DebugSessionPage = () => {
+  return (
+    <AutoFixProvider>
+      <DebugSessionPageContent />
+    </AutoFixProvider>
   );
 };
 
