@@ -681,6 +681,47 @@ export type Database = {
         }
         Relationships: []
       }
+      conversion_tracking: {
+        Row: {
+          conversion_data: Json | null
+          created_at: string
+          event_type: string
+          feature_blocked: string | null
+          id: string
+          partner_id: string | null
+          upgrade_tier: string | null
+          user_id: string
+        }
+        Insert: {
+          conversion_data?: Json | null
+          created_at?: string
+          event_type: string
+          feature_blocked?: string | null
+          id?: string
+          partner_id?: string | null
+          upgrade_tier?: string | null
+          user_id: string
+        }
+        Update: {
+          conversion_data?: Json | null
+          created_at?: string
+          event_type?: string
+          feature_blocked?: string | null
+          id?: string
+          partner_id?: string | null
+          upgrade_tier?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversion_tracking_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_dashboards: {
         Row: {
           created_at: string
@@ -3963,6 +4004,100 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          partner_id: string | null
+          status: string
+          stripe_subscription_id: string | null
+          tier: string
+          trial_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          partner_id?: string | null
+          status?: string
+          stripe_subscription_id?: string | null
+          tier?: string
+          trial_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          partner_id?: string | null
+          status?: string
+          stripe_subscription_id?: string | null
+          tier?: string
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_usage_tracking: {
+        Row: {
+          ai_analysis_count: number
+          analysis_count: number
+          created_at: string
+          id: string
+          partner_id: string | null
+          premium_feature_attempts: number
+          updated_at: string
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          ai_analysis_count?: number
+          analysis_count?: number
+          created_at?: string
+          id?: string
+          partner_id?: string | null
+          premium_feature_attempts?: number
+          updated_at?: string
+          usage_date?: string
+          user_id: string
+        }
+        Update: {
+          ai_analysis_count?: number
+          analysis_count?: number
+          created_at?: string
+          id?: string
+          partner_id?: string | null
+          premium_feature_attempts?: number
+          updated_at?: string
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_usage_tracking_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_data_sources: {
         Row: {
           created_at: string
@@ -4069,6 +4204,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_or_create_daily_usage: {
+        Args: { p_user_id: string; p_partner_id?: string }
+        Returns: string
+      }
       gtrgm_compress: {
         Args: { "": unknown }
         Returns: unknown
@@ -4093,6 +4232,14 @@ export type Database = {
         Args: {
           _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      increment_usage_counter: {
+        Args: {
+          p_user_id: string
+          p_analysis_type?: string
+          p_partner_id?: string
         }
         Returns: boolean
       }
