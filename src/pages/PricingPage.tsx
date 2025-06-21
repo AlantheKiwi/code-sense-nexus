@@ -29,7 +29,7 @@ const tiers = [
     id: 'premium',
     name: 'Pro',
     price: '$19',
-    priceId: 'price_premium_monthly', // This would be your actual Stripe price ID
+    priceId: 'price_1234567890', // You need to replace this with your actual Stripe price ID
     description: 'For professionals and small agencies ready to deliver quality.',
     features: [
       '10 Lovable projects',
@@ -45,7 +45,7 @@ const tiers = [
     id: 'team',
     name: 'Team',
     price: '$49',
-    priceId: 'price_team_monthly', // This would be your actual Stripe price ID
+    priceId: 'price_0987654321', // You need to replace this with your actual Stripe price ID
     description: 'For growing agencies with multiple clients and developers.',
     features: [
       'Unlimited projects',
@@ -92,6 +92,11 @@ const PricingPage = () => {
       return;
     }
 
+    if (!tier.priceId) {
+      toast.error('This plan is not available yet. Please contact support.');
+      return;
+    }
+
     setLoadingPlan(tier.id);
 
     try {
@@ -103,17 +108,28 @@ const PricingPage = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to create checkout session');
+      }
 
       if (data?.url) {
         // Open Stripe checkout in a new tab
         window.open(data.url, '_blank');
       } else {
-        throw new Error('No checkout URL received');
+        throw new Error('No checkout URL received from server');
       }
     } catch (error) {
       console.error('Subscription error:', error);
-      toast.error('Failed to start subscription process. Please try again.');
+      if (error instanceof Error) {
+        if (error.message.includes('No such price')) {
+          toast.error('This pricing plan needs to be configured in Stripe. Please contact support.');
+        } else {
+          toast.error(`Subscription error: ${error.message}`);
+        }
+      } else {
+        toast.error('Failed to start subscription process. Please try again.');
+      }
     } finally {
       setLoadingPlan(null);
     }
