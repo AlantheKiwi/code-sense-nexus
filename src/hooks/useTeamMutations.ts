@@ -11,26 +11,26 @@ const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
   console.log('=== TEAM CREATION DEBUG START ===');
   console.log('Original team data received:', newTeam);
   
-  // Verify user is authenticated
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    console.error('Authentication failed:', authError);
-    throw new Error('You must be logged in to create a team');
-  }
+  // Get current session first
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  console.log('Session check:', { sessionData, sessionError });
   
-  console.log('✓ User authenticated successfully:', {
+  if (sessionError || !sessionData.session) {
+    console.error('No active session:', sessionError);
+    throw new Error('You must be logged in to create a team. Please refresh the page and try again.');
+  }
+
+  const user = sessionData.session.user;
+  console.log('✓ User from session:', {
     userId: user.id,
     email: user.email
   });
   
-  // Debug: Check partner relationship
+  // Debug: Check partner relationship using RPC call to avoid RLS issues
   const { data: partnerData, error: partnerError } = await supabase
-    .from('partners')
-    .select('id, user_id, company_name')
-    .eq('user_id', user.id)
-    .maybeSingle();
+    .rpc('get_my_partner_id');
     
-  console.log('Partner lookup result:', { partnerData, partnerError });
+  console.log('Partner RPC result:', { partnerData, partnerError });
   
   if (partnerError) {
     console.error('Partner lookup error:', partnerError);
@@ -39,20 +39,16 @@ const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
   
   if (!partnerData) {
     console.error('No partner found for user:', user.id);
-    throw new Error('No partner account found for this user');
+    throw new Error('No partner account found for this user. Please contact support.');
   }
   
-  console.log('✓ Partner found:', {
-    partnerId: partnerData.id,
-    partnerUserId: partnerData.user_id,
-    companyName: partnerData.company_name
-  });
+  console.log('✓ Partner found via RPC:', partnerData);
   
   // Verify the partner_id matches
-  if (newTeam.partner_id !== partnerData.id) {
+  if (newTeam.partner_id !== partnerData) {
     console.error('Partner ID mismatch:', {
       requestedPartnerId: newTeam.partner_id,
-      actualPartnerId: partnerData.id
+      actualPartnerId: partnerData
     });
     throw new Error('Partner ID mismatch - you can only create teams for your own partner account');
   }
@@ -83,7 +79,7 @@ const addTeam = async (newTeam: Omit<TeamInsert, 'created_by'>) => {
       hint: teamError.hint
     });
     console.error('Data that failed to insert:', teamData);
-    throw new Error(teamError.message);
+    throw new Error(`Failed to create team: ${teamError.message}`);
   }
   
   console.log('=== TEAM INSERT SUCCESSFUL ===');

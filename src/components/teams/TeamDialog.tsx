@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useAddTeam, useUpdateTeam } from '@/hooks/useTeamMutations';
 import { Team } from '@/hooks/useTeamsData';
+import { useAuth } from '@/contexts/AuthContext';
 
 const teamSchema = z.object({
   name: z.string().min(1, 'Team name is required'),
@@ -23,6 +24,7 @@ interface TeamDialogProps {
 }
 
 export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpenChange, teamToEdit }) => {
+  const { user, isLoading } = useAuth();
   const addTeamMutation = useAddTeam();
   const updateTeamMutation = useUpdateTeam();
 
@@ -42,8 +44,22 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
   }, [teamToEdit, form]);
 
   const onSubmit = (values: z.infer<typeof teamSchema>) => {
-    console.log('Submitting team with partnerId:', partnerId);
-    console.log('Form values:', values);
+    console.log('TeamDialog submit - Auth state:', {
+      isLoading,
+      hasUser: !!user,
+      userId: user?.id,
+      partnerId
+    });
+    
+    if (isLoading) {
+      toast.error('Authentication is still loading. Please wait a moment and try again.');
+      return;
+    }
+    
+    if (!user) {
+      toast.error('You must be logged in to create a team. Please refresh the page and sign in again.');
+      return;
+    }
     
     if (!partnerId) {
       console.error('No partnerId provided');
@@ -51,6 +67,9 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
       return;
     }
 
+    console.log('Submitting team with values:', values);
+    console.log('Partner ID:', partnerId);
+    
     if (teamToEdit) {
       updateTeamMutation.mutate(
         { id: teamToEdit.id, ...values },
@@ -68,6 +87,9 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
     }
   };
 
+  const isSubmitting = addTeamMutation.isPending || updateTeamMutation.isPending;
+  const isDisabled = isLoading || isSubmitting || !user;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -83,7 +105,7 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
                 <FormItem>
                   <FormLabel>Team Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="E.g. Frontend Legends" {...field} />
+                    <Input placeholder="E.g. Frontend Legends" {...field} disabled={isDisabled} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -91,8 +113,8 @@ export const TeamDialog: React.FC<TeamDialogProps> = ({ partnerId, isOpen, onOpe
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={addTeamMutation.isPending || updateTeamMutation.isPending}>
-                {teamToEdit ? 'Save Changes' : 'Create Team'}
+              <Button type="submit" disabled={isDisabled}>
+                {isSubmitting ? 'Creating...' : teamToEdit ? 'Save Changes' : 'Create Team'}
               </Button>
             </DialogFooter>
           </form>
