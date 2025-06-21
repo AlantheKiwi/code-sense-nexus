@@ -4,12 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, Play, AlertTriangle, CheckCircle, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, AlertTriangle, CheckCircle, Zap, Clock } from 'lucide-react';
 
 const demoSteps = [
   {
     title: "Problematic Lovable Component",
     description: "Here's a typical React component with common issues that slow down development",
+    readingTime: "2 min read",
     type: "code",
     content: {
       code: `import React, { useState, useEffect } from 'react';
@@ -73,6 +74,7 @@ const UserProfile = ({ userId }) => {
   {
     title: "CodeSense Analysis in Progress",
     description: "Our AI analyzes your code for 50+ types of issues specific to Lovable projects",
+    readingTime: "1 min read",
     type: "analysis",
     content: {
       analysisSteps: [
@@ -91,6 +93,7 @@ const UserProfile = ({ userId }) => {
   {
     title: "Issues Detected",
     description: "Clear explanations in plain English - no confusing technical jargon",
+    readingTime: "3 min read",
     type: "issues",
     content: {
       issues: [
@@ -118,6 +121,7 @@ const UserProfile = ({ userId }) => {
   {
     title: "Fixed Code",
     description: "See exactly how to fix each issue with step-by-step code improvements",
+    readingTime: "4 min read",
     type: "fixed-code",
     content: {
       code: `import React from 'react';
@@ -200,6 +204,7 @@ const UserProfile = ({ userId }: { userId: string }) => {
   {
     title: "Performance Results",
     description: "Measurable improvements in your app's speed and maintainability",
+    readingTime: "2 min read",
     type: "results",
     content: {
       metrics: [
@@ -214,7 +219,6 @@ const UserProfile = ({ userId }: { userId: string }) => {
 
 export const InteractiveDemo: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   const nextStep = () => {
     if (currentStep < demoSteps.length - 1) {
@@ -228,20 +232,12 @@ export const InteractiveDemo: React.FC = () => {
     }
   };
 
-  const playDemo = () => {
-    setIsPlaying(true);
+  const goToStep = (stepIndex: number) => {
+    setCurrentStep(stepIndex);
+  };
+
+  const startDemo = () => {
     setCurrentStep(0);
-    
-    const interval = setInterval(() => {
-      setCurrentStep(step => {
-        if (step >= demoSteps.length - 1) {
-          setIsPlaying(false);
-          clearInterval(interval);
-          return step;
-        }
-        return step + 1;
-      });
-    }, 3000);
   };
 
   const step = demoSteps[currentStep];
@@ -250,19 +246,19 @@ export const InteractiveDemo: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto">
       {/* Demo Controls */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-4">
           <Button 
-            onClick={playDemo}
-            disabled={isPlaying}
+            onClick={startDemo}
             className="flex items-center gap-2"
           >
             <Play className="h-4 w-4" />
-            {isPlaying ? 'Playing...' : 'Play Demo'}
+            Start Demo
           </Button>
-          <span className="text-sm text-muted-foreground">
-            Step {currentStep + 1} of {demoSteps.length}
-          </span>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>{step.readingTime}</span>
+          </div>
         </div>
         
         <div className="flex items-center gap-2">
@@ -270,24 +266,57 @@ export const InteractiveDemo: React.FC = () => {
             variant="outline" 
             size="sm" 
             onClick={prevStep}
-            disabled={currentStep === 0 || isPlaying}
+            disabled={currentStep === 0}
           >
             <ChevronLeft className="h-4 w-4" />
+            Previous
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={nextStep}
-            disabled={currentStep === demoSteps.length - 1 || isPlaying}
+            disabled={currentStep === demoSteps.length - 1}
           >
+            Next
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
+      {/* Step Indicators */}
+      <div className="flex justify-center mb-6">
+        <div className="flex gap-2">
+          {demoSteps.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToStep(index)}
+              className={`w-3 h-3 rounded-full transition-colors ${
+                index === currentStep 
+                  ? 'bg-brand' 
+                  : index < currentStep 
+                    ? 'bg-brand/60' 
+                    : 'bg-gray-300'
+              }`}
+              aria-label={`Go to step ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
       {/* Progress Bar */}
       <div className="mb-8">
+        <div className="flex justify-between text-sm text-muted-foreground mb-2">
+          <span>Step {currentStep + 1} of {demoSteps.length}</span>
+          <span>{Math.round(progress)}% Complete</span>
+        </div>
         <Progress value={progress} className="h-2" />
+      </div>
+
+      {/* User Guidance */}
+      <div className="text-center mb-6 p-4 bg-blue-50 rounded-lg">
+        <p className="text-sm text-blue-700">
+          📖 Take your time reading each step. Use the Previous/Next buttons or click the dots above to navigate at your own pace.
+        </p>
       </div>
 
       {/* Demo Content */}
@@ -414,6 +443,33 @@ export const InteractiveDemo: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Navigation Footer */}
+      <div className="mt-8 flex justify-between items-center">
+        <Button 
+          variant="outline" 
+          onClick={prevStep}
+          disabled={currentStep === 0}
+          className="flex items-center gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Previous Step
+        </Button>
+        
+        {currentStep === demoSteps.length - 1 ? (
+          <Button size="lg" className="bg-brand hover:bg-brand/90">
+            Get Started Free
+          </Button>
+        ) : (
+          <Button 
+            onClick={nextStep}
+            className="flex items-center gap-2"
+          >
+            Next Step
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
       {/* Call to Action */}
       {currentStep === demoSteps.length - 1 && (
