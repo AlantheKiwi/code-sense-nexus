@@ -1,14 +1,18 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const tiers = [
   {
+    id: 'free',
     name: 'Developer',
     price: '$0',
     description: 'Perfect for individual developers testing the platform.',
@@ -22,8 +26,10 @@ const tiers = [
     link: '/auth'
   },
   {
+    id: 'premium',
     name: 'Pro',
     price: '$19',
+    priceId: 'price_premium_monthly', // This would be your actual Stripe price ID
     description: 'For professionals and small agencies ready to deliver quality.',
     features: [
       '10 Lovable projects',
@@ -33,12 +39,13 @@ const tiers = [
       'Custom branding'
     ],
     cta: 'Start Pro Trial',
-    link: '/auth',
     popular: true,
   },
   {
+    id: 'team',
     name: 'Team',
     price: '$49',
+    priceId: 'price_team_monthly', // This would be your actual Stripe price ID
     description: 'For growing agencies with multiple clients and developers.',
     features: [
       'Unlimited projects',
@@ -48,9 +55,9 @@ const tiers = [
       'API access'
     ],
     cta: 'Start Team Trial',
-    link: '/auth'
   },
   {
+    id: 'enterprise',
     name: 'Enterprise',
     price: 'Custom',
     description: 'For large agencies and enterprises with custom needs.',
@@ -66,6 +73,52 @@ const tiers = [
 ];
 
 const PricingPage = () => {
+  const { user } = useAuth();
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  const handleSubscription = async (tier: typeof tiers[0]) => {
+    if (!user) {
+      toast.error('Please log in to subscribe to a plan');
+      return;
+    }
+
+    if (tier.id === 'free') {
+      toast.info('You are already on the free plan');
+      return;
+    }
+
+    if (tier.id === 'enterprise') {
+      window.location.href = '/contact';
+      return;
+    }
+
+    setLoadingPlan(tier.id);
+
+    try {
+      // Call Supabase Edge Function to create Stripe checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          priceId: tier.priceId,
+          planName: tier.name 
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Open Stripe checkout in a new tab
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      toast.error('Failed to start subscription process. Please try again.');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
@@ -95,9 +148,28 @@ const PricingPage = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button asChild className={`w-full ${tier.popular ? 'bg-brand text-brand-foreground hover:bg-brand/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
-                    <Link to={tier.link}>{tier.cta}</Link>
-                  </Button>
+                  
+                  {tier.link ? (
+                    <Button asChild className={`w-full ${tier.popular ? 'bg-brand text-brand-foreground hover:bg-brand/90' : ''}`} variant={tier.popular ? 'default' : 'outline'}>
+                      <Link to={tier.link}>{tier.cta}</Link>
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => handleSubscription(tier)}
+                      disabled={loadingPlan === tier.id}
+                      className={`w-full ${tier.popular ? 'bg-brand text-brand-foreground hover:bg-brand/90' : ''}`} 
+                      variant={tier.popular ? 'default' : 'outline'}
+                    >
+                      {loadingPlan === tier.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        tier.cta
+                      )}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}

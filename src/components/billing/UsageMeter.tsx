@@ -3,7 +3,7 @@ import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertTriangle, Zap, ExternalLink, CreditCard } from 'lucide-react';
+import { AlertTriangle, Zap, ExternalLink, CreditCard, Crown } from 'lucide-react';
 import { UsageData, UserSubscription, SUBSCRIPTION_TIERS } from '@/types/billing';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -71,13 +71,15 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
                 Credit Balance
               </Badge>
             </div>
-            {showPricingLink && (
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/pricing" className="flex items-center gap-1">
-                  Buy More <ExternalLink className="h-3 w-3" />
-                </Link>
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {showPricingLink && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/pricing" className="flex items-center gap-1">
+                    Buy More <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
           {showDetails && (
             <div className="mt-2 text-xs text-blue-600">
@@ -126,10 +128,16 @@ export const UsageMeter: React.FC<UsageMeterProps> = ({
             <span className={`text-sm font-semibold ${getStatusColor()}`}>
               {currentUsage}/{dailyLimit}
             </span>
+            <Button variant="outline" size="sm" asChild className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:from-purple-600 hover:to-pink-600">
+              <Link to="/pricing" className="flex items-center gap-1">
+                <Crown className="h-3 w-3" />
+                Upgrade
+              </Link>
+            </Button>
             {showPricingLink && (
               <Button variant="outline" size="sm" asChild>
                 <Link to="/pricing" className="flex items-center gap-1">
-                  Upgrade <ExternalLink className="h-3 w-3" />
+                  View Plans <ExternalLink className="h-3 w-3" />
                 </Link>
               </Button>
             )}
