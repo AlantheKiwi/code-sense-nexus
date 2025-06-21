@@ -17,6 +17,7 @@ import { AutoFixProvider } from '@/contexts/AutoFixProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import { SimpleAutoFixPanel } from '@/components/debug-session/SimpleAutoFixPanel';
+import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 
 const DebugSessionPageContent = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
@@ -134,6 +135,12 @@ sayHello('World')`);
     }
   }, [handleMouseMove, broadcastEvent]);
 
+  const handleAIPromptApply = useCallback((prompt: string) => {
+    console.log('AI prompt applied:', prompt);
+    // In a real implementation, this might open Lovable with the prompt
+    // or copy it to clipboard for the user
+  }, []);
+
   if (isLoading) {
     console.log('Debug session loading...');
     return <LoadingSkeleton />;
@@ -178,16 +185,25 @@ sayHello('World')`);
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-800">
             <AlertTriangle className="h-5 w-5" />
-            Auto-Fix System Ready
+            AI-Enhanced Debug Session Ready
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-blue-700">
-            New centralized state management system is active! 
-            You can now use both mock and real analysis modes. Toggle between them in the panel below.
+            New AI-powered analysis system is active! 
+            CodeSense AI will provide intelligent insights and perfect Lovable prompts.
           </p>
         </CardContent>
       </Card>
+
+      {/* AI Assistant Panel */}
+      <AIAssistantPanel 
+        code={code}
+        filePath="debug-session.tsx"
+        projectType="lovable"
+        userTier="premium"
+        onApplyPrompt={handleAIPromptApply}
+      />
 
       {/* Auto-Fix Panel */}
       <SimpleAutoFixPanel 
