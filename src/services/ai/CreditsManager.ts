@@ -59,9 +59,9 @@ export class CreditsManager {
         .from('user_credits')
         .select('balance')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // Not found error
+      if (error) {
         console.error('Error fetching user credits:', error);
         return 0;
       }
@@ -92,7 +92,7 @@ export class CreditsManager {
         return false;
       }
 
-      return data;
+      return data as boolean;
     } catch (error) {
       console.error('Exception in deductCredits:', error);
       return false;
@@ -118,7 +118,7 @@ export class CreditsManager {
         return false;
       }
 
-      return data;
+      return data as boolean;
     } catch (error) {
       console.error('Exception in addCredits:', error);
       return false;
@@ -139,7 +139,15 @@ export class CreditsManager {
         return [];
       }
 
-      return data || [];
+      return data?.map(row => ({
+        id: row.id,
+        user_id: row.user_id,
+        amount: row.amount,
+        balance: row.balance,
+        description: row.description,
+        metadata: row.metadata,
+        created_at: row.created_at
+      })) || [];
     } catch (error) {
       console.error('Exception in getCreditHistory:', error);
       return [];

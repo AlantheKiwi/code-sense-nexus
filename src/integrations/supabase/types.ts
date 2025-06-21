@@ -722,6 +722,36 @@ export type Database = {
           },
         ]
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance: number
+          created_at: string
+          description: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance: number
+          created_at?: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance?: number
+          created_at?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_dashboards: {
         Row: {
           created_at: string
@@ -3980,6 +4010,30 @@ export type Database = {
           },
         ]
       }
+      user_credits: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -4165,6 +4219,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_user_credits: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_description: string
+          p_metadata?: Json
+        }
+        Returns: boolean
+      }
       calculate_cost_benefit_score: {
         Args: {
           estimated_hours: number
@@ -4198,6 +4261,15 @@ export type Database = {
       }
       can_view_dashboard: {
         Args: { _dashboard_id: string; _user_id: string }
+        Returns: boolean
+      }
+      deduct_user_credits: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_description: string
+          p_metadata?: Json
+        }
         Returns: boolean
       }
       get_my_partner_id: {
