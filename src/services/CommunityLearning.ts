@@ -50,8 +50,7 @@ export class CommunityLearning {
           project_type: projectType,
           issue_type: issueType,
           fix_applied: fixApplied,
-          time_to_resolve: timeToResolve,
-          submitted_at: new Date().toISOString()
+          time_to_resolve: timeToResolve
         });
 
       if (error) {
@@ -91,7 +90,41 @@ export class CommunityLearning {
   }
 
   private async getCommonPatterns(projectType?: string): Promise<CommunityPattern[]> {
-    // In a real implementation, this would aggregate data from the community_patterns table
+    try {
+      let query = supabase
+        .from('community_patterns')
+        .select('*');
+
+      if (projectType) {
+        query = query.eq('project_type', projectType);
+      }
+
+      const { data, error } = await query
+        .order('frequency', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching patterns:', error);
+        return this.getMockPatterns();
+      }
+
+      // Transform database data to interface format
+      return data?.map(item => ({
+        id: item.id,
+        pattern: `${item.issue_type} in ${item.project_type} projects`,
+        frequency: item.frequency || 1,
+        successRate: item.success_rate || 0,
+        category: 'common' as const,
+        description: `Common issue found in ${item.project_type} projects`,
+        relatedFixes: [`Fix ${item.issue_type}`, 'Improve code quality', 'Add error handling']
+      })) || this.getMockPatterns();
+    } catch (error) {
+      console.error('Exception fetching patterns:', error);
+      return this.getMockPatterns();
+    }
+  }
+
+  private getMockPatterns(): CommunityPattern[] {
     return [
       {
         id: '1',

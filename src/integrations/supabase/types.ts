@@ -648,6 +648,39 @@ export type Database = {
           },
         ]
       }
+      community_patterns: {
+        Row: {
+          fix_applied: boolean
+          frequency: number | null
+          id: string
+          issue_type: string
+          project_type: string
+          submitted_at: string
+          success_rate: number | null
+          time_to_resolve: number | null
+        }
+        Insert: {
+          fix_applied?: boolean
+          frequency?: number | null
+          id?: string
+          issue_type: string
+          project_type: string
+          submitted_at?: string
+          success_rate?: number | null
+          time_to_resolve?: number | null
+        }
+        Update: {
+          fix_applied?: boolean
+          frequency?: number | null
+          id?: string
+          issue_type?: string
+          project_type?: string
+          submitted_at?: string
+          success_rate?: number | null
+          time_to_resolve?: number | null
+        }
+        Relationships: []
+      }
       custom_dashboards: {
         Row: {
           created_at: string
@@ -3127,6 +3160,59 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      project_health_snapshots: {
+        Row: {
+          accessibility: number
+          code_quality: number
+          created_at: string
+          id: string
+          issues_fixed: number
+          maintainability: number
+          new_issues_found: number
+          overall_score: number
+          performance: number
+          project_id: string
+          security: number
+          session_id: string | null
+        }
+        Insert: {
+          accessibility?: number
+          code_quality?: number
+          created_at?: string
+          id?: string
+          issues_fixed?: number
+          maintainability?: number
+          new_issues_found?: number
+          overall_score?: number
+          performance?: number
+          project_id: string
+          security?: number
+          session_id?: string | null
+        }
+        Update: {
+          accessibility?: number
+          code_quality?: number
+          created_at?: string
+          id?: string
+          issues_fixed?: number
+          maintainability?: number
+          new_issues_found?: number
+          overall_score?: number
+          performance?: number
+          project_id?: string
+          security?: number
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_health_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_members: {
         Row: {
