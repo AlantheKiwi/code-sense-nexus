@@ -27,6 +27,12 @@ import TeamSettingsPage from "./pages/TeamSettingsPage";
 import AppLayout from "./components/layout/AppLayout";
 import InstructionsPage from "./pages/InstructionsPage";
 import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
+import AdminLayout from '@/components/admin/AdminLayout';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import PricingManagement from '@/pages/admin/PricingManagement';
+import UserManagement from '@/pages/admin/UserManagement';
+import LegalPagesManagement from '@/pages/admin/LegalPagesManagement';
+import SystemSettings from '@/pages/admin/SystemSettings';
 
 const queryClient = new QueryClient({
   defaultOptions: {
