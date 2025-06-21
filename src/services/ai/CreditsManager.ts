@@ -145,7 +145,9 @@ export class CreditsManager {
         amount: row.amount,
         balance: row.balance,
         description: row.description,
-        metadata: row.metadata,
+        metadata: typeof row.metadata === 'object' && row.metadata !== null 
+          ? row.metadata as Record<string, any>
+          : {},
         created_at: row.created_at
       })) || [];
     } catch (error) {
