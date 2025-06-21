@@ -20,11 +20,16 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
   const { state, actions } = useAutoFix();
   const orchestrator = React.useMemo(() => new AutoFixOrchestrator(actions), [actions]);
 
+  // Debug logging
+  console.log('SimpleAutoFixPanel rendering, autoFix state:', state);
+  console.log('SimpleAutoFixPanel props:', { projectId, sessionId });
+
   const handleRunESLint = async () => {
     if (!projectId) {
       actions.addError('Project ID is required');
       return;
     }
+    console.log('Starting ESLint mock analysis');
     await orchestrator.runESLintAnalysis(projectId);
   };
 
@@ -33,6 +38,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
       actions.addError('Project ID is required');
       return;
     }
+    console.log('Starting Lighthouse mock analysis');
     await orchestrator.runLighthouseAnalysis(projectId);
   };
 
@@ -41,14 +47,17 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
       actions.addError('Project ID is required');
       return;
     }
+    console.log('Starting Full mock analysis');
     await orchestrator.runFullAnalysis(projectId);
   };
 
   const handleStop = () => {
+    console.log('Stopping mock analysis');
     orchestrator.stopAnalysis();
   };
 
   const handleClear = () => {
+    console.log('Clearing mock analysis results');
     actions.clearState();
   };
 
@@ -58,7 +67,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Play className="h-5 w-5" />
-            Auto-Fix Analysis
+            Auto-Fix Analysis (Mock Mode)
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -70,7 +79,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
               variant="outline"
               size="sm"
             >
-              Run ESLint
+              Run ESLint (Mock)
             </Button>
             <Button
               onClick={handleRunLighthouse}
@@ -78,14 +87,14 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
               variant="outline"
               size="sm"
             >
-              Run Lighthouse
+              Run Lighthouse (Mock)
             </Button>
             <Button
               onClick={handleRunAll}
               disabled={state.isRunning}
               size="sm"
             >
-              Run All Analysis
+              Run All Analysis (Mock)
             </Button>
             {state.isRunning && (
               <Button
@@ -146,13 +155,13 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-green-600 flex items-center gap-1">
                 <CheckCircle className="h-4 w-4" />
-                Results ({state.results.length})
+                Mock Results ({state.results.length})
               </h4>
               <div className="space-y-2">
                 {state.results.map((result, index) => (
-                  <Card key={index} className="p-3">
+                  <Card key={index} className="p-3 bg-blue-50">
                     <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline">{result.tool}</Badge>
+                      <Badge variant="outline">{result.tool} (Mock)</Badge>
                       {result.completedAt && (
                         <span className="text-xs text-muted-foreground">
                           {new Date(result.completedAt).toLocaleTimeString()}

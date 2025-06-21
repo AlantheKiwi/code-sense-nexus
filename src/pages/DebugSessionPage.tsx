@@ -1,3 +1,4 @@
+
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebugSession } from '@/hooks/useDebugSession';
@@ -12,7 +13,7 @@ import { AutomationControlPanel, AutomationSettings } from '@/components/debug-s
 import { DebugSessionInstructions } from '@/components/debug-session/DebugSessionInstructions';
 import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
-import { IssuesRecommendationsDashboard } from '@/components/debug-session/IssuesRecommendationsDashboard';
+// import { IssuesRecommendationsDashboard } from '@/components/debug-session/IssuesRecommendationsDashboard';
 import { AutoFixProvider } from '@/contexts/AutoFixProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
@@ -22,6 +23,9 @@ const DebugSessionPageContent = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
   const { user } = useAuth();
   const { session, isLoading, error, collaborators, broadcastEvent, lastEvent } = useDebugSession(sessionId!, user);
+  
+  // Debug logging
+  console.log('DebugSessionPageContent rendering with:', { sessionId, projectId, user: user?.id });
   
   const [code, setCode] = useState(`// Welcome to the Live Debugging Session!
 // 1. This is a shared code editor. Any changes you make will be seen by your team in real-time.
@@ -142,7 +146,7 @@ sayHello('World')`);
           <p className="text-yellow-700">
             New centralized state management system is now active! 
             The Auto-Fix panel below demonstrates the new architecture with mock analysis.
-            Real integrations will be added incrementally.
+            Real integrations will be added incrementally. Database queries temporarily disabled for debugging.
           </p>
         </CardContent>
       </Card>
@@ -153,11 +157,13 @@ sayHello('World')`);
         sessionId={sessionId}
       />
 
-      {/* Issues Recommendations Dashboard - Keep basic recommendations */}
+      {/* Temporarily commenting out IssuesRecommendationsDashboard to isolate database query issues */}
+      {/*
       <IssuesRecommendationsDashboard 
         projectId={projectId} 
         sessionId={sessionId}
       />
+      */}
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-4">
@@ -180,6 +186,8 @@ sayHello('World')`);
 };
 
 const DebugSessionPage = () => {
+  console.log('DebugSessionPage wrapper rendering');
+  
   return (
     <AutoFixProvider>
       <DebugSessionPageContent />
