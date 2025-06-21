@@ -1,4 +1,3 @@
-
 export interface LovableIssue {
   id: string;
   type: 'typescript' | 'missing-import' | 'incomplete-component' | 'responsive' | 'error-boundary' | 'loading-state';
@@ -28,6 +27,17 @@ export interface FixResult {
   originalCode: string;
   fixedCode: string;
   error?: string;
+  instructions?: LovableFixInstruction[];
+}
+
+export interface LovableFixInstruction {
+  step: number;
+  action: string;
+  codeToAdd?: string;
+  codeToReplace?: string;
+  fileLocation: string;
+  lineNumber?: number;
+  lovablePrompt: string;
 }
 
 export interface LovablePromptSuggestion {
