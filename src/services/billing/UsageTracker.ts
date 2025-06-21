@@ -39,6 +39,15 @@ export class UsageTracker {
         return null;
       }
 
+      // Cast the tier to the proper type since database returns generic string
+      if (data) {
+        return {
+          ...data,
+          tier: data.tier as 'free' | 'premium' | 'enterprise',
+          status: data.status as 'active' | 'cancelled' | 'expired'
+        };
+      }
+
       return data;
     } catch (error) {
       console.error('Exception in getUserSubscription:', error);
@@ -200,6 +209,13 @@ export class UsageTracker {
         return null;
       }
 
+      // Cast the result to proper types
+      const result: UserSubscription = {
+        ...data,
+        tier: data.tier as 'free' | 'premium' | 'enterprise',
+        status: data.status as 'active' | 'cancelled' | 'expired'
+      };
+
       // Track conversion event if upgrading
       if (tier !== 'free') {
         await this.trackConversionEvent(userId, 'subscription_created', {
@@ -209,7 +225,7 @@ export class UsageTracker {
         });
       }
 
-      return data;
+      return result;
     } catch (error) {
       console.error('Exception in createOrUpdateSubscription:', error);
       return null;

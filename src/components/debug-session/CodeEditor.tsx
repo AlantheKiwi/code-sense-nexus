@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Play, Loader2 } from 'lucide-react';
-import { ToolSelectionGrid } from './tool-selection/ToolSelectionGrid';
+import { ToolSelectionGrid } from './ToolSelectionGrid';
 import { BillingWrapper } from '@/components/billing/BillingWrapper';
 
 interface CodeEditorProps {
