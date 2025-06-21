@@ -5,49 +5,75 @@ import { supabase } from '@/integrations/supabase/client';
 export class AutoFixOrchestrator {
   private actions: AutoFixActions;
   private isRunning = false;
+  private currentAnalysisId: string | null = null;
 
   constructor(actions: AutoFixActions) {
     this.actions = actions;
     console.log('AutoFixOrchestrator initialized');
   }
 
+  private logStateChange(operation: string, newState: boolean) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] AutoFixOrchestrator: ${operation} - isRunning: ${this.isRunning} -> ${newState}`);
+    this.isRunning = newState;
+  }
+
+  private generateAnalysisId(): string {
+    return `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  forceReset(): void {
+    console.log('AutoFixOrchestrator: Force reset triggered');
+    this.logStateChange('FORCE_RESET', false);
+    this.currentAnalysisId = null;
+    this.actions.stopAnalysis();
+  }
+
   async runESLintAnalysis(projectId: string, code?: string, useRealAnalysis: boolean = false): Promise<void> {
-    console.log('Starting ESLint analysis for project:', projectId, 'Real mode:', useRealAnalysis);
+    console.log('AutoFixOrchestrator: ESLint analysis requested for project:', projectId, 'Real mode:', useRealAnalysis);
     
     if (this.isRunning) {
-      console.log('Analysis already in progress, aborting');
-      this.actions.addError('Analysis already in progress');
+      console.log('AutoFixOrchestrator: Analysis already in progress, aborting new request');
+      this.actions.addError('Analysis already in progress. Please wait for current analysis to complete.');
       return;
     }
 
-    this.isRunning = true;
+    const analysisId = this.generateAnalysisId();
+    this.currentAnalysisId = analysisId;
+    this.logStateChange('START_ESLINT', true);
     this.actions.startAnalysis('ESLint');
 
     try {
       if (useRealAnalysis) {
+        console.log(`[${analysisId}] Running REAL ESLint analysis`);
         await this.runRealESLintAnalysis(projectId, code);
       } else {
+        console.log(`[${analysisId}] Running MOCK ESLint analysis`);
         await this.runMockESLintAnalysis(projectId, code);
       }
+      console.log(`[${analysisId}] ESLint analysis completed successfully`);
     } catch (error: any) {
-      console.error('ESLint analysis error:', error);
+      console.error(`[${analysisId}] ESLint analysis error:`, error);
       this.actions.addError(`ESLint analysis failed: ${error.message}`);
       
       // Fallback to mock if real analysis fails
       if (useRealAnalysis) {
-        console.log('Real analysis failed, falling back to mock');
+        console.log(`[${analysisId}] Real analysis failed, attempting mock fallback`);
         this.actions.addError('Real analysis failed, using mock fallback');
         try {
           await this.runMockESLintAnalysis(projectId, code);
+          console.log(`[${analysisId}] Mock fallback completed successfully`);
         } catch (mockError: any) {
-          console.error('Mock fallback also failed:', mockError);
+          console.error(`[${analysisId}] Mock fallback also failed:`, mockError);
           this.actions.addError(`Mock fallback failed: ${mockError.message}`);
         }
       }
     } finally {
+      console.log(`[${analysisId}] ESLint analysis cleanup starting`);
       this.actions.stopAnalysis();
-      this.isRunning = false;
-      console.log('ESLint analysis completed');
+      this.logStateChange('END_ESLINT', false);
+      this.currentAnalysisId = null;
+      console.log(`[${analysisId}] ESLint analysis cleanup completed`);
     }
   }
 
@@ -58,7 +84,7 @@ export class AutoFixOrchestrator {
       // Update progress
       this.actions.setProgress(10);
       
-      // Call the eslint-scheduler edge function
+      // Call the eslint-scheduler edge function with timeout
       console.log('Calling eslint-scheduler edge function...');
       
       const { data, error } = await Promise.race([
@@ -156,20 +182,21 @@ export class AutoFixOrchestrator {
   }
 
   async runLighthouseAnalysis(projectId: string, url?: string): Promise<void> {
-    console.log('Starting Lighthouse mock analysis for project:', projectId);
+    console.log('AutoFixOrchestrator: Lighthouse analysis requested for project:', projectId);
     
     if (this.isRunning) {
-      console.log('Analysis already in progress, aborting');
-      this.actions.addError('Analysis already in progress');
+      console.log('AutoFixOrchestrator: Analysis already in progress, aborting new request');
+      this.actions.addError('Analysis already in progress. Please wait for current analysis to complete.');
       return;
     }
 
-    this.isRunning = true;
+    const analysisId = this.generateAnalysisId();
+    this.currentAnalysisId = analysisId;
+    this.logStateChange('START_LIGHTHOUSE', true);
     this.actions.startAnalysis('Lighthouse');
 
     try {
-      // Simulate Lighthouse analysis with progress updates
-      console.log('Running Lighthouse simulation');
+      console.log(`[${analysisId}] Running Lighthouse simulation`);
       await this.simulateAnalysis('Lighthouse Analysis', [
         { progress: 20, message: 'Loading page...' },
         { progress: 40, message: 'Analyzing performance...' },
@@ -191,28 +218,32 @@ export class AutoFixOrchestrator {
         completedAt: new Date().toISOString()
       };
 
-      console.log('Lighthouse mock result created:', mockResult);
+      console.log(`[${analysisId}] Lighthouse mock result created:`, mockResult);
       this.actions.addResult(mockResult);
     } catch (error: any) {
-      console.error('Lighthouse mock analysis error:', error);
+      console.error(`[${analysisId}] Lighthouse mock analysis error:`, error);
       this.actions.addError(`Lighthouse analysis failed: ${error.message}`);
     } finally {
+      console.log(`[${analysisId}] Lighthouse analysis cleanup starting`);
       this.actions.stopAnalysis();
-      this.isRunning = false;
-      console.log('Lighthouse mock analysis completed');
+      this.logStateChange('END_LIGHTHOUSE', false);
+      this.currentAnalysisId = null;
+      console.log(`[${analysisId}] Lighthouse analysis cleanup completed`);
     }
   }
 
   async runFullAnalysis(projectId: string, code?: string, url?: string, useRealAnalysis: boolean = false): Promise<void> {
-    console.log('Starting Full analysis for project:', projectId, 'Real mode:', useRealAnalysis);
+    console.log('AutoFixOrchestrator: Full analysis requested for project:', projectId, 'Real mode:', useRealAnalysis);
     
     if (this.isRunning) {
-      console.log('Analysis already in progress, aborting');
-      this.actions.addError('Analysis already in progress');
+      console.log('AutoFixOrchestrator: Analysis already in progress, aborting new request');
+      this.actions.addError('Analysis already in progress. Please wait for current analysis to complete.');
       return;
     }
 
-    this.isRunning = true;
+    const analysisId = this.generateAnalysisId();
+    this.currentAnalysisId = analysisId;
+    this.logStateChange('START_FULL', true);
     this.actions.startAnalysis('Full Analysis');
 
     try {
@@ -221,23 +252,75 @@ export class AutoFixOrchestrator {
       this.actions.startAnalysis('Full Analysis');
 
       // Run ESLint first
-      console.log('Running ESLint phase of full analysis');
+      console.log(`[${analysisId}] Running ESLint phase of full analysis`);
       this.actions.setProgress(10);
-      await this.runESLintAnalysis(projectId, code, useRealAnalysis);
+      await this.runESLintSubAnalysis(projectId, code, useRealAnalysis);
 
       // Run Lighthouse second (always mock for now)
-      console.log('Running Lighthouse phase of full analysis');
+      console.log(`[${analysisId}] Running Lighthouse phase of full analysis`);
       this.actions.setProgress(50);
-      await this.runLighthouseAnalysis(projectId, url);
+      await this.runLighthouseSubAnalysis(projectId, url);
 
       this.actions.setProgress(100);
-      console.log('Full analysis completed successfully');
+      console.log(`[${analysisId}] Full analysis completed successfully`);
     } catch (error: any) {
-      console.error('Full analysis error:', error);
+      console.error(`[${analysisId}] Full analysis error:`, error);
       this.actions.addError(`Full analysis failed: ${error.message}`);
     } finally {
+      console.log(`[${analysisId}] Full analysis cleanup starting`);
       this.actions.stopAnalysis();
-      this.isRunning = false;
+      this.logStateChange('END_FULL', false);
+      this.currentAnalysisId = null;
+      console.log(`[${analysisId}] Full analysis cleanup completed`);
+    }
+  }
+
+  private async runESLintSubAnalysis(projectId: string, code?: string, useRealAnalysis: boolean = false): Promise<void> {
+    // Sub-analysis doesn't change the main running state, just processes results
+    try {
+      if (useRealAnalysis) {
+        await this.runRealESLintAnalysis(projectId, code);
+      } else {
+        await this.runMockESLintAnalysis(projectId, code);
+      }
+    } catch (error: any) {
+      console.error('ESLint sub-analysis error:', error);
+      this.actions.addError(`ESLint sub-analysis failed: ${error.message}`);
+      
+      if (useRealAnalysis) {
+        this.actions.addError('Real analysis failed, using mock fallback');
+        await this.runMockESLintAnalysis(projectId, code);
+      }
+    }
+  }
+
+  private async runLighthouseSubAnalysis(projectId: string, url?: string): Promise<void> {
+    // Sub-analysis doesn't change the main running state, just processes results
+    try {
+      await this.simulateAnalysis('Lighthouse Analysis', [
+        { progress: 60, message: 'Loading page...' },
+        { progress: 70, message: 'Analyzing performance...' },
+        { progress: 80, message: 'Checking accessibility...' },
+        { progress: 90, message: 'Evaluating SEO...' },
+        { progress: 95, message: 'Lighthouse analysis complete' }
+      ]);
+
+      const mockResult = {
+        tool: 'Lighthouse (Mock)',
+        scores: {
+          performance: 85,
+          accessibility: 92,
+          bestPractices: 88,
+          seo: 90
+        },
+        summary: 'Good overall performance (mock data)',
+        completedAt: new Date().toISOString()
+      };
+
+      this.actions.addResult(mockResult);
+    } catch (error: any) {
+      console.error('Lighthouse sub-analysis error:', error);
+      this.actions.addError(`Lighthouse sub-analysis failed: ${error.message}`);
     }
   }
 
@@ -255,8 +338,16 @@ export class AutoFixOrchestrator {
   }
 
   stopAnalysis(): void {
-    console.log('Stopping analysis manually');
-    this.isRunning = false;
+    console.log('AutoFixOrchestrator: Manual stop requested');
+    this.logStateChange('MANUAL_STOP', false);
+    this.currentAnalysisId = null;
     this.actions.stopAnalysis();
+  }
+
+  getCurrentState(): { isRunning: boolean; analysisId: string | null } {
+    return {
+      isRunning: this.isRunning,
+      analysisId: this.currentAnalysisId
+    };
   }
 }

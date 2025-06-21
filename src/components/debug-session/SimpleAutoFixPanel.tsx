@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, CheckCircle, Play, Square, Settings } from 'lucide-react';
+import { AlertCircle, CheckCircle, Play, Square, Settings, RotateCcw } from 'lucide-react';
 import { useAutoFix } from '@/hooks/useAutoFix';
 import { AutoFixOrchestrator } from '@/services/AutoFixOrchestrator';
 
@@ -29,6 +29,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
     const orchestrator = React.useMemo(() => new AutoFixOrchestrator(actions), [actions]);
 
     console.log('SimpleAutoFixPanel state:', state);
+    console.log('Orchestrator internal state:', orchestrator.getCurrentState());
 
     const handleRunESLint = async () => {
       try {
@@ -79,6 +80,17 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
       } catch (error: any) {
         console.error('Error stopping analysis:', error);
         actions.addError(`Failed to stop analysis: ${error.message}`);
+      }
+    };
+
+    const handleForceReset = () => {
+      try {
+        console.log('Force resetting analysis state');
+        orchestrator.forceReset();
+        actions.clearState();
+      } catch (error: any) {
+        console.error('Error force resetting:', error);
+        actions.addError(`Failed to force reset: ${error.message}`);
       }
     };
 
@@ -172,6 +184,8 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
               >
                 Run All Analysis {useRealAnalysis ? '(Mixed)' : '(Mock)'}
               </Button>
+              
+              {/* Analysis Control Buttons */}
               {state.isRunning && (
                 <Button
                   onClick={handleStop}
@@ -182,6 +196,18 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
                   Stop
                 </Button>
               )}
+              
+              {/* Reset Button - always available */}
+              <Button
+                onClick={handleForceReset}
+                variant="outline"
+                size="sm"
+                className="text-orange-600 border-orange-200"
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Force Reset
+              </Button>
+              
               {(state.results.length > 0 || state.errors.length > 0) && (
                 <Button
                   onClick={handleClear}
@@ -211,6 +237,9 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
                   )}
                 </div>
                 <Progress value={state.progress} className="w-full" />
+                <p className="text-xs text-muted-foreground">
+                  If analysis appears stuck, use the "Force Reset" button above.
+                </p>
               </div>
             )}
 
@@ -228,6 +257,14 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
                     </div>
                   ))}
                 </div>
+                <Button 
+                  onClick={() => actions.clearState()} 
+                  variant="outline" 
+                  size="sm"
+                  className="text-red-600"
+                >
+                  Clear Errors
+                </Button>
               </div>
             )}
 
