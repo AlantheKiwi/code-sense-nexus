@@ -16,6 +16,7 @@ import { IssuesRecommendationsDashboard } from '@/components/debug-session/Issue
 import { AutoFixProvider } from '@/contexts/AutoFixProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import { SimpleAutoFixPanel } from '@/components/debug-session/SimpleAutoFixPanel';
 
 const DebugSessionPageContent = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
@@ -134,17 +135,23 @@ sayHello('World')`);
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-yellow-800">
             <AlertTriangle className="h-5 w-5" />
-            Auto-Fix System Rebuilding with New State Management
+            Auto-Fix System with New State Management
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-yellow-700">
-            We've implemented a new centralized state management foundation for improved reliability. 
-            Analysis features are being rebuilt incrementally with this new architecture.
-            Manual analysis and recommendations remain available below.
+            New centralized state management system is now active! 
+            The Auto-Fix panel below demonstrates the new architecture with mock analysis.
+            Real integrations will be added incrementally.
           </p>
         </CardContent>
       </Card>
+
+      {/* New Simple Auto-Fix Panel */}
+      <SimpleAutoFixPanel 
+        projectId={projectId} 
+        sessionId={sessionId}
+      />
 
       {/* Issues Recommendations Dashboard - Keep basic recommendations */}
       <IssuesRecommendationsDashboard 
