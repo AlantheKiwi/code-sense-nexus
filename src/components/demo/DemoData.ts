@@ -117,12 +117,62 @@ const UserProfile = ({ userId }) => {
     readingTime: "4 min read",
     type: "fixed-code",
     content: {
-      code: `import React from 'react';
+      originalCode: `import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+const UserProfile = ({ userId }) => {
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Multiple API calls without optimization
+    fetchUser();
+    fetchPosts();
+    fetchUserStats();
+  }, [userId]);
+
+  const fetchUser = async () => {
+    const { data } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId);
+    setUser(data[0]);
+  };
+
+  const fetchPosts = async () => {
+    const { data } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('user_id', userId);
+    setPosts(data);
+    setLoading(false);
+  };
+
+  // Missing error handling, inefficient renders
+  return (
+    <div style={{padding: '20px'}}>
+      {loading ? <div>Loading...</div> : (
+        <div>
+          <h1>{user?.name}</h1>
+          {posts.map(post => (
+            <div key={post.id}>
+              <h3>{post.title}</h3>
+              <p>{post.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};`,
+      fixedCode: `import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertTriangle } from 'lucide-react';
 
 const UserProfile = ({ userId }: { userId: string }) => {
   const { data, isLoading, error } = useQuery({

@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Zap } from 'lucide-react';
+import { CodeComparison } from './CodeComparison';
 
 interface DemoStepProps {
   step: {
@@ -97,12 +98,11 @@ export const DemoStep: React.FC<DemoStepProps> = ({ step }) => {
         )}
 
         {step.type === 'fixed-code' && (
-          <div className="space-y-4">
-            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-              <pre className="text-sm">
-                <code>{step.content.code}</code>
-              </pre>
-            </div>
+          <div className="space-y-6">
+            <CodeComparison 
+              originalCode={step.content.originalCode}
+              fixedCode={step.content.fixedCode}
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {step.content.improvements.map((improvement: string, index: number) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-green-50 rounded">
