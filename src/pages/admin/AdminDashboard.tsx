@@ -10,18 +10,18 @@ const AdminDashboard = () => {
   const { data: userStats } = useQuery({
     queryKey: ['admin-user-stats'],
     queryFn: async () => {
-      const { data: totalUsers } = await supabase
+      const { data: totalUsers, count } = await supabase
         .from('profiles')
-        .select('id', { count: 'exact' });
+        .select('id', { count: 'exact', head: true });
 
-      const { data: activeUsers } = await supabase
+      const { data: activeUsers, count: activeCount } = await supabase
         .from('user_usage_tracking')
-        .select('user_id', { count: 'exact' })
+        .select('user_id', { count: 'exact', head: true })
         .gte('usage_date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       return {
-        totalUsers: totalUsers?.length || 0,
-        activeUsers: activeUsers?.length || 0
+        totalUsers: count || 0,
+        activeUsers: activeCount || 0
       };
     }
   });
