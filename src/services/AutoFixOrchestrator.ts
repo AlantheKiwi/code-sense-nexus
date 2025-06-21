@@ -1,15 +1,17 @@
-
 import { AutoFixActions } from '@/contexts/AutoFixContext';
 import { supabase } from '@/integrations/supabase/client';
+import { CodeFixEngine, CodeFix, FixResult } from './CodeFixEngine';
 
 export class AutoFixOrchestrator {
   private actions: AutoFixActions;
   private isRunning = false;
   private currentAnalysisId: string | null = null;
+  private codeFixEngine: CodeFixEngine;
 
   constructor(actions: AutoFixActions) {
     this.actions = actions;
-    console.log('AutoFixOrchestrator initialized');
+    this.codeFixEngine = new CodeFixEngine(actions);
+    console.log('AutoFixOrchestrator initialized with CodeFixEngine');
   }
 
   private logStateChange(operation: string, newState: boolean) {
@@ -26,6 +28,7 @@ export class AutoFixOrchestrator {
     console.log('AutoFixOrchestrator: Force reset triggered');
     this.logStateChange('FORCE_RESET', false);
     this.currentAnalysisId = null;
+    this.codeFixEngine.clearFixes();
     this.actions.stopAnalysis();
   }
 
@@ -440,5 +443,63 @@ export class AutoFixOrchestrator {
       isRunning: this.isRunning,
       analysisId: this.currentAnalysisId
     };
+  }
+
+  async generateCodeFixes(): Promise<CodeFix[]> {
+    console.log('Generating code fixes from analysis results');
+    
+    try {
+      // Get current analysis results from the context
+      const results = this.actions.getResults ? this.actions.getResults() : [];
+      console.log('Analysis results for fix generation:', results);
+      
+      if (results.length === 0) {
+        console.log('No analysis results available for fix generation');
+        return [];
+      }
+
+      const fixes = await this.codeFixEngine.generateFixes(results);
+      console.log(`Generated ${fixes.length} potential fixes`);
+      
+      return fixes;
+    } catch (error: any) {
+      console.error('Error generating code fixes:', error);
+      this.actions.addError(`Failed to generate fixes: ${error.message}`);
+      return [];
+    }
+  }
+
+  async applyCodeFixes(selectedFixIds: string[]): Promise<FixResult[]> {
+    console.log('Applying selected code fixes:', selectedFixIds);
+    
+    try {
+      const results = await this.codeFixEngine.applyFixes(selectedFixIds);
+      
+      const successCount = results.filter(r => r.success).length;
+      const failureCount = results.filter(r => !r.success).length;
+      
+      if (successCount > 0) {
+        console.log(`Successfully applied ${successCount} fixes`);
+      }
+      
+      if (failureCount > 0) {
+        console.log(`Failed to apply ${failureCount} fixes`);
+        this.actions.addError(`${failureCount} fixes failed to apply`);
+      }
+      
+      return results;
+    } catch (error: any) {
+      console.error('Error applying code fixes:', error);
+      this.actions.addError(`Failed to apply fixes: ${error.message}`);
+      return [];
+    }
+  }
+
+  getCodeFixes(): CodeFix[] {
+    return this.codeFixEngine.getFixes();
+  }
+
+  clearCodeFixes(): void {
+    this.codeFixEngine.clearFixes();
   }
 }

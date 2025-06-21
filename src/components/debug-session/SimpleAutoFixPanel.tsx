@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, CheckCircle, Play, Square, Settings, RotateCcw } from 'lucide-react';
+import { AlertCircle, CheckCircle, Play, Square, Settings, RotateCcw, Wrench } from 'lucide-react';
 import { useAutoFix } from '@/hooks/useAutoFix';
 import { AutoFixOrchestrator } from '@/services/AutoFixOrchestrator';
+import { FixReviewPanel } from './FixReviewPanel';
+import { CodeFix, FixResult } from '@/services/CodeFixEngine';
 
 interface SimpleAutoFixPanelProps {
   projectId?: string;
@@ -22,6 +24,11 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
 
   // Error boundary state
   const [hasError, setHasError] = useState(false);
+  
+  // Code fixes state
+  const [fixes, setFixes] = useState<CodeFix[]>([]);
+  const [isGeneratingFixes, setIsGeneratingFixes] = useState(false);
+  const [isApplyingFixes, setIsApplyingFixes] = useState(false);
 
   try {
     const { state, actions } = useAutoFix();
@@ -39,6 +46,9 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
         }
         console.log('Starting ESLint analysis, real mode:', useRealAnalysis);
         await orchestrator.runESLintAnalysis(projectId, undefined, useRealAnalysis);
+        
+        // After analysis, automatically generate fixes
+        await handleGenerateFixes();
       } catch (error: any) {
         console.error('Error running ESLint:', error);
         actions.addError(`Failed to run ESLint: ${error.message}`);
@@ -53,6 +63,9 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
         }
         console.log('Starting Lighthouse analysis, real mode:', useRealAnalysis);
         await orchestrator.runLighthouseAnalysis(projectId, undefined, useRealAnalysis);
+        
+        // After analysis, automatically generate fixes
+        await handleGenerateFixes();
       } catch (error: any) {
         console.error('Error running Lighthouse:', error);
         actions.addError(`Failed to run Lighthouse: ${error.message}`);
@@ -67,9 +80,56 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
         }
         console.log('Starting Full analysis, real mode:', useRealAnalysis);
         await orchestrator.runFullAnalysis(projectId, undefined, undefined, useRealAnalysis);
+        
+        // After analysis, automatically generate fixes
+        await handleGenerateFixes();
       } catch (error: any) {
         console.error('Error running full analysis:', error);
         actions.addError(`Failed to run full analysis: ${error.message}`);
+      }
+    };
+
+    const handleGenerateFixes = async () => {
+      try {
+        setIsGeneratingFixes(true);
+        console.log('Generating code fixes from analysis results');
+        
+        const generatedFixes = await orchestrator.generateCodeFixes();
+        setFixes(generatedFixes);
+        
+        if (generatedFixes.length > 0) {
+          console.log(`Generated ${generatedFixes.length} potential fixes`);
+        } else {
+          console.log('No fixable issues found');
+        }
+      } catch (error: any) {
+        console.error('Error generating fixes:', error);
+        actions.addError(`Failed to generate fixes: ${error.message}`);
+      } finally {
+        setIsGeneratingFixes(false);
+      }
+    };
+
+    const handleApplyFixes = async (selectedFixIds: string[]): Promise<FixResult[]> => {
+      try {
+        setIsApplyingFixes(true);
+        console.log('Applying selected fixes:', selectedFixIds);
+        
+        const results = await orchestrator.applyCodeFixes(selectedFixIds);
+        
+        const successCount = results.filter(r => r.success).length;
+        if (successCount > 0) {
+          // You could add a success message to the actions here
+          console.log(`Successfully applied ${successCount} fixes`);
+        }
+        
+        return results;
+      } catch (error: any) {
+        console.error('Error applying fixes:', error);
+        actions.addError(`Failed to apply fixes: ${error.message}`);
+        return [];
+      } finally {
+        setIsApplyingFixes(false);
       }
     };
 
@@ -88,6 +148,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
         console.log('Force resetting analysis state');
         orchestrator.forceReset();
         actions.clearState();
+        setFixes([]);
       } catch (error: any) {
         console.error('Error force resetting:', error);
         actions.addError(`Failed to force reset: ${error.message}`);
@@ -98,6 +159,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
       try {
         console.log('Clearing analysis results');
         actions.clearState();
+        setFixes([]);
       } catch (error: any) {
         console.error('Error clearing results:', error);
         actions.addError(`Failed to clear results: ${error.message}`);
@@ -131,7 +193,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Play className="h-5 w-5" />
-              Auto-Fix Analysis System
+              Smart Auto-Fix Analysis System
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -185,6 +247,20 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
                 Run All Analysis {useRealAnalysis ? '(Real)' : '(Mock)'}
               </Button>
               
+              {/* Fix Generation Button */}
+              {state.results.length > 0 && (
+                <Button
+                  onClick={handleGenerateFixes}
+                  disabled={state.isRunning || isGeneratingFixes}
+                  variant="secondary"
+                  size="sm"
+                  className="bg-green-100 hover:bg-green-200 text-green-800"
+                >
+                  <Wrench className="h-4 w-4 mr-1" />
+                  {isGeneratingFixes ? 'Generating...' : 'Generate Fixes'}
+                </Button>
+              )}
+              
               {/* Analysis Control Buttons */}
               {state.isRunning && (
                 <Button
@@ -208,14 +284,14 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
                 Force Reset
               </Button>
               
-              {(state.results.length > 0 || state.errors.length > 0) && (
+              {(state.results.length > 0 || state.errors.length > 0 || fixes.length > 0) && (
                 <Button
                   onClick={handleClear}
                   variant="ghost"
                   size="sm"
                   disabled={state.isRunning}
                 >
-                  Clear Results
+                  Clear All
                 </Button>
               )}
             </div>
@@ -239,6 +315,21 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
                 <Progress value={state.progress} className="w-full" />
                 <p className="text-xs text-muted-foreground">
                   If analysis appears stuck, use the "Force Reset" button above.
+                </p>
+              </div>
+            )}
+
+            {/* Fix Generation Status */}
+            {isGeneratingFixes && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">
+                    <Wrench className="h-3 w-3 mr-1" />
+                    Generating Fixes...
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Analyzing results to create automatic code fixes...
                 </p>
               </div>
             )}
@@ -273,7 +364,7 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-green-600 flex items-center gap-1">
                   <CheckCircle className="h-4 w-4" />
-                  Results ({state.results.length})
+                  Analysis Results ({state.results.length})
                 </h4>
                 <div className="space-y-2">
                   {state.results.map((result, index) => (
@@ -330,6 +421,13 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
             )}
           </CardContent>
         </Card>
+
+        {/* Code Fixes Panel */}
+        <FixReviewPanel
+          fixes={fixes}
+          isApplying={isApplyingFixes}
+          onApplyFixes={handleApplyFixes}
+        />
       </div>
     );
   } catch (error: any) {
