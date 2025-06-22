@@ -1,5 +1,4 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { llmGateway } from './LLMGateway';
 
 interface CodeAnalysisRequest {
   code: string;
@@ -34,53 +33,40 @@ export class GenspartAIEngine {
     try {
       console.log('🧠 CodeSense AI: Starting intelligent analysis...');
       
-      const analysisType = this.mapAnalysisType(request.analysisType);
+      // Use the LLM gateway for real AI analysis
+      const llmRequest = {
+        code: request.code,
+        analysisType: request.analysisType,
+        projectContext: request.context?.projectDescription
+      };
+
+      // Default to GPT-4 for analysis, but could be made configurable
+      const provider = 'gpt-4';
+      const userId = 'current-user'; // In real app, get from auth context
       
-      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
-        body: {
-          projectId: 'demo-project', // In real app, get from context
-          code: request.code,
-          analysisType
-        }
-      });
-
-      if (error) throw error;
-
-      const result = this.transformAnalysisResult(data, request);
+      const result = await llmGateway.analyzeWithProvider(provider, llmRequest, userId);
+      
+      const transformedResult = this.transformLLMResult(result, request);
       
       console.log('✨ CodeSense AI: Analysis complete!');
-      return result;
+      return transformedResult;
     } catch (error: any) {
       console.error('❌ CodeSense AI analysis failed:', error);
       return this.getFallbackAnalysis(request);
     }
   }
 
-  private mapAnalysisType(type: string): string {
-    switch (type) {
-      case 'lovable-prompts':
-      case 'optimization':
-        return 'optimize';
-      case 'debugging':
-        return 'security';
-      case 'quality':
-      case 'architecture':
-      default:
-        return 'review';
-    }
-  }
-
-  private transformAnalysisResult(data: any, request: CodeAnalysisRequest): AIAnalysisResult {
+  private transformLLMResult(result: any, request: CodeAnalysisRequest): AIAnalysisResult {
     const userTier = request.context?.userTier || 'free';
     
     if (request.analysisType === 'lovable-prompts') {
       return {
         summary: 'Generated optimized Lovable prompts for code enhancement',
-        insights: (data.optimizations || []).map((opt: any) => `Optimization opportunity: ${opt.issue}`),
-        recommendations: (data.optimizations || []).map((opt: any) => opt.suggestion),
-        lovablePrompts: this.generateLovablePromptsFromData(data, request.code),
-        codeQualityScore: 78,
-        issuesPrevented: (data.optimizations || []).length,
+        insights: result.result.issues?.map((issue: any) => `Optimization opportunity: ${issue.description}`) || [],
+        recommendations: result.result.recommendations || [],
+        lovablePrompts: this.generateLovablePromptsFromAnalysis(result.result),
+        codeQualityScore: result.result.score || 78,
+        issuesPrevented: result.result.issues?.length || 0,
         estimatedTimeSaved: 45,
         nextSteps: [
           'Start with the highest impact prompts first',
@@ -91,27 +77,33 @@ export class GenspartAIEngine {
     }
 
     return {
-      summary: data.summary || 'Comprehensive code analysis completed',
-      insights: [
-        ...(data.bugs || []).map((bug: any) => `🐛 Bug detected: ${bug.issue}`),
-        ...(data.improvements || []).map((imp: any) => `💡 Improvement: ${imp.issue}`)
-      ],
-      recommendations: [
-        ...(data.bugs || []).map((bug: any) => bug.suggestion),
-        ...(data.improvements || []).map((imp: any) => imp.suggestion)
-      ],
-      codeQualityScore: data.quality_score || 75,
-      estimatedTimeSaved: Math.max(10, (data.bugs?.length || 0) * 15),
+      summary: result.result.summary || 'Comprehensive code analysis completed',
+      insights: result.result.issues?.map((issue: any) => `${this.getIssueIcon(issue.severity)} ${issue.description}`) || [],
+      recommendations: result.result.recommendations || [],
+      codeQualityScore: result.result.score || 75,
+      estimatedTimeSaved: Math.max(10, (result.result.issues?.length || 0) * 15),
       nextSteps: [
-        'Address critical bugs first',
+        'Address critical issues first',
         'Implement suggested improvements',
         'Run analysis again to track progress'
       ]
     };
   }
 
-  private generateLovablePromptsFromData(data: any, code: string): string[] {
-    const optimizations = data.optimizations || [];
+  private getIssueIcon(severity: string): string {
+    switch (severity) {
+      case 'critical': return '🚨';
+      case 'high': return '🔴';
+      case 'medium': return '🟡';
+      case 'low': return '🟢';
+      default: return '💡';
+    }
+  }
+
+  private generateLovablePromptsFromAnalysis(analysisResult: any): string[] {
+    const issues = analysisResult.issues || [];
+    const recommendations = analysisResult.recommendations || [];
+    
     const basePrompts = [
       'Add proper TypeScript interfaces for all props and state objects with strict typing',
       'Implement React Error Boundary wrapper with user-friendly error messages',
@@ -126,9 +118,9 @@ export class GenspartAIEngine {
     ];
 
     // Generate specific prompts based on the analysis
-    const specificPrompts = optimizations.map((opt: any) => 
-      `Refactor the code to ${opt.suggestion.toLowerCase()}`
-    );
+    const specificPrompts = recommendations.map((rec: string) => 
+      `Refactor the code to ${rec.toLowerCase()}`
+    ).slice(0, 4);
 
     return [...specificPrompts, ...basePrompts.slice(0, 6 - specificPrompts.length)];
   }

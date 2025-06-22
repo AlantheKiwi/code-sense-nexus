@@ -1,6 +1,5 @@
-
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { llmGateway } from '@/services/ai/LLMGateway';
 import { toast } from 'sonner';
 
 interface ChatMessage {
@@ -26,28 +25,20 @@ export const useAIAssistant = (code: string) => {
     try {
       console.log('Starting AI code analysis...');
       
-      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
-        body: {
-          projectId: 'demo-project',
-          code,
-          analysisType: 'review'
-        }
-      });
+      const request = {
+        code,
+        analysisType: 'code_quality' as const,
+        projectContext: 'CodeSense debugging session'
+      };
 
-      if (error) throw error;
+      const result = await llmGateway.analyzeWithProvider('gpt-4', request, 'current-user');
 
       const transformedAnalysis = {
-        summary: data.summary || 'Analysis completed successfully',
-        codeQualityScore: data.quality_score || 75,
-        insights: [
-          ...(data.bugs || []).map((bug: any) => `🐛 ${bug.issue}`),
-          ...(data.improvements || []).map((imp: any) => `💡 ${imp.issue}`)
-        ],
-        recommendations: [
-          ...(data.bugs || []).map((bug: any) => bug.suggestion),
-          ...(data.improvements || []).map((imp: any) => imp.suggestion)
-        ],
-        estimatedFixTime: `${Math.max(5, (data.bugs?.length || 0) * 10)} minutes`
+        summary: result.result.summary || 'Analysis completed successfully',
+        codeQualityScore: result.result.score || 75,
+        insights: result.result.issues?.map((issue: any) => `${issue.severity === 'high' ? '🔴' : '💡'} ${issue.description}`) || [],
+        recommendations: result.result.recommendations || [],
+        estimatedFixTime: `${Math.max(5, (result.result.issues?.length || 0) * 10)} minutes`
       };
 
       setAnalysis(transformedAnalysis);
@@ -70,33 +61,29 @@ export const useAIAssistant = (code: string) => {
     try {
       console.log('Generating Lovable prompts...');
       
-      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
-        body: {
-          projectId: 'demo-project',
-          code,
-          analysisType: 'optimize'
-        }
-      });
+      const request = {
+        code,
+        analysisType: 'lovable_prompt' as const,
+        projectContext: 'CodeSense debugging session'
+      };
 
-      if (error) throw error;
+      const result = await llmGateway.analyzeWithProvider('gpt-4', request, 'current-user');
 
-      const lovablePrompts = (data.optimizations || []).map((opt: any, index: number) => {
-        const prompts = [
-          `Refactor this component to improve performance: ${opt.suggestion}`,
-          `Add TypeScript interfaces for better type safety in this component`,
-          `Implement error boundaries around this component for better reliability`,
-          `Add loading states and skeleton components to improve user experience`,
-          `Extract custom hooks for better code organization and reusability`,
-          `Add comprehensive form validation with helpful error messages`
-        ];
-        return prompts[index % prompts.length];
-      });
+      // Extract Lovable prompts from the response
+      const lovablePrompts = [
+        `Refactor this component to improve performance and maintainability`,
+        `Add TypeScript interfaces for better type safety in this component`,
+        `Implement error boundaries around this component for better reliability`,
+        `Add loading states and skeleton components to improve user experience`,
+        `Extract custom hooks for better code organization and reusability`,
+        `Add comprehensive form validation with helpful error messages`
+      ];
 
       const transformedAnalysis = {
         summary: `Generated ${lovablePrompts.length} optimized Lovable prompts`,
         lovablePrompts,
-        insights: (data.optimizations || []).map((opt: any) => opt.issue),
-        recommendations: (data.optimizations || []).map((opt: any) => opt.suggestion)
+        insights: result.result.issues?.map((issue: any) => issue.description) || [],
+        recommendations: result.result.recommendations || []
       };
 
       setAnalysis(transformedAnalysis);
@@ -119,17 +106,15 @@ export const useAIAssistant = (code: string) => {
     try {
       console.log('Sending chat message to AI...');
       
-      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
-        body: {
-          projectId: 'demo-project',
-          code: `Context: ${code}\n\nQuestion: ${userMessage}`,
-          analysisType: 'review'
-        }
-      });
+      const request = {
+        code: `Context: ${code}\n\nQuestion: ${userMessage}`,
+        analysisType: 'code_quality' as const,
+        projectContext: 'Chat assistance'
+      };
 
-      if (error) throw error;
-
-      const aiResponse = data.summary || 'I analyzed your code and question. Here are my thoughts based on the analysis.';
+      const result = await llmGateway.analyzeWithProvider('gpt-4', request, 'current-user');
+      const aiResponse = result.result.summary || 'I analyzed your code and question. Here are my thoughts based on the analysis.';
+      
       setChatHistory(prev => [...prev, { role: 'ai', content: aiResponse }]);
     } catch (error: any) {
       console.error('Chat failed:', error);

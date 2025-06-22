@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 export interface LLMProvider {
   id: string;
   name: string;
@@ -199,59 +201,51 @@ Create a prompt that would help a developer improve this code using Lovable's ca
   }
 
   private async callOpenAI(prompt: string, model: string) {
-    const response = await fetch('/api/llm/openai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, model })
+    const { data, error } = await supabase.functions.invoke('llm-openai', {
+      body: { prompt, model }
     });
 
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+    if (error) {
+      throw new Error(`OpenAI API error: ${error.message}`);
     }
 
-    return await response.json();
+    return data;
   }
 
   private async callClaude(prompt: string, model: string) {
-    const response = await fetch('/api/llm/claude', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, model })
+    const { data, error } = await supabase.functions.invoke('llm-claude', {
+      body: { prompt, model }
     });
 
-    if (!response.ok) {
-      throw new Error(`Claude API error: ${response.statusText}`);
+    if (error) {
+      throw new Error(`Claude API error: ${error.message}`);
     }
 
-    return await response.json();
+    return data;
   }
 
   private async callGemini(prompt: string, model: string) {
-    const response = await fetch('/api/llm/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, model })
+    const { data, error } = await supabase.functions.invoke('llm-gemini', {
+      body: { prompt, model }
     });
 
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.statusText}`);
+    if (error) {
+      throw new Error(`Gemini API error: ${error.message}`);
     }
 
-    return await response.json();
+    return data;
   }
 
   private async callPerplexity(prompt: string, model: string) {
-    const response = await fetch('/api/llm/perplexity', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, model })
+    const { data, error } = await supabase.functions.invoke('llm-perplexity', {
+      body: { prompt, model }
     });
 
-    if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.statusText}`);
+    if (error) {
+      throw new Error(`Perplexity API error: ${error.message}`);
     }
 
-    return await response.json();
+    return data;
   }
 
   private parseAIResponse(content: string, analysisType: string): any {

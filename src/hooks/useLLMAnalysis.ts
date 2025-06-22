@@ -1,7 +1,6 @@
-
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { llmGateway } from '@/services/ai/LLMGateway';
 import { toast } from 'sonner';
 
 interface AnalysisRequest {
@@ -70,61 +69,44 @@ export function useLLMAnalysis() {
     try {
       console.log(`Starting ${provider} analysis...`);
 
-      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
-        body: {
-          projectId: request.projectId || 'demo-project',
-          code: request.code,
-          analysisType: request.analysisType
-        }
-      });
+      // Use the real LLM gateway
+      const llmRequest = {
+        code: request.code,
+        analysisType: request.analysisType,
+        projectContext: request.projectId
+      };
 
-      if (error) throw error;
+      const result = await llmGateway.analyzeWithProvider(provider, llmRequest, user.id);
 
       // Transform the response to match our interface
-      const result: AnalysisResult = {
+      const analysisResult: AnalysisResult = {
         id: `analysis_${Date.now()}`,
         analysisType: request.analysisType,
         provider: provider,
         result: {
-          summary: data.summary || 'Analysis completed',
-          score: data.quality_score,
-          issues: [
-            ...(data.bugs || []).map((bug: any) => ({
-              type: 'Bug',
-              severity: 'high',
-              description: bug.issue,
-              suggestion: bug.suggestion,
-              lineNumber: bug.line
-            })),
-            ...(data.improvements || []).map((imp: any) => ({
-              type: 'Improvement',
-              severity: 'medium',
-              description: imp.issue,
-              suggestion: imp.suggestion,
-              lineNumber: imp.line
-            }))
-          ],
-          recommendations: [
-            ...(data.bugs || []).map((bug: any) => bug.suggestion),
-            ...(data.improvements || []).map((imp: any) => imp.suggestion)
-          ],
-          estimatedFixTime: `${Math.max(5, (data.bugs?.length || 0) * 10)} minutes`
+          summary: result.result.summary || 'Analysis completed',
+          score: result.result.score,
+          issues: result.result.issues?.map((issue: any) => ({
+            type: issue.type || 'General',
+            severity: issue.severity as 'critical' | 'high' | 'medium' | 'low',
+            description: issue.description || issue.issue,
+            suggestion: issue.suggestion || 'No specific suggestion available',
+            lineNumber: issue.lineNumber || issue.line
+          })) || [],
+          recommendations: result.result.recommendations || [],
+          estimatedFixTime: result.result.estimatedFixTime || `${Math.max(5, (result.result.issues?.length || 0) * 10)} minutes`
         },
-        usage: {
-          tokensUsed: Math.floor(request.code.length / 4), // Rough estimate
-          processingTimeMs: Math.floor(Math.random() * 3000) + 1000,
-          costInCredits: 1
-        },
-        timestamp: new Date().toISOString()
+        usage: result.usage,
+        timestamp: result.timestamp
       };
 
       // Update state
-      setCurrentAnalysis(result);
-      setAnalysisHistory(prev => [result, ...prev.slice(0, 9)]); // Keep last 10
-      setUserCredits(prev => prev - 1);
+      setCurrentAnalysis(analysisResult);
+      setAnalysisHistory(prev => [analysisResult, ...prev.slice(0, 9)]); // Keep last 10
+      setUserCredits(prev => Math.max(0, prev - result.usage.costInCredits));
 
       toast.success(`Analysis completed with ${provider}!`);
-      console.log('Analysis result:', result);
+      console.log('Analysis result:', analysisResult);
 
     } catch (error: any) {
       console.error('LLM Analysis error:', error);
