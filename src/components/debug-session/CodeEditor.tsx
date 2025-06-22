@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -78,6 +77,14 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           
           <LLMSelector
             analysisType="security"
+            onAnalyze={analyzeWithLLM}
+            code={code}
+            userCredits={userCredits}
+            isAnalyzing={isLLMAnalyzing}
+          />
+
+          <LLMSelector
+            analysisType="performance"
             onAnalyze={analyzeWithLLM}
             code={code}
             userCredits={userCredits}

@@ -113,14 +113,69 @@ ${code}
 
 Please provide architectural analysis with suggestions for improvement, scalability considerations, and design pattern recommendations.`,
 
-      security: `${baseContext}Perform a security analysis on this code. Look for vulnerabilities, security anti-patterns, and potential attack vectors:
+      security: `${baseContext}PROFESSIONAL SECURITY AUDIT - Perform a comprehensive security analysis of this code as a cybersecurity consultant would.
 
-Code:
+🔍 ANALYZE FOR:
+
+1. **OWASP Top 10 Vulnerabilities:**
+   - A01: Broken Access Control
+   - A02: Cryptographic Failures
+   - A03: Injection (SQL, NoSQL, Command, LDAP)
+   - A04: Insecure Design
+   - A05: Security Misconfiguration
+   - A06: Vulnerable Components
+   - A07: Authentication Failures
+   - A08: Software/Data Integrity Failures
+   - A09: Security Logging/Monitoring Failures
+   - A10: Server-Side Request Forgery
+
+2. **Specific Security Issues:**
+   - Input validation and sanitization
+   - Authentication bypass vulnerabilities
+   - Authorization flaws and privilege escalation
+   - XSS (Stored, Reflected, DOM-based)
+   - CSRF protection
+   - Session management issues
+   - API security weaknesses
+   - Data exposure and privacy violations
+   - Insecure cryptographic practices
+   - Business logic vulnerabilities
+
+3. **AI/LLM Specific Vulnerabilities:**
+   - Prompt injection attacks
+   - Model data poisoning risks
+   - Training data exposure
+   - Output filtering bypasses
+   - Context window manipulation
+   - AI model fingerprinting
+
+Code to audit:
 \`\`\`
 ${code}
 \`\`\`
 
-Identify security issues, classify their severity, and provide specific remediation steps.`,
+📋 REQUIRED OUTPUT FORMAT:
+For each vulnerability found, provide:
+- **Exact location** (file, line numbers, code snippet)
+- **Vulnerability type** (map to OWASP category)
+- **Severity** (Critical/High/Medium/Low/Informational)
+- **Business impact** assessment
+- **Proof of concept** exploit (if applicable)
+- **Specific remediation** with before/after code examples
+- **CVSS v3.1 score** estimate
+- **Compliance impact** (SOC2, PCI-DSS, GDPR relevance)
+
+🎯 FOCUS AREAS:
+- Authentication & authorization mechanisms
+- Input validation and output encoding
+- Session management security
+- API endpoint security
+- Data handling and privacy
+- Error handling and information disclosure
+- Cryptographic implementations
+- Dependencies and third-party risks
+
+Provide executive summary with risk level and business impact assessment.`,
 
       performance: `${baseContext}Analyze this code for performance bottlenecks and optimization opportunities:
 

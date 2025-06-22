@@ -40,7 +40,10 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   const { subscription } = useUsageTracking();
 
   const selectedLLM = LLM_PROVIDERS[selectedProvider];
-  const canAfford = userCredits >= selectedLLM.costPerRequest;
+  
+  // Security audits cost more credits
+  const actualCost = analysisType === 'security' ? selectedLLM.costPerRequest * 4 : selectedLLM.costPerRequest;
+  const canAfford = userCredits >= actualCost;
   const hasUnlimitedAccess = subscription?.tier === 'enterprise';
 
   const getAnalysisTypeIcon = () => {
@@ -56,7 +59,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
     const labels = {
       code_quality: 'Code Quality Analysis',
       architecture: 'Architecture Review',
-      security: 'Security Audit',
+      security: 'Professional Security Audit ($4.99)',
       performance: 'Performance Analysis',
       lovable_prompt: 'Lovable Prompt Generation'
     };
@@ -64,6 +67,16 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
   };
 
   const getProviderRecommendation = (providerId: string) => {
+    if (analysisType === 'security') {
+      const securityRecommendations = {
+        'gemini-pro': '🥇 Best for Security Analysis - Exceptional vulnerability detection',
+        'gpt-4': '🥈 Excellent for complex security patterns and compliance',
+        'claude-3.5': '🥉 Strong at identifying data leakage and privacy issues',
+        'perplexity': 'Good for latest security threat intelligence'
+      };
+      return securityRecommendations[providerId] || '';
+    }
+
     const recommendations = {
       'gpt-4': 'Best for complex architecture decisions and detailed explanations',
       'claude-3.5': 'Excellent for debugging and finding subtle issues',
@@ -75,7 +88,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
 
   const handleAnalyze = () => {
     if (!canAfford && !hasUnlimitedAccess) {
-      toast.error(`Insufficient credits. You need ${selectedLLM.costPerRequest} credits for this analysis.`);
+      toast.error(`Insufficient credits. You need ${actualCost} credits for this analysis.`);
       return;
     }
 
@@ -99,7 +112,17 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         <CardTitle className="flex items-center gap-2">
           {getAnalysisTypeIcon()}
           {getAnalysisTypeLabel()}
+          {analysisType === 'security' && (
+            <Badge className="bg-red-100 text-red-800 border-red-300">
+              PREMIUM
+            </Badge>
+          )}
         </CardTitle>
+        {analysisType === 'security' && (
+          <p className="text-sm text-red-600">
+            🔒 Professional-grade security audit using multiple AI models for comprehensive vulnerability detection
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* LLM Selection */}
@@ -113,10 +136,17 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
               {Object.values(LLM_PROVIDERS).map((provider) => (
                 <SelectItem key={provider.id} value={provider.id}>
                   <div className="flex items-center justify-between w-full">
-                    <span>{provider.name}</span>
+                    <span className="flex items-center gap-2">
+                      {provider.name}
+                      {analysisType === 'security' && provider.id === 'gemini-pro' && (
+                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                          RECOMMENDED
+                        </Badge>
+                      )}
+                    </span>
                     <div className="flex items-center gap-2 ml-4">
                       <Badge variant="secondary" className="text-xs">
-                        {provider.costPerRequest} credits
+                        {actualCost} credits
                       </Badge>
                     </div>
                   </div>
@@ -127,14 +157,21 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         </div>
 
         {/* Selected Provider Details */}
-        <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+        <div className={`rounded-lg p-4 space-y-3 ${
+          analysisType === 'security' ? 'bg-red-50 border border-red-200' : 'bg-blue-50'
+        }`}>
           <div className="flex items-center justify-between">
             <h4 className="font-medium">{selectedLLM.name}</h4>
             <div className="flex items-center gap-2">
               <DollarSign className="h-3 w-3" />
               <span className="text-sm">
-                {hasUnlimitedAccess ? 'Unlimited' : `${selectedLLM.costPerRequest} credits`}
+                {hasUnlimitedAccess ? 'Unlimited' : `${actualCost} credits`}
               </span>
+              {analysisType === 'security' && (
+                <Badge variant="outline" className="text-xs">
+                  4x Enhanced Analysis
+                </Badge>
+              )}
             </div>
           </div>
           
@@ -143,7 +180,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              ~{Math.round(selectedLLM.estimatedTimeMs / 1000)}s
+              ~{Math.round(selectedLLM.estimatedTimeMs / 1000) * (analysisType === 'security' ? 3 : 1)}s
             </div>
           </div>
 
@@ -155,10 +192,43 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
             ))}
           </div>
 
-          <div className="text-xs text-blue-600">
+          <div className={`text-xs ${analysisType === 'security' ? 'text-red-600' : 'text-blue-600'}`}>
             {getProviderRecommendation(selectedProvider)}
           </div>
         </div>
+
+        {/* Security Audit Features */}
+        {analysisType === 'security' && (
+          <div className="bg-white p-4 rounded-lg border border-red-200">
+            <h4 className="font-semibold text-red-800 mb-3">Professional Security Audit Includes:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Shield className="h-3 w-3 text-red-500" />
+                Vulnerability Detection
+              </div>
+              <div className="flex items-center gap-2">
+                <Target className="h-3 w-3 text-red-500" />
+                OWASP Top 10 Analysis
+              </div>
+              <div className="flex items-center gap-2">
+                <Brain className="h-3 w-3 text-red-500" />
+                Multi-AI Validation
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-3 w-3 text-red-500" />
+                Compliance Assessment
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-3 w-3 text-red-500" />
+                Code Fix Examples
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-3 w-3 text-red-500" />
+                Executive Summary
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Credit Status */}
         {!hasUnlimitedAccess && (
@@ -168,7 +238,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
             <div className="flex items-center gap-2">
               <DollarSign className={`h-4 w-4 ${canAfford ? 'text-green-600' : 'text-red-600'}`} />
               <span className="text-sm">
-                Your Credits: {userCredits}
+                Your Credits: {userCredits} {analysisType === 'security' && `(Need ${actualCost})`}
               </span>
             </div>
             {canAfford ? (
@@ -186,18 +256,22 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
           <Button
             onClick={handleAnalyze}
             disabled={isAnalyzing || (!canAfford && !hasUnlimitedAccess)}
-            className="flex-1"
+            className={`flex-1 ${
+              analysisType === 'security' 
+                ? 'bg-red-600 hover:bg-red-700' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
             {isAnalyzing ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Analyzing...
+                {analysisType === 'security' ? 'Security Auditing...' : 'Analyzing...'}
               </>
             ) : (
               <>
                 <Brain className="h-4 w-4 mr-2" />
-                Analyze with {selectedLLM.name}
-                {!hasUnlimitedAccess && ` (${selectedLLM.costPerRequest} credits)`}
+                {analysisType === 'security' ? 'Start Security Audit' : `Analyze with ${selectedLLM.name}`}
+                {!hasUnlimitedAccess && ` (${actualCost} credits)`}
               </>
             )}
           </Button>
@@ -226,12 +300,19 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
                   onClick={() => setSelectedProvider(provider.id)}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium">{provider.name}</span>
+                    <span className="font-medium flex items-center gap-2">
+                      {provider.name}
+                      {analysisType === 'security' && provider.id === 'gemini-pro' && (
+                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                          BEST FOR SECURITY
+                        </Badge>
+                      )}
+                    </span>
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-3 w-3" />
-                      {Math.round(provider.estimatedTimeMs / 1000)}s
+                      {Math.round(provider.estimatedTimeMs / 1000) * (analysisType === 'security' ? 3 : 1)}s
                       <DollarSign className="h-3 w-3 ml-2" />
-                      {provider.costPerRequest}
+                      {analysisType === 'security' ? provider.costPerRequest * 4 : provider.costPerRequest}
                     </div>
                   </div>
                   <p className="text-xs text-gray-600 mb-2">{provider.description}</p>
@@ -242,6 +323,11 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
                       </Badge>
                     ))}
                   </div>
+                  {analysisType === 'security' && (
+                    <div className="text-xs text-red-600 mt-2">
+                      {getProviderRecommendation(provider.id)}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
