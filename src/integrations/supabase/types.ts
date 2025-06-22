@@ -1613,6 +1613,39 @@ export type Database = {
           },
         ]
       }
+      github_tokens: {
+        Row: {
+          created_at: string
+          encrypted_token: string
+          expires_at: string | null
+          id: string
+          permissions: string[] | null
+          token_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_token: string
+          expires_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          token_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_token?: string
+          expires_at?: string | null
+          id?: string
+          permissions?: string[] | null
+          token_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       github_webhook_events: {
         Row: {
           created_at: string
@@ -3566,6 +3599,60 @@ export type Database = {
           tenant_id?: string | null
           total_files?: number | null
           warnings?: number | null
+        }
+        Relationships: []
+      }
+      repository_audit_results: {
+        Row: {
+          audit_id: string
+          audit_metadata: Json
+          audit_type: string
+          created_at: string
+          executive_summary: Json
+          file_results: Json
+          id: string
+          overall_score: number
+          performance_summary: Json
+          quality_summary: Json
+          repository_name: string
+          repository_url: string
+          security_summary: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audit_id: string
+          audit_metadata?: Json
+          audit_type?: string
+          created_at?: string
+          executive_summary?: Json
+          file_results?: Json
+          id?: string
+          overall_score?: number
+          performance_summary?: Json
+          quality_summary?: Json
+          repository_name: string
+          repository_url: string
+          security_summary?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audit_id?: string
+          audit_metadata?: Json
+          audit_type?: string
+          created_at?: string
+          executive_summary?: Json
+          file_results?: Json
+          id?: string
+          overall_score?: number
+          performance_summary?: Json
+          quality_summary?: Json
+          repository_name?: string
+          repository_url?: string
+          security_summary?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
