@@ -42,9 +42,18 @@ export const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
     return <CheckCircle className="h-4 w-4" />;
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard!');
+  const copyToClipboard = (issue: any) => {
+    const issueText = `
+**${issue.type || 'Issue'}** (${issue.severity})
+${issue.lineNumber ? `Line ${issue.lineNumber}` : ''}
+
+Description: ${issue.description}
+
+${issue.suggestion ? `Suggestion: ${issue.suggestion}` : ''}
+    `.trim();
+    
+    navigator.clipboard.writeText(issueText);
+    toast.success('Issue details copied to clipboard!');
   };
 
   const formatAnalysisType = (type: string) => {
@@ -159,7 +168,7 @@ export const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard(issue.description)}
+                      onClick={() => copyToClipboard(issue)}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
