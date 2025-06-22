@@ -43,88 +43,78 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
         return;
       }
 
-      // If we have a session ID, try to use the scheduler for better tracking
-      if (sessionId) {
-        console.log('Using scheduler for analysis with session:', sessionId);
-        
-        const job = await triggerAnalysis(sessionId, code, selectedTools);
-        
-        if (job) {
-          // For now, also run the direct analysis for immediate feedback
-          // In the future, we could wait for the scheduled job to complete
-          const { data, error } = await supabase.functions.invoke('eslint-analysis', {
-            body: { code, selectedTools },
-          });
-
-          if (error) throw error;
-          
-          const newResult = { 
-            ...data, 
-            timestamp: new Date().toISOString(),
-            analyzedTools: selectedTools,
-            jobId: job.id
-          };
-          
-          setResult(newResult);
-          broadcastEvent({ type: 'EXECUTION_RESULT', payload: newResult });
-          
-          track('code_analysis_completed', { 
-            sessionId, 
-            selectedTools,
-            toolCount: selectedTools.length,
-            success: true, 
-            issueCount: data.analysis?.issues?.length || 0,
-            jobId: job.id
-          });
-
-          toast.success('Analysis completed successfully!');
-        } else {
-          throw new Error('Failed to schedule analysis');
-        }
-      } else {
-        // Fallback to direct analysis if no session
-        console.log('Using direct analysis (no session)');
-        
-        const { data, error } = await supabase.functions.invoke('eslint-analysis', {
-          body: { code, selectedTools },
-        });
-
-        if (error) throw error;
-        
-        const newResult = { 
-          ...data, 
-          timestamp: new Date().toISOString(),
-          analyzedTools: selectedTools 
-        };
-        setResult(newResult);
-        broadcastEvent({ type: 'EXECUTION_RESULT', payload: newResult });
-        track('code_analysis_completed', { 
-          sessionId, 
+      console.log('Running eslint-analysis with tools:', selectedTools);
+      
+      // Use the eslint-analysis function which is more reliable
+      const { data, error } = await supabase.functions.invoke('eslint-analysis', {
+        body: { 
+          code, 
           selectedTools,
-          toolCount: selectedTools.length,
-          success: true, 
-          issueCount: data.analysis?.issues?.length || 0 
-        });
+          config: {
+            // Add some basic configuration
+            rules: {},
+            extends: ['eslint:recommended']
+          }
+        },
+      });
 
-        toast.success('Analysis completed successfully!');
+      if (error) {
+        console.error('ESLint analysis error:', error);
+        throw new Error(`Analysis failed: ${error.message || 'Unknown error'}`);
       }
-
-    } catch (e: any) {
-      console.error('Analysis failed:', e);
-      const newError = { 
-        error: e.message, 
+      
+      console.log('ESLint analysis completed:', data);
+      
+      const newResult = { 
+        ...data, 
         timestamp: new Date().toISOString(),
-        analyzedTools: selectedTools 
+        analyzedTools: selectedTools,
+        sessionId
       };
-      setResult(newError);
-      broadcastEvent({ type: 'EXECUTION_RESULT', payload: newError });
+      
+      setResult(newResult);
+      broadcastEvent({ type: 'EXECUTION_RESULT', payload: newResult });
+      
       track('code_analysis_completed', { 
         sessionId, 
         selectedTools,
         toolCount: selectedTools.length,
-        success: false 
+        success: true, 
+        issueCount: data.analysis?.issues?.length || 0
       });
-      toast.error(`Analysis failed: ${e.message}`);
+
+      toast.success('Analysis completed successfully!');
+
+    } catch (e: any) {
+      console.error('Analysis failed:', e);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Analysis failed';
+      if (e.message) {
+        errorMessage = e.message;
+      } else if (typeof e === 'string') {
+        errorMessage = e;
+      }
+      
+      const newError = { 
+        error: errorMessage, 
+        timestamp: new Date().toISOString(),
+        analyzedTools: selectedTools,
+        details: e.details || e.stack || 'No additional details available'
+      };
+      
+      setResult(newError);
+      broadcastEvent({ type: 'EXECUTION_RESULT', payload: newError });
+      
+      track('code_analysis_completed', { 
+        sessionId, 
+        selectedTools,
+        toolCount: selectedTools.length,
+        success: false,
+        error: errorMessage
+      });
+      
+      toast.error(`Analysis failed: ${errorMessage}`);
     } finally {
       setIsAnalyzing(false);
     }
