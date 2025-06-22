@@ -384,58 +384,27 @@ export class RepositoryAuditor {
         return;
       }
 
-      // Use a manual query construction to avoid TypeScript issues with the new table
-      const { error } = await supabase.rpc('sql', {
-        query: `
-          INSERT INTO repository_audit_results (
-            audit_id, user_id, repository_url, repository_name, audit_type,
-            overall_score, executive_summary, file_results, security_summary,
-            quality_summary, performance_summary, audit_metadata
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        `,
-        params: [
-          result.id,
-          user.id,
-          result.repositoryUrl,
-          result.repositoryName,
-          result.auditType,
-          result.overallScore,
-          JSON.stringify(result.executiveSummary),
-          JSON.stringify(result.fileResults),
-          JSON.stringify(result.securitySummary),
-          JSON.stringify(result.qualitySummary),
-          JSON.stringify(result.performanceSummary),
-          JSON.stringify(result.auditMetadata)
-        ]
-      });
+      const insertData = {
+        audit_id: result.id,
+        user_id: user.id,
+        repository_url: result.repositoryUrl,
+        repository_name: result.repositoryName,
+        audit_type: result.auditType,
+        overall_score: result.overallScore,
+        executive_summary: result.executiveSummary,
+        file_results: result.fileResults,
+        security_summary: result.securitySummary,
+        quality_summary: result.qualitySummary,
+        performance_summary: result.performanceSummary,
+        audit_metadata: result.auditMetadata
+      };
+
+      const { error } = await supabase
+        .from('repository_audit_results')
+        .insert(insertData);
 
       if (error) {
-        // Fallback: Use a direct INSERT with a prepared statement approach
-        const insertData = {
-          audit_id: result.id,
-          user_id: user.id,
-          repository_url: result.repositoryUrl,
-          repository_name: result.repositoryName,
-          audit_type: result.auditType,
-          overall_score: result.overallScore,
-          executive_summary: result.executiveSummary,
-          file_results: result.fileResults,
-          security_summary: result.securitySummary,
-          quality_summary: result.qualitySummary,
-          performance_summary: result.performanceSummary,
-          audit_metadata: result.auditMetadata
-        };
-
-        // Try direct table access - this should work once types are regenerated
-        const { error: insertError } = await (supabase as any)
-          .from('repository_audit_results')
-          .insert(insertData);
-
-        if (insertError) {
-          console.error('Failed to store repository audit result:', insertError);
-        } else {
-          console.log('✅ Repository audit result stored successfully');
-        }
+        console.error('Failed to store repository audit result:', error);
       } else {
         console.log('✅ Repository audit result stored successfully');
       }

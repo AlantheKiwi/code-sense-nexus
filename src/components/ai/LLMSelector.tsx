@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,12 +11,13 @@ import {
   Shield, 
   Target,
   Loader2,
-  Check,
-  CheckCircle
+  Check
 } from 'lucide-react';
 import { LLM_PROVIDERS, type LLMProvider, type AnalysisRequest } from '@/services/ai/LLMGateway';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { toast } from 'sonner';
+import { ProviderCard } from './ProviderCard';
+import { SecurityAuditFeatures } from './SecurityAuditFeatures';
 
 interface LLMSelectorProps {
   analysisType: 'code_quality' | 'architecture' | 'security' | 'performance' | 'lovable_prompt';
@@ -199,37 +199,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
         </div>
 
         {/* Security Audit Features */}
-        {analysisType === 'security' && (
-          <div className="bg-white p-4 rounded-lg border border-red-200">
-            <h4 className="font-semibold text-red-800 mb-3">Professional Security Audit Includes:</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-              <div className="flex items-center gap-2">
-                <Shield className="h-3 w-3 text-red-500" />
-                Vulnerability Detection
-              </div>
-              <div className="flex items-center gap-2">
-                <Target className="h-3 w-3 text-red-500" />
-                OWASP Top 10 Analysis
-              </div>
-              <div className="flex items-center gap-2">
-                <Brain className="h-3 w-3 text-red-500" />
-                Multi-AI Validation
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-3 w-3 text-red-500" />
-                Compliance Assessment
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-3 w-3 text-red-500" />
-                Code Fix Examples
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-3 w-3 text-red-500" />
-                Executive Summary
-              </div>
-            </div>
-          </div>
-        )}
+        {analysisType === 'security' && <SecurityAuditFeatures />}
 
         {/* Credit Status */}
         {!hasUnlimitedAccess && (
@@ -291,45 +261,14 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({
             <h4 className="font-medium">AI Assistant Comparison</h4>
             <div className="grid gap-3">
               {Object.values(LLM_PROVIDERS).map((provider) => (
-                <div 
-                  key={provider.id} 
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    selectedProvider === provider.id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                  onClick={() => setSelectedProvider(provider.id)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium flex items-center gap-2">
-                      {provider.name}
-                      {analysisType === 'security' && provider.id === 'gemini-pro' && (
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                          BEST FOR SECURITY
-                        </Badge>
-                      )}
-                    </span>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-3 w-3" />
-                      {Math.round(provider.estimatedTimeMs / 1000) * (analysisType === 'security' ? 3 : 1)}s
-                      <DollarSign className="h-3 w-3 ml-2" />
-                      {analysisType === 'security' ? provider.costPerRequest * 4 : provider.costPerRequest}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600 mb-2">{provider.description}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {provider.strengths.slice(0, 2).map((strength) => (
-                      <Badge key={strength} variant="secondary" className="text-xs">
-                        {strength}
-                      </Badge>
-                    ))}
-                  </div>
-                  {analysisType === 'security' && (
-                    <div className="text-xs text-red-600 mt-2">
-                      {getProviderRecommendation(provider.id)}
-                    </div>
-                  )}
-                </div>
+                <ProviderCard
+                  key={provider.id}
+                  provider={provider}
+                  isSelected={selectedProvider === provider.id}
+                  analysisType={analysisType}
+                  onSelect={() => setSelectedProvider(provider.id)}
+                  getProviderRecommendation={getProviderRecommendation}
+                />
               ))}
             </div>
           </div>
