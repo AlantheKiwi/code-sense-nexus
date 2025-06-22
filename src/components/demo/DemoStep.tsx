@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Zap } from 'lucide-react';
 import { CodeComparison } from './CodeComparison';
+import { ReportToggle } from '@/components/reports/ReportToggle';
 
 interface DemoStepProps {
   step: {
@@ -110,6 +110,25 @@ export const DemoStep: React.FC<DemoStepProps> = ({ step }) => {
                   <span className="text-sm">{improvement}</span>
                 </div>
               ))}
+            </div>
+            
+            <div className="pt-4 border-t">
+              <ReportToggle
+                originalCode={step.content.originalCode}
+                fixedCode={step.content.fixedCode}
+                projectName="Demo Project"
+                improvements={[
+                  {
+                    id: '1',
+                    title: 'Optimized API Calls',
+                    category: 'Performance',
+                    originalCode: step.content.originalCode,
+                    fixedCode: step.content.fixedCode,
+                    impact: 'High - 67% faster loading',
+                    explanation: 'Combined multiple API calls into a single optimized query'
+                  }
+                ]}
+              />
             </div>
           </div>
         )}

@@ -33,6 +33,7 @@ import PricingManagement from '@/pages/admin/PricingManagement';
 import UserManagement from '@/pages/admin/UserManagement';
 import LegalPagesManagement from '@/pages/admin/LegalPagesManagement';
 import SystemSettings from '@/pages/admin/SystemSettings';
+import ReportsPage from '@/pages/reports/ReportsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,7 @@ function App() {
               <Route path="/terms" element={<TermsOfServicePage />} />
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/best-practices" element={<BestPracticesPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route element={<AppLayout />}>
