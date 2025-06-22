@@ -159,24 +159,17 @@ export const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard(issue.suggestion)}
+                      onClick={() => copyToClipboard(issue.description)}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
-                  
-                  <p className="text-gray-700 mb-3">{issue.description}</p>
-                  
-                  <div className="bg-gray-50 rounded p-3">
-                    <p className="text-sm text-gray-600 mb-2">💡 Suggestion:</p>
-                    <p className="text-sm">{issue.suggestion}</p>
-                  </div>
-
-                  {issue.codeExample && (
-                    <div className="mt-3 bg-gray-900 text-gray-100 rounded p-3">
-                      <pre className="text-xs overflow-x-auto">
-                        <code>{issue.codeExample}</code>
-                      </pre>
+                  <p className="text-gray-700 mb-2">{issue.description}</p>
+                  {issue.suggestion && (
+                    <div className="bg-blue-50 p-3 rounded border-l-2 border-blue-300">
+                      <p className="text-sm text-blue-800">
+                        <strong>Suggestion:</strong> {issue.suggestion}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -186,45 +179,21 @@ export const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
         </Card>
       )}
 
-      {/* Recommendations */}
-      {result.result.recommendations && result.result.recommendations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recommendations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {result.result.recommendations.map((recommendation, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm">{recommendation}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => copyToClipboard(recommendation)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button variant="outline" className="flex-1">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
-        <Button variant="outline" className="flex-1">
-          <Share className="h-4 w-4 mr-2" />
-          Share Results
-        </Button>
-      </div>
+      {/* Actions */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Report
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Share className="h-4 w-4" />
+              Share Results
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

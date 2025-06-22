@@ -16,9 +16,11 @@ import {
   Crown,
   Zap,
   Copy,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
-import { GenspartAIEngine } from '@/services/ai/GenspartAIEngine';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AIAssistantPanelProps {
   code: string;
@@ -42,39 +44,96 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'ai', content: string}>>([]);
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
 
-  const aiEngine = React.useMemo(() => new GenspartAIEngine(), []);
-
   const handleSmartAnalysis = async () => {
+    if (!code.trim()) {
+      toast.error('Please provide some code to analyze');
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
-      const result = await aiEngine.analyzeCode({
-        code,
-        filePath,
-        projectType,
-        analysisType: 'quality',
-        context: { userTier }
+      console.log('Starting AI code analysis...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
+        body: {
+          projectId: 'demo-project', // In a real app, get this from context
+          code,
+          analysisType: 'review'
+        }
       });
-      setAnalysis(result);
-    } catch (error) {
+
+      if (error) throw error;
+
+      // Transform the analysis result to match our UI expectations
+      const transformedAnalysis = {
+        summary: data.summary || 'Analysis completed successfully',
+        codeQualityScore: data.quality_score || 75,
+        insights: [
+          ...(data.bugs || []).map((bug: any) => `🐛 ${bug.issue}`),
+          ...(data.improvements || []).map((imp: any) => `💡 ${imp.issue}`)
+        ],
+        recommendations: [
+          ...(data.bugs || []).map((bug: any) => bug.suggestion),
+          ...(data.improvements || []).map((imp: any) => imp.suggestion)
+        ],
+        estimatedFixTime: `${Math.max(5, (data.bugs?.length || 0) * 10)} minutes`
+      };
+
+      setAnalysis(transformedAnalysis);
+      console.log('Analysis completed:', transformedAnalysis);
+    } catch (error: any) {
       console.error('AI analysis failed:', error);
+      toast.error(`Analysis failed: ${error.message}`);
     } finally {
       setIsAnalyzing(false);
     }
   };
 
   const handleGenerateLovablePrompts = async () => {
+    if (!code.trim()) {
+      toast.error('Please provide some code to analyze');
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
-      const result = await aiEngine.analyzeCode({
-        code,
-        filePath,
-        projectType: 'lovable',
-        analysisType: 'lovable-prompts',
-        context: { userTier }
+      console.log('Generating Lovable prompts...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
+        body: {
+          projectId: 'demo-project',
+          code,
+          analysisType: 'optimize'
+        }
       });
-      setAnalysis(result);
-    } catch (error) {
+
+      if (error) throw error;
+
+      // Generate Lovable-specific prompts based on the optimization analysis
+      const lovablePrompts = (data.optimizations || []).map((opt: any, index: number) => {
+        const prompts = [
+          `Refactor this component to improve performance: ${opt.suggestion}`,
+          `Add TypeScript interfaces for better type safety in this component`,
+          `Implement error boundaries around this component for better reliability`,
+          `Add loading states and skeleton components to improve user experience`,
+          `Extract custom hooks for better code organization and reusability`,
+          `Add comprehensive form validation with helpful error messages`
+        ];
+        return prompts[index % prompts.length];
+      });
+
+      const transformedAnalysis = {
+        summary: `Generated ${lovablePrompts.length} optimized Lovable prompts`,
+        lovablePrompts,
+        insights: (data.optimizations || []).map((opt: any) => opt.issue),
+        recommendations: (data.optimizations || []).map((opt: any) => opt.suggestion)
+      };
+
+      setAnalysis(transformedAnalysis);
+      console.log('Prompts generated:', transformedAnalysis);
+    } catch (error: any) {
       console.error('Prompt generation failed:', error);
+      toast.error(`Prompt generation failed: ${error.message}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -87,11 +146,26 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     setChatMessage('');
     setChatHistory(prev => [...prev, { role: 'user', content: userMessage }]);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(userMessage, code, userTier);
+    try {
+      console.log('Sending chat message to AI...');
+      
+      const { data, error } = await supabase.functions.invoke('ai-code-analysis', {
+        body: {
+          projectId: 'demo-project',
+          code: `Context: ${code}\n\nQuestion: ${userMessage}`,
+          analysisType: 'review'
+        }
+      });
+
+      if (error) throw error;
+
+      const aiResponse = data.summary || 'I analyzed your code and question. Here are my thoughts based on the analysis.';
       setChatHistory(prev => [...prev, { role: 'ai', content: aiResponse }]);
-    }, 1000);
+    } catch (error: any) {
+      console.error('Chat failed:', error);
+      const errorResponse = 'I apologize, but I encountered an error while processing your question. Please try again.';
+      setChatHistory(prev => [...prev, { role: 'ai', content: errorResponse }]);
+    }
   };
 
   const handleCopyPrompt = async (prompt: string) => {
@@ -100,8 +174,10 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       setCopiedPrompt(prompt);
       setTimeout(() => setCopiedPrompt(null), 2000);
       onApplyPrompt?.(prompt);
+      toast.success('Prompt copied to clipboard!');
     } catch (error) {
       console.error('Failed to copy prompt:', error);
+      toast.error('Failed to copy prompt');
     }
   };
 
@@ -139,11 +215,20 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                 disabled={isAnalyzing}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
-                <Sparkles className="h-4 w-4 mr-2" />
-                {isAnalyzing ? 'Analyzing...' : 'Run Smart Analysis'}
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Run Smart Analysis
+                  </>
+                )}
               </Button>
 
-              {analysis && (
+              {analysis && !analysis.lovablePrompts && (
                 <div className="space-y-3">
                   <Alert className="border-green-200 bg-green-50">
                     <Zap className="h-4 w-4 text-green-600" />
@@ -165,27 +250,31 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                     </div>
                   )}
 
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-blue-800">Key Insights</h4>
-                    <div className="space-y-1">
-                      {analysis.insights?.map((insight: string, index: number) => (
-                        <div key={index} className="text-sm p-2 bg-white rounded border-l-2 border-blue-300">
-                          {insight}
-                        </div>
-                      ))}
+                  {analysis.insights && analysis.insights.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-blue-800">Key Insights</h4>
+                      <div className="space-y-1">
+                        {analysis.insights.map((insight: string, index: number) => (
+                          <div key={index} className="text-sm p-2 bg-white rounded border-l-2 border-blue-300">
+                            {insight}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-blue-800">Recommendations</h4>
-                    <div className="space-y-1">
-                      {analysis.recommendations?.map((rec: string, index: number) => (
-                        <div key={index} className="text-sm p-2 bg-white rounded border-l-2 border-green-300">
-                          💡 {rec}
-                        </div>
-                      ))}
+                  {analysis.recommendations && analysis.recommendations.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-blue-800">Recommendations</h4>
+                      <div className="space-y-1">
+                        {analysis.recommendations.map((rec: string, index: number) => (
+                          <div key={index} className="text-sm p-2 bg-white rounded border-l-2 border-green-300">
+                            💡 {rec}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
@@ -198,8 +287,17 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                 disabled={isAnalyzing || !canUseFeature('prompt-generation')}
                 className="w-full bg-purple-600 hover:bg-purple-700"
               >
-                <Code className="h-4 w-4 mr-2" />
-                {isAnalyzing ? 'Generating...' : 'Generate Perfect Prompts'}
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Code className="h-4 w-4 mr-2" />
+                    Generate Perfect Prompts
+                  </>
+                )}
               </Button>
 
               {!canUseFeature('prompt-generation') && (
@@ -302,7 +400,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                 Get comprehensive code reviews with security, performance, and maintainability insights.
               </p>
               {canUseFeature('code-review') ? (
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSmartAnalysis}>
                   Start AI Code Review
                 </Button>
               ) : (
@@ -323,16 +421,3 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
     </Card>
   );
 };
-
-function generateAIResponse(question: string, code: string, userTier: string): string {
-  // Simulate intelligent AI responses based on the question
-  const responses = [
-    "Based on your code analysis, I recommend adding proper error handling to prevent runtime crashes. The component structure looks good but could benefit from better state management.",
-    "Your TypeScript usage is solid! Consider adding more specific interface definitions for better type safety. The component architecture follows React best practices.",
-    "I notice some potential performance optimization opportunities. Consider using React.memo for components that don't need frequent re-renders.",
-    "The code structure is clean and maintainable. For production readiness, I'd suggest adding comprehensive error boundaries and loading states.",
-    "Great use of modern React patterns! To improve user experience, consider adding skeleton loading states and optimistic updates."
-  ];
-  
-  return responses[Math.floor(Math.random() * responses.length)];
-}
