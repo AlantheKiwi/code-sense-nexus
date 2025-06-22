@@ -4,7 +4,7 @@ interface CodeAnalysisRequest {
   code: string;
   filePath?: string;
   projectType: 'lovable' | 'react' | 'typescript' | 'general';
-  analysisType: 'quality' | 'architecture' | 'debugging' | 'optimization' | 'lovable-prompts';
+  analysisType: 'code_quality' | 'architecture' | 'security' | 'performance' | 'lovable_prompt';
   context?: {
     projectDescription?: string;
     userTier: 'free' | 'premium' | 'enterprise';
@@ -59,7 +59,7 @@ export class GenspartAIEngine {
   private transformLLMResult(result: any, request: CodeAnalysisRequest): AIAnalysisResult {
     const userTier = request.context?.userTier || 'free';
     
-    if (request.analysisType === 'lovable-prompts') {
+    if (request.analysisType === 'lovable_prompt') {
       return {
         summary: 'Generated optimized Lovable prompts for code enhancement',
         insights: result.result.issues?.map((issue: any) => `Optimization opportunity: ${issue.description}`) || [],
@@ -150,7 +150,7 @@ export class GenspartAIEngine {
     const request: CodeAnalysisRequest = {
       code,
       projectType: 'lovable',
-      analysisType: 'lovable-prompts',
+      analysisType: 'lovable_prompt',
       context: { userTier: 'premium' }
     };
 
@@ -174,7 +174,7 @@ export class GenspartAIEngine {
     const request: CodeAnalysisRequest = {
       code: errorContext ? `${code}\n\nError Context: ${errorContext}` : code,
       projectType: 'react',
-      analysisType: 'debugging',
+      analysisType: 'code_quality',
       context: { userTier: 'premium' }
     };
 

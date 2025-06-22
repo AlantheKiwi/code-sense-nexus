@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { llmGateway } from '@/services/ai/LLMGateway';
@@ -5,7 +6,7 @@ import { toast } from 'sonner';
 
 interface AnalysisRequest {
   code: string;
-  analysisType: string;
+  analysisType: 'code_quality' | 'architecture' | 'security' | 'performance' | 'lovable_prompt';
   projectId?: string;
 }
 
@@ -69,10 +70,10 @@ export function useLLMAnalysis() {
     try {
       console.log(`Starting ${provider} analysis...`);
 
-      // Use the real LLM gateway
+      // Use the real LLM gateway - make sure analysisType matches the interface
       const llmRequest = {
         code: request.code,
-        analysisType: request.analysisType,
+        analysisType: request.analysisType as 'code_quality' | 'architecture' | 'security' | 'performance' | 'lovable_prompt',
         projectContext: request.projectId
       };
 
