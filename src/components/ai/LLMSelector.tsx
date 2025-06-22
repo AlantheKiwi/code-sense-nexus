@@ -12,7 +12,8 @@ import {
   Shield, 
   Target,
   Loader2,
-  Check
+  Check,
+  CheckCircle
 } from 'lucide-react';
 import { LLM_PROVIDERS, type LLMProvider, type AnalysisRequest } from '@/services/ai/LLMGateway';
 import { useUsageTracking } from '@/hooks/useUsageTracking';

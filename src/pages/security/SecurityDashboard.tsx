@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Define a proper type for the database result
+interface SecurityAuditDBResult {
+  id: string;
+  project_id: string;
+  user_id: string;
+  audit_type: string;
+  security_score: number;
+  executive_summary: any;
+  vulnerabilities: any[];
+  compliance: any;
+  recommendations: any;
+  audit_metadata: any;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function SecurityDashboard() {
   const { user } = useAuth();
   const [auditHistory, setAuditHistory] = useState<SecurityAuditResult[]>([]);
@@ -46,7 +61,7 @@ export default function SecurityDashboard() {
 
     setIsLoading(true);
     try {
-      // Load audit history
+      // Load audit history from the database
       const { data: audits, error } = await supabase
         .from('security_audit_results')
         .select('*')
@@ -60,9 +75,16 @@ export default function SecurityDashboard() {
         return;
       }
 
-      const auditResults = audits?.map(audit => ({
-        ...audit,
+      // Transform database results to SecurityAuditResult format
+      const auditResults: SecurityAuditResult[] = (audits as SecurityAuditDBResult[])?.map(audit => ({
+        id: audit.id,
+        projectId: audit.project_id,
+        auditType: audit.audit_type as 'comprehensive' | 'quick' | 'compliance',
+        securityScore: audit.security_score,
         executiveSummary: audit.executive_summary,
+        vulnerabilities: audit.vulnerabilities,
+        compliance: audit.compliance,
+        recommendations: audit.recommendations,
         auditMetadata: audit.audit_metadata
       })) || [];
 
@@ -77,7 +99,7 @@ export default function SecurityDashboard() {
     }
   };
 
-  const calculateDashboardStats = (audits: any[]) => {
+  const calculateDashboardStats = (audits: SecurityAuditResult[]) => {
     if (audits.length === 0) {
       setDashboardStats({
         totalAudits: 0,
@@ -91,7 +113,7 @@ export default function SecurityDashboard() {
 
     const totalAudits = audits.length;
     const averageScore = Math.round(
-      audits.reduce((sum, audit) => sum + (audit.security_score || 0), 0) / totalAudits
+      audits.reduce((sum, audit) => sum + (audit.securityScore || 0), 0) / totalAudits
     );
     
     const allVulnerabilities = audits.flatMap(audit => audit.vulnerabilities || []);
@@ -103,8 +125,8 @@ export default function SecurityDashboard() {
       .slice(0, 10)
       .reverse()
       .map((audit, index) => ({
-        date: new Date(audit.created_at).toLocaleDateString(),
-        score: audit.security_score || 0,
+        date: new Date(audit.auditMetadata.createdAt).toLocaleDateString(),
+        score: audit.securityScore || 0,
         vulnerabilities: audit.executiveSummary?.totalVulnerabilities || 0
       }));
 

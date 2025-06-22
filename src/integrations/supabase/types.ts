@@ -3775,6 +3775,59 @@ export type Database = {
           },
         ]
       }
+      security_audit_results: {
+        Row: {
+          audit_metadata: Json
+          audit_type: string
+          compliance: Json
+          created_at: string
+          executive_summary: Json
+          id: string
+          project_id: string
+          recommendations: Json
+          security_score: number
+          updated_at: string
+          user_id: string
+          vulnerabilities: Json
+        }
+        Insert: {
+          audit_metadata?: Json
+          audit_type?: string
+          compliance?: Json
+          created_at?: string
+          executive_summary?: Json
+          id?: string
+          project_id: string
+          recommendations?: Json
+          security_score?: number
+          updated_at?: string
+          user_id: string
+          vulnerabilities?: Json
+        }
+        Update: {
+          audit_metadata?: Json
+          audit_type?: string
+          compliance?: Json
+          created_at?: string
+          executive_summary?: Json
+          id?: string
+          project_id?: string
+          recommendations?: Json
+          security_score?: number
+          updated_at?: string
+          user_id?: string
+          vulnerabilities?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_audit_results_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_events: {
         Row: {
           created_at: string

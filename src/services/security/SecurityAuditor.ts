@@ -1,4 +1,3 @@
-
 import { llmGateway } from '@/services/ai/LLMGateway';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -443,11 +442,19 @@ if (!req.user || !hasPermission(req.user, 'read', resource)) {
 
   private async storeAuditResult(result: SecurityAuditResult): Promise<void> {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No authenticated user found');
+        return;
+      }
+
       const { error } = await supabase
         .from('security_audit_results')
         .insert({
           id: result.id,
           project_id: result.projectId,
+          user_id: user.id,
           audit_type: result.auditType,
           security_score: result.securityScore,
           executive_summary: result.executiveSummary,
