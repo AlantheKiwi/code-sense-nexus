@@ -376,6 +376,35 @@ export class RepositoryAuditor {
     return analyzedFiles * baseCreditsPerFile;
   }
 
+  private serializeForDatabase(result: RepositoryAuditResult) {
+    // Convert complex objects to JSON-serializable format
+    return {
+      audit_id: result.id,
+      repository_url: result.repositoryUrl,
+      repository_name: result.repositoryName,
+      audit_type: result.auditType,
+      overall_score: result.overallScore,
+      executive_summary: JSON.stringify(result.executiveSummary),
+      file_results: JSON.stringify(result.fileResults.map(fileResult => ({
+        file: {
+          path: fileResult.file.path,
+          size: fileResult.file.size,
+          content: fileResult.file.content ? fileResult.file.content.substring(0, 1000) : '', // Truncate content
+        },
+        securityIssues: fileResult.securityIssues,
+        qualityScore: fileResult.qualityScore,
+        performanceIssues: fileResult.performanceIssues,
+        recommendations: fileResult.recommendations,
+        analysisType: fileResult.analysisType,
+        error: fileResult.error
+      }))),
+      security_summary: JSON.stringify(result.securitySummary),
+      quality_summary: JSON.stringify(result.qualitySummary),
+      performance_summary: JSON.stringify(result.performanceSummary),
+      audit_metadata: JSON.stringify(result.auditMetadata)
+    };
+  }
+
   private async storeAuditResult(result: RepositoryAuditResult): Promise<void> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -384,24 +413,14 @@ export class RepositoryAuditor {
         return;
       }
 
-      const insertData = {
-        audit_id: result.id,
-        user_id: user.id,
-        repository_url: result.repositoryUrl,
-        repository_name: result.repositoryName,
-        audit_type: result.auditType,
-        overall_score: result.overallScore,
-        executive_summary: result.executiveSummary,
-        file_results: result.fileResults,
-        security_summary: result.securitySummary,
-        quality_summary: result.qualitySummary,
-        performance_summary: result.performanceSummary,
-        audit_metadata: result.auditMetadata
-      };
+      const serializedData = this.serializeForDatabase(result);
 
       const { error } = await supabase
         .from('repository_audit_results')
-        .insert(insertData);
+        .insert({
+          ...serializedData,
+          user_id: user.id
+        });
 
       if (error) {
         console.error('Failed to store repository audit result:', error);
