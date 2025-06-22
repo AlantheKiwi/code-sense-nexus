@@ -1,9 +1,6 @@
-
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal, Rocket } from 'lucide-react';
-
-export const DebugSessionInstructions = () => (
-  <>
+export const DebugSessionInstructions = () => <>
     <Alert variant="default" className="bg-blue-50 border-blue-200 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
       <Rocket className="h-4 w-4" />
       <AlertTitle>How to Use the Multi-Tool Analyzer</AlertTitle>
@@ -18,12 +15,5 @@ export const DebugSessionInstructions = () => (
       </AlertDescription>
     </Alert>
 
-    <Alert>
-      <Terminal className="h-4 w-4" />
-      <AlertTitle>Secure Multi-Tool Analysis</AlertTitle>
-      <AlertDescription>
-        This platform uses static analysis to check your code for issues across multiple categories. No code is executed on the server.
-      </AlertDescription>
-    </Alert>
-  </>
-);
+    
+  </>;
