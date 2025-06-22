@@ -1,3 +1,4 @@
+
 import { llmGateway } from '@/services/ai/LLMGateway';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -5,6 +6,7 @@ export interface SecurityVulnerability {
   id: string;
   type: 'prompt_injection' | 'xss' | 'data_leakage' | 'auth_bypass' | 'input_validation' | 'api_security' | 'client_side';
   severity: 'critical' | 'high' | 'medium' | 'low' | 'informational';
+  status?: 'open' | 'resolved' | 'dismissed';
   title: string;
   description: string;
   codeLocation: {
@@ -452,16 +454,15 @@ if (!req.user || !hasPermission(req.user, 'read', resource)) {
       const { error } = await supabase
         .from('security_audit_results')
         .insert({
-          id: result.id,
           project_id: result.projectId,
           user_id: user.id,
           audit_type: result.auditType,
           security_score: result.securityScore,
-          executive_summary: result.executiveSummary,
-          vulnerabilities: result.vulnerabilities,
-          compliance: result.compliance,
-          recommendations: result.recommendations,
-          audit_metadata: result.auditMetadata
+          executive_summary: result.executiveSummary as any,
+          vulnerabilities: result.vulnerabilities as any,
+          compliance: result.compliance as any,
+          recommendations: result.recommendations as any,
+          audit_metadata: result.auditMetadata as any
         });
 
       if (error) {
