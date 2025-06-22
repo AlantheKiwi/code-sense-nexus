@@ -78,7 +78,7 @@ export class GenspartAIEngine {
         summary: 'Generated optimized Lovable prompts for code enhancement',
         insights: (data.optimizations || []).map((opt: any) => `Optimization opportunity: ${opt.issue}`),
         recommendations: (data.optimizations || []).map((opt: any) => opt.suggestion),
-        lovablePrompts: this.generateLovablePrompts(data, request.code),
+        lovablePrompts: this.generateLovablePromptsFromData(data, request.code),
         codeQualityScore: 78,
         issuesPrevented: (data.optimizations || []).length,
         estimatedTimeSaved: 45,
@@ -110,7 +110,7 @@ export class GenspartAIEngine {
     };
   }
 
-  private generateLovablePrompts(data: any, code: string): string[] {
+  private generateLovablePromptsFromData(data: any, code: string): string[] {
     const optimizations = data.optimizations || [];
     const basePrompts = [
       'Add proper TypeScript interfaces for all props and state objects with strict typing',

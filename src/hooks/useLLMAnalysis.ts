@@ -24,6 +24,7 @@ interface AnalysisResult {
       suggestion?: string;
       lineNumber?: number;
     }>;
+    recommendations: string[];
     estimatedFixTime?: string;
   };
   usage: {
@@ -102,6 +103,10 @@ export function useLLMAnalysis() {
               suggestion: imp.suggestion,
               lineNumber: imp.line
             }))
+          ],
+          recommendations: [
+            ...(data.bugs || []).map((bug: any) => bug.suggestion),
+            ...(data.improvements || []).map((imp: any) => imp.suggestion)
           ],
           estimatedFixTime: `${Math.max(5, (data.bugs?.length || 0) * 10)} minutes`
         },

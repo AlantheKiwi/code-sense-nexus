@@ -32,6 +32,21 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     loadUserCredits();
   }, [loadUserCredits]);
 
+  // Transform the analysis result to match the expected type structure
+  const transformedAnalysis = currentAnalysis ? {
+    ...currentAnalysis,
+    result: {
+      ...currentAnalysis.result,
+      issues: currentAnalysis.result.issues?.map(issue => ({
+        ...issue,
+        severity: issue.severity as 'critical' | 'high' | 'medium' | 'low',
+        suggestion: issue.suggestion || 'No specific suggestion available',
+        codeExample: undefined
+      })) || [],
+      score: currentAnalysis.result.score || 0
+    }
+  } : null;
+
   return (
     <div className="space-y-4">
       {/* Code Editor */}
@@ -72,9 +87,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
         {/* Analysis Results */}
         <div>
-          {currentAnalysis && (
+          {transformedAnalysis && (
             <AIAnalysisResults
-              result={currentAnalysis}
+              result={transformedAnalysis}
               onClear={clearAnalysis}
             />
           )}
