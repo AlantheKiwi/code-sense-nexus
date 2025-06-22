@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,13 +46,13 @@ export const AICodeReviewPanel: React.FC<AICodeReviewPanelProps> = ({
         aiEngine.analyzeCode({
           code,
           projectType: 'react',
-          analysisType: 'debugging',
+          analysisType: 'security',
           context: { userTier }
         }),
         aiEngine.analyzeCode({
           code,
           projectType: 'react',
-          analysisType: 'optimization',
+          analysisType: 'performance',
           context: { userTier }
         }),
         aiEngine.analyzeCode({
@@ -265,3 +266,4 @@ export const AICodeReviewPanel: React.FC<AICodeReviewPanelProps> = ({
     </Card>
   );
 };
+
