@@ -70,6 +70,12 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
         throw new Error('No data returned from analysis function');
       }
       
+      // Check if the response indicates an error (even with 200 status)
+      if (data.success === false && data.error) {
+        console.error('Edge function returned error:', data.error);
+        throw new Error(`Analysis failed: ${data.error}`);
+      }
+      
       console.log('ESLint analysis completed successfully:', data);
       
       const newResult = { 
