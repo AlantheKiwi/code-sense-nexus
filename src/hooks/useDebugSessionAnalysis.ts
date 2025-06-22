@@ -44,26 +44,33 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
       }
 
       console.log('Running eslint-analysis with tools:', selectedTools);
+      console.log('Code length:', code.length);
       
-      // Use the eslint-analysis function which is more reliable
+      // Use the eslint-analysis function with proper error handling
       const { data, error } = await supabase.functions.invoke('eslint-analysis', {
         body: { 
           code, 
-          selectedTools,
+          selectedTools: selectedTools || [],
           config: {
-            // Add some basic configuration
             rules: {},
             extends: ['eslint:recommended']
           }
         },
       });
 
+      console.log('Raw response from edge function:', { data, error });
+
       if (error) {
         console.error('ESLint analysis error:', error);
-        throw new Error(`Analysis failed: ${error.message || 'Unknown error'}`);
+        throw new Error(`Analysis failed: ${error.message || JSON.stringify(error)}`);
+      }
+
+      if (!data) {
+        console.error('No data returned from edge function');
+        throw new Error('No data returned from analysis function');
       }
       
-      console.log('ESLint analysis completed:', data);
+      console.log('ESLint analysis completed successfully:', data);
       
       const newResult = { 
         ...data, 
@@ -86,7 +93,7 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
       toast.success('Analysis completed successfully!');
 
     } catch (e: any) {
-      console.error('Analysis failed:', e);
+      console.error('Analysis failed with error:', e);
       
       // Provide more specific error messages
       let errorMessage = 'Analysis failed';
@@ -96,11 +103,17 @@ export const useDebugSessionAnalysis = (sessionId: string | undefined) => {
         errorMessage = e;
       }
       
+      // Check if it's a network error
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('TypeError: Failed to fetch')) {
+        errorMessage = 'Network connection error. Please check your internet connection and try again.';
+      }
+      
       const newError = { 
         error: errorMessage, 
         timestamp: new Date().toISOString(),
         analyzedTools: selectedTools,
-        details: e.details || e.stack || 'No additional details available'
+        details: e.details || e.stack || 'No additional details available',
+        isNetworkError: errorMessage.includes('Network connection error')
       };
       
       setResult(newError);

@@ -12,9 +12,13 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { code, config } = await req.json();
+    const requestBody = await req.json();
+    console.log('Request body received:', requestBody);
+    
+    const { code, selectedTools, config } = requestBody;
 
     if (!code) {
+      console.error('Missing code parameter');
       return new Response(JSON.stringify({ error: '`code` parameter is required.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -22,6 +26,8 @@ serve(async (req: Request) => {
     }
 
     console.log('Parsing code with Babel...');
+    console.log('Selected tools:', selectedTools);
+    
     let ast;
     try {
       ast = babelParser.parse(code, {
@@ -64,18 +70,29 @@ serve(async (req: Request) => {
     console.log(`ESLint analysis completed with ${messages.length} issues found.`);
     console.log(`Found ${securityIssues.length} security issues.`);
 
-    return new Response(JSON.stringify({ 
+    const response = { 
       analysis: {
         issues: messages,
         securityIssues,
-      }
-    }), {
+      },
+      selectedTools: selectedTools || [],
+      success: true
+    };
+
+    return new Response(JSON.stringify(response), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (e: any) {
     console.error('Error in secure analysis function:', e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    
+    const errorResponse = { 
+      error: e.message || 'Unknown error occurred',
+      details: e.stack || 'No stack trace available',
+      success: false
+    };
+    
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
