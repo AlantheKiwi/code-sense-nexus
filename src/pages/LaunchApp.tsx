@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Rocket, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Zap, Rocket, CheckCircle, AlertCircle, ArrowLeft, Eye } from 'lucide-react';
 import { SeamlessFileInput } from '@/components/input/SeamlessFileInput';
 import { SimpleResults } from '@/components/simple/SimpleResults';
 import { SimpleProgress } from '@/components/simple/SimpleProgress';
+import { CodeDiffDialog } from '@/components/diff/CodeDiffDialog';
 import { TypeScriptFixer } from '@/services/typescript/TypeScriptFixer';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
 import { GitHubFile } from '@/services/github/GitHubConnector';
@@ -35,6 +35,8 @@ const LaunchApp = () => {
   const [singleResult, setSingleResult] = useState<FixResult | null>(null);
   const [multiResult, setMultiResult] = useState<MultiFileResult | null>(null);
   const [step, setStep] = useState<'input' | 'fixing' | 'results'>('input');
+  const [diffDialogOpen, setDiffDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<MultiFileResult['files'][0] | null>(null);
   const { incrementUsage, checkUsageLimit } = useUsageTracking();
 
   const handleFilesDetected = async (files: GitHubFile[]) => {
@@ -139,6 +141,16 @@ const LaunchApp = () => {
     toast.success('All fixed files downloaded!');
   };
 
+  const openDiffDialog = (file: MultiFileResult['files'][0]) => {
+    setSelectedFile(file);
+    setDiffDialogOpen(true);
+  };
+
+  const closeDiffDialog = () => {
+    setDiffDialogOpen(false);
+    setSelectedFile(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
       <div className="container mx-auto px-4 max-w-5xl">
@@ -209,9 +221,20 @@ const LaunchApp = () => {
                       <div key={index} className="border rounded-lg p-4 bg-gray-50">
                         <div className="flex items-center justify-between mb-2">
                           <h4 className="font-medium font-mono text-sm">{file.path}</h4>
-                          <Badge variant="outline" className="bg-green-100 text-green-800">
-                            {file.errorsFixed} errors fixed
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="bg-green-100 text-green-800">
+                              {file.errorsFixed} errors fixed
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openDiffDialog(file)}
+                              className="h-7 px-2"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View Changes
+                            </Button>
+                          </div>
                         </div>
                         <div className="text-sm text-gray-600">
                           {file.description.map((desc, i) => (
@@ -310,3 +333,9 @@ const LaunchApp = () => {
 };
 
 export default LaunchApp;
+
+<CodeDiffDialog
+  isOpen={diffDialogOpen}
+  onClose={closeDiffDialog}
+  file={selectedFile}
+/>
