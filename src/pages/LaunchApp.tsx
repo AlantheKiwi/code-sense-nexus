@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -327,15 +328,15 @@ const LaunchApp = () => {
             </div>
           </CardContent>
         </Card>
+
+        <CodeDiffDialog
+          isOpen={diffDialogOpen}
+          onClose={closeDiffDialog}
+          file={selectedFile}
+        />
       </div>
     </div>
   );
 };
 
 export default LaunchApp;
-
-<CodeDiffDialog
-  isOpen={diffDialogOpen}
-  onClose={closeDiffDialog}
-  file={selectedFile}
-/>
