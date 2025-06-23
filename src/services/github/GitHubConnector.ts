@@ -39,16 +39,26 @@ export class GitHubConnector {
     const repository = await this.apiClient.getRepositoryInfo(owner, repo, token);
     
     // Get repository file tree
-    const files = await this.apiClient.getRepositoryFiles(owner, repo, repository.defaultBranch, token);
+    const allFiles = await this.apiClient.getRepositoryFiles(owner, repo, repository.defaultBranch, token);
     
     // Filter files for analysis
-    const filteredFiles = GitHubFileFilter.filterFilesForAnalysis(files);
+    const typeScriptFiles = GitHubFileFilter.filterFilesForAnalysis(allFiles);
+    
+    // Get TypeScript file statistics
+    const tsFiles = typeScriptFiles.filter(file => file.path.endsWith('.ts'));
+    const tsxFiles = typeScriptFiles.filter(file => file.path.endsWith('.tsx'));
     
     return {
       repository,
-      files: filteredFiles,
-      totalFiles: files.length,
-      filteredFiles: filteredFiles.length
+      files: typeScriptFiles,
+      totalFiles: allFiles.length,
+      filteredFiles: typeScriptFiles.length,
+      statistics: {
+        totalFiles: allFiles.length,
+        typeScriptFiles: typeScriptFiles.length,
+        tsFiles: tsFiles.length,
+        tsxFiles: tsxFiles.length
+      }
     };
   }
 

@@ -3,82 +3,65 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 import { 
   Github, 
-  Zap, 
-  Loader2,
-  Key,
-  ExternalLink,
-  Info,
-  AlertTriangle
+  Loader2, 
+  AlertCircle, 
+  CheckCircle, 
+  Key
 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { gitHubConnector, GitHubFile } from '@/services/github/GitHubConnector';
+import { RepositoryStatistics } from '@/services/github/types';
 
 interface GitHubRepoTabProps {
-  onFilesDetected: (files: GitHubFile[]) => void;
+  onFilesDetected: (files: GitHubFile[], repositoryName?: string, statistics?: RepositoryStatistics) => void;
 }
 
 export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
   onFilesDetected
 }) => {
-  const [githubUrl, setGithubUrl] = useState('');
+  const [repoUrl, setRepoUrl] = useState('');
   const [githubToken, setGithubToken] = useState('');
-  const [showTokenInput, setShowTokenInput] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isVerified, setIsVerified] = useState(false);
 
-  const clearError = () => {
-    setScanError(null);
-  };
-
-  const handleGitHubScan = async () => {
-    if (!githubUrl.trim()) {
+  const handleConnect = async () => {
+    if (!repoUrl.trim()) {
       toast.error('Please enter a GitHub repository URL');
       return;
     }
 
-    setIsScanning(true);
-    setScanError(null);
-    
+    setIsLoading(true);
+    setError(null);
+    setIsVerified(false);
+
     try {
-      // First verify the repository
-      const verification = await gitHubConnector.verifyRepository(githubUrl, githubToken || undefined);
+      const repositoryContent = await gitHubConnector.fetchRepository(repoUrl, githubToken || undefined);
       
-      if (!verification.exists && verification.error) {
-        setScanError(verification.error.message + (verification.error.suggestion ? ` ${verification.error.suggestion}` : ''));
-        
-        // If it's a forbidden error, suggest using a token
-        if (verification.error.code === 'FORBIDDEN' || verification.error.code === 'NOT_FOUND') {
-          setShowTokenInput(true);
-        }
+      if (repositoryContent.files.length === 0) {
+        toast.error('No TypeScript files found in this repository');
         return;
       }
 
-      const repoContent = await gitHubConnector.fetchRepository(githubUrl, githubToken || undefined);
-      
-      // Filter for TypeScript files
-      const tsFiles = repoContent.files.filter(file => 
-        file.path.endsWith('.ts') || file.path.endsWith('.tsx')
+      setIsVerified(true);
+      onFilesDetected(
+        repositoryContent.files, 
+        repositoryContent.repository.fullName,
+        repositoryContent.statistics
       );
-
-      if (tsFiles.length === 0) {
-        toast.warning('No TypeScript files found in this repository');
-        setScanError('No TypeScript files found. Make sure this is a TypeScript/React project.');
-        return;
-      }
-
-      onFilesDetected(tsFiles);
-      setScanError(null);
-      toast.success(`Found ${tsFiles.length} TypeScript files!`);
+      
+      toast.success(`Successfully connected to ${repositoryContent.repository.fullName}`);
     } catch (error) {
-      console.error('GitHub scan error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to scan repository';
-      setScanError(errorMessage);
-      toast.error('Failed to scan repository. Please check the details below.');
+      console.error('Repository connection failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to connect to repository';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setIsScanning(false);
+      setIsLoading(false);
     }
   };
 
@@ -87,107 +70,85 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Github className="h-5 w-5 text-blue-600" />
-          Connect Your Lovable Project
+          Connect GitHub Repository
         </CardTitle>
         <p className="text-gray-600">
-          Paste your GitHub repository URL and we'll automatically find all TypeScript files
+          Connect your Lovable project's GitHub repository to automatically detect TypeScript files
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-2">
+        <div className="space-y-2">
+          <Label htmlFor="repo-url">Repository URL</Label>
           <Input
-            placeholder="https://github.com/username/your-lovable-project"
-            value={githubUrl}
-            onChange={(e) => {
-              setGithubUrl(e.target.value);
-              if (scanError) clearError();
-            }}
-            className="flex-1"
+            id="repo-url"
+            type="url"
+            placeholder="https://github.com/username/repository-name"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+            disabled={isLoading}
           />
-          <Button 
-            onClick={handleGitHubScan}
-            disabled={isScanning}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isScanning ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Scanning...
-              </>
-            ) : (
-              <>
-                <Zap className="h-4 w-4 mr-2" />
-                Scan Project
-              </>
-            )}
-          </Button>
         </div>
 
-        {/* GitHub Token Input */}
-        {showTokenInput && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Key className="h-4 w-4 text-gray-500" />
-              <label className="text-sm font-medium">GitHub Personal Access Token (Optional)</label>
-              <Button
-                variant="link"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={() => window.open('https://github.com/settings/tokens', '_blank')}
-              >
-                Get Token <ExternalLink className="h-3 w-3 ml-1" />
-              </Button>
-            </div>
-            <Input
-              type="password"
-              placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-              value={githubToken}
-              onChange={(e) => setGithubToken(e.target.value)}
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-gray-500">
-              Required for private repositories or to avoid rate limits
-            </p>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="github-token" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            GitHub Token (Optional)
+          </Label>
+          <Input
+            id="github-token"
+            type="password"
+            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+            value={githubToken}
+            onChange={(e) => setGithubToken(e.target.value)}
+            disabled={isLoading}
+          />
+          <p className="text-sm text-gray-500">
+            Required for private repositories. Get your token from GitHub Settings → Developer settings → Personal access tokens
+          </p>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
-        {/* Error Display */}
-        {scanError && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {scanError}
-              {!showTokenInput && scanError.includes('private') && (
-                <Button
-                  variant="link"
-                  className="h-auto p-0 ml-2 text-red-600"
-                  onClick={() => setShowTokenInput(true)}
-                >
-                  Add GitHub Token
-                </Button>
-              )}
+        {isVerified && (
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Repository connected successfully! TypeScript files detected and ready for analysis.
             </AlertDescription>
           </Alert>
         )}
 
+        <Button 
+          onClick={handleConnect}
+          disabled={isLoading || !repoUrl.trim()}
+          className="w-full"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Connecting...
+            </>
+          ) : (
+            <>
+              <Github className="h-4 w-4 mr-2" />
+              Connect Repository
+            </>
+          )}
+        </Button>
+
         <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            How to find your GitHub link:
-          </h4>
+          <h4 className="font-medium text-blue-800 mb-2">How to get your repository URL:</h4>
           <ol className="text-sm text-blue-700 space-y-1">
             <li>1. Open your Lovable project</li>
-            <li>2. Click the "GitHub" button in the top right</li>
-            <li>3. Copy the repository URL and paste it above</li>
+            <li>2. Click the GitHub button in the top right</li>
+            <li>3. Copy the repository URL from GitHub</li>
+            <li>4. Paste it here to scan for TypeScript files</li>
           </ol>
-          <div className="mt-3 text-xs text-blue-600">
-            <p className="font-medium">Supported URL formats:</p>
-            <ul className="mt-1 space-y-1 font-mono">
-              <li>• https://github.com/username/repository</li>
-              <li>• github.com/username/repository</li>
-              <li>• username/repository</li>
-            </ul>
-          </div>
         </div>
       </CardContent>
     </Card>

@@ -7,6 +7,7 @@ import {
   FileText
 } from 'lucide-react';
 import { GitHubFile } from '@/services/github/GitHubConnector';
+import { RepositoryStatistics } from '@/services/github/types';
 import { GitHubRepoTab } from './GitHubRepoTab';
 import { FileUploadTab } from './FileUploadTab';
 import { CodePasteTab } from './CodePasteTab';
@@ -22,9 +23,13 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
   onSingleCodeInput
 }) => {
   const [detectedFiles, setDetectedFiles] = useState<GitHubFile[]>([]);
+  const [repositoryName, setRepositoryName] = useState<string>();
+  const [statistics, setStatistics] = useState<RepositoryStatistics>();
 
-  const handleFilesDetected = (files: GitHubFile[]) => {
+  const handleFilesDetected = (files: GitHubFile[], repoName?: string, stats?: RepositoryStatistics) => {
     setDetectedFiles(files);
+    setRepositoryName(repoName);
+    setStatistics(stats);
   };
 
   const handleProcessFiles = () => {
@@ -56,7 +61,7 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
         </TabsContent>
 
         <TabsContent value="upload" className="space-y-4">
-          <FileUploadTab onFilesDetected={handleFilesDetected} />
+          <FileUploadTab onFilesDetected={(files) => handleFilesDetected(files)} />
         </TabsContent>
 
         <TabsContent value="paste" className="space-y-4">
@@ -66,7 +71,9 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
 
       <FilesPreview 
         detectedFiles={detectedFiles} 
-        onProcessFiles={handleProcessFiles} 
+        onProcessFiles={handleProcessFiles}
+        repositoryName={repositoryName}
+        statistics={statistics}
       />
     </div>
   );

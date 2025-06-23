@@ -19,11 +19,19 @@ export interface GitHubRepository {
   url: string;
 }
 
+export interface RepositoryStatistics {
+  totalFiles: number;
+  typeScriptFiles: number;
+  tsFiles: number;
+  tsxFiles: number;
+}
+
 export interface RepositoryContent {
   repository: GitHubRepository;
   files: GitHubFile[];
   totalFiles: number;
   filteredFiles: number;
+  statistics?: RepositoryStatistics;
 }
 
 export interface GitHubError {
