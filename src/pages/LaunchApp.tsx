@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -177,29 +178,41 @@ const LaunchApp = () => {
 
         {/* Main Content */}
         {step === 'input' && (
-          <Card className="mb-8">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl flex items-center justify-center gap-2">
-                <AlertCircle className="h-6 w-6 text-orange-500" />
-                Connect Your Lovable Project
-              </CardTitle>
-              <p className="text-gray-600">
-                Choose the easiest way to import your TypeScript files
-              </p>
-              <div className="mt-4 bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Why we succeed where Lovable doesn't:</strong> We use specialized debugging algorithms 
-                  built specifically for TypeScript error resolution. Different tools, different expertise.
+          <>
+            <Card className="mb-8">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                  <AlertCircle className="h-6 w-6 text-orange-500" />
+                  Connect Your Lovable Project
+                </CardTitle>
+                <p className="text-gray-600">
+                  Choose the easiest way to import your TypeScript files
                 </p>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <SeamlessFileInput
-                onFilesDetected={handleFilesDetected}
-                onSingleCodeInput={handleSingleCodeInput}
-              />
-            </CardContent>
-          </Card>
+                <div className="mt-4 bg-blue-50 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Why we succeed where Lovable doesn't:</strong> We use specialized debugging algorithms 
+                    built specifically for TypeScript error resolution. Different tools, different expertise.
+                  </p>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <SeamlessFileInput
+                  onFilesDetected={handleFilesDetected}
+                  onSingleCodeInput={handleSingleCodeInput}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Why It Works Section */}
+            <div className="mb-16">
+              <WhyItWorks />
+            </div>
+
+            {/* FAQ Section */}
+            <div className="mb-16">
+              <FAQ />
+            </div>
+          </>
         )}
 
         {step === 'fixing' && (
