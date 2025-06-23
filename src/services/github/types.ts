@@ -1,0 +1,33 @@
+
+export interface GitHubFile {
+  path: string;
+  name: string;
+  content: string;
+  size: number;
+  type: 'file' | 'dir';
+  sha: string;
+}
+
+export interface GitHubRepository {
+  name: string;
+  fullName: string;
+  description: string;
+  language: string;
+  size: number;
+  isPrivate: boolean;
+  defaultBranch: string;
+  url: string;
+}
+
+export interface RepositoryContent {
+  repository: GitHubRepository;
+  files: GitHubFile[];
+  totalFiles: number;
+  filteredFiles: number;
+}
+
+export interface GitHubError {
+  code: 'NOT_FOUND' | 'FORBIDDEN' | 'RATE_LIMITED' | 'INVALID_URL' | 'NETWORK_ERROR' | 'UNKNOWN';
+  message: string;
+  suggestion?: string;
+}
