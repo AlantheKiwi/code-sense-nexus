@@ -1,5 +1,4 @@
-
-import { GitHubRepository, GitHubFile, GitHubError } from './types';
+import { GitHubRepository, GitHubFile, GitHubError, ProgressCallback } from './types';
 import { GitHubErrorHandler } from './errorHandler';
 import { GitHubFileFilter } from './fileFilter';
 
@@ -8,8 +7,16 @@ export class GitHubApiClient {
   private rateLimitRemaining = 5000;
   private rateLimitReset = 0;
 
-  async getRepositoryInfo(owner: string, repo: string, token?: string): Promise<GitHubRepository> {
+  async getRepositoryInfo(owner: string, repo: string, token?: string, onProgress?: ProgressCallback): Promise<GitHubRepository> {
     const headers = this.buildHeaders(token);
+    
+    if (onProgress) {
+      onProgress({
+        percentage: 5,
+        stage: 'verifying',
+        message: 'Verifying repository access...'
+      });
+    }
     
     try {
       const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}`, { headers });
@@ -22,6 +29,14 @@ export class GitHubApiClient {
       }
 
       const data = await response.json();
+      
+      if (onProgress) {
+        onProgress({
+          percentage: 10,
+          stage: 'verifying',
+          message: 'Repository verified successfully'
+        });
+      }
       
       return {
         name: data.name,
@@ -39,11 +54,19 @@ export class GitHubApiClient {
     }
   }
 
-  async getRepositoryFiles(owner: string, repo: string, branch: string, token?: string): Promise<GitHubFile[]> {
+  async getRepositoryFiles(owner: string, repo: string, branch: string, token?: string, onProgress?: ProgressCallback): Promise<GitHubFile[]> {
     const headers = this.buildHeaders(token);
     const files: GitHubFile[] = [];
     
     try {
+      if (onProgress) {
+        onProgress({
+          percentage: 15,
+          stage: 'fetching_tree',
+          message: 'Getting repository file list...'
+        });
+      }
+
       // Get repository tree (recursive)
       const treeResponse = await fetch(
         `${this.baseUrl}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
@@ -64,10 +87,22 @@ export class GitHubApiClient {
         item.type === 'blob' && !GitHubFileFilter.shouldExcludeFile(item.path)
       );
 
-      console.log(`📁 Found ${fileItems.length} files to analyze`);
+      const totalFiles = Math.min(fileItems.length, 100); // Limit for demo
+      console.log(`📁 Found ${fileItems.length} files to analyze (processing ${totalFiles})`);
 
-      // Fetch content for files (with rate limiting consideration)
-      for (const item of fileItems.slice(0, 100)) { // Limit initial fetch for demo
+      if (onProgress) {
+        onProgress({
+          percentage: 20,
+          stage: 'downloading_files',
+          message: `Found ${totalFiles} files to process`,
+          filesProcessed: 0,
+          totalFiles
+        });
+      }
+
+      // Fetch content for files (with progress tracking)
+      for (let i = 0; i < totalFiles; i++) {
+        const item = fileItems[i];
         try {
           const content = await this.getFileContent(owner, repo, item.path, token);
           
@@ -80,13 +115,36 @@ export class GitHubApiClient {
             sha: item.sha
           });
 
+          // Report progress
+          if (onProgress) {
+            const filesProcessed = i + 1;
+            const percentage = 20 + Math.floor((filesProcessed / totalFiles) * 75); // 20% to 95%
+            onProgress({
+              percentage,
+              stage: 'downloading_files',
+              message: `Downloading file contents...`,
+              filesProcessed,
+              totalFiles
+            });
+          }
+
           // Basic rate limiting
-          if (files.length % 10 === 0) {
+          if ((i + 1) % 10 === 0) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
         } catch (error) {
           console.warn(`Failed to fetch content for ${item.path}:`, error);
         }
+      }
+
+      if (onProgress) {
+        onProgress({
+          percentage: 100,
+          stage: 'processing',
+          message: 'Processing complete!',
+          filesProcessed: files.length,
+          totalFiles
+        });
       }
 
       return files;

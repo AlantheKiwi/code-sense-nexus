@@ -1,5 +1,4 @@
-
-import { GitHubRepository, GitHubFile, RepositoryContent, GitHubError } from './types';
+import { GitHubRepository, GitHubFile, RepositoryContent, GitHubError, ProgressCallback } from './types';
 import { GitHubUrlParser } from './urlParser';
 import { GitHubApiClient } from './apiClient';
 import { GitHubFileFilter } from './fileFilter';
@@ -24,7 +23,7 @@ export class GitHubConnector {
     }
   }
 
-  async fetchRepository(repoUrl: string, token?: string): Promise<RepositoryContent> {
+  async fetchRepository(repoUrl: string, token?: string, onProgress?: ProgressCallback): Promise<RepositoryContent> {
     // First verify the repository exists
     const verification = await this.verifyRepository(repoUrl, token);
     if (!verification.exists && verification.error) {
@@ -36,10 +35,10 @@ export class GitHubConnector {
     console.log(`🔍 Fetching repository: ${owner}/${repo}`);
 
     // Get repository metadata
-    const repository = await this.apiClient.getRepositoryInfo(owner, repo, token);
+    const repository = await this.apiClient.getRepositoryInfo(owner, repo, token, onProgress);
     
     // Get repository file tree
-    const allFiles = await this.apiClient.getRepositoryFiles(owner, repo, repository.defaultBranch, token);
+    const allFiles = await this.apiClient.getRepositoryFiles(owner, repo, repository.defaultBranch, token, onProgress);
     
     // Filter files for analysis
     const typeScriptFiles = GitHubFileFilter.filterFilesForAnalysis(allFiles);

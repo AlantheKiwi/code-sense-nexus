@@ -1,4 +1,3 @@
-
 export interface GitHubFile {
   path: string;
   name: string;
@@ -39,3 +38,13 @@ export interface GitHubError {
   message: string;
   suggestion?: string;
 }
+
+export interface GitHubProgress {
+  percentage: number;
+  stage: 'verifying' | 'fetching_tree' | 'downloading_files' | 'processing';
+  message: string;
+  filesProcessed?: number;
+  totalFiles?: number;
+}
+
+export type ProgressCallback = (progress: GitHubProgress) => void;

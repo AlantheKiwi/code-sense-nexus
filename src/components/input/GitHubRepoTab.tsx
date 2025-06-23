@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { 
   Github, 
   Loader2, 
@@ -14,7 +15,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { gitHubConnector, GitHubFile } from '@/services/github/GitHubConnector';
-import { RepositoryStatistics } from '@/services/github/types';
+import { RepositoryStatistics, GitHubProgress } from '@/services/github/types';
 
 interface GitHubRepoTabProps {
   onFilesDetected: (files: GitHubFile[], repositoryName?: string, statistics?: RepositoryStatistics) => void;
@@ -28,6 +29,7 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [progress, setProgress] = useState<GitHubProgress | null>(null);
 
   const handleConnect = async () => {
     if (!repoUrl.trim()) {
@@ -38,9 +40,16 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
     setIsLoading(true);
     setError(null);
     setIsVerified(false);
+    setProgress(null);
 
     try {
-      const repositoryContent = await gitHubConnector.fetchRepository(repoUrl, githubToken || undefined);
+      const repositoryContent = await gitHubConnector.fetchRepository(
+        repoUrl, 
+        githubToken || undefined,
+        (progressUpdate) => {
+          setProgress(progressUpdate);
+        }
+      );
       
       if (repositoryContent.files.length === 0) {
         toast.error('No TypeScript files found in this repository');
@@ -62,6 +71,7 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
+      setProgress(null);
     }
   };
 
@@ -107,6 +117,27 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
           </p>
         </div>
 
+        {/* Progress Section */}
+        {isLoading && progress && (
+          <div className="space-y-3 p-4 bg-blue-50 rounded-lg border">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                {progress.message}
+              </span>
+            </div>
+            <Progress value={progress.percentage} className="h-2" />
+            <div className="flex justify-between text-xs text-blue-600">
+              <span>{progress.percentage}% complete</span>
+              {progress.filesProcessed !== undefined && progress.totalFiles !== undefined && (
+                <span>
+                  {progress.filesProcessed}/{progress.totalFiles} files
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -131,7 +162,7 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Connecting...
+              {progress ? 'Processing...' : 'Connecting...'}
             </>
           ) : (
             <>
