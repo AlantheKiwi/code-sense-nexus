@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Rocket, CheckCircle, AlertCircle } from 'lucide-react';
-import { SimpleUpload } from '@/components/simple/SimpleUpload';
+import { Zap, Rocket, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { SeamlessFileInput } from '@/components/input/SeamlessFileInput';
 import { SimpleResults } from '@/components/simple/SimpleResults';
 import { SimpleProgress } from '@/components/simple/SimpleProgress';
 import { TypeScriptFixer } from '@/services/typescript/TypeScriptFixer';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
+import { GitHubFile } from '@/services/github/GitHubConnector';
 import { toast } from 'sonner';
 
 interface FixResult {
@@ -17,19 +18,70 @@ interface FixResult {
   description: string[];
 }
 
+interface MultiFileResult {
+  files: Array<{
+    path: string;
+    originalCode: string;
+    fixedCode: string;
+    errorsFixed: number;
+    description: string[];
+  }>;
+  totalErrorsFixed: number;
+}
+
 const LaunchApp = () => {
-  const [code, setCode] = useState('');
   const [isFixing, setIsFixing] = useState(false);
-  const [result, setResult] = useState<FixResult | null>(null);
-  const [step, setStep] = useState<'upload' | 'fixing' | 'results'>('upload');
+  const [singleResult, setSingleResult] = useState<FixResult | null>(null);
+  const [multiResult, setMultiResult] = useState<MultiFileResult | null>(null);
+  const [step, setStep] = useState<'input' | 'fixing' | 'results'>('input');
   const { incrementUsage, checkUsageLimit } = useUsageTracking();
 
-  const handleFixTypeScript = async () => {
-    if (!code.trim()) {
-      toast.error('Please upload or paste your TypeScript code first');
+  const handleFilesDetected = async (files: GitHubFile[]) => {
+    // Check usage limit
+    const usageCheck = await checkUsageLimit('basic');
+    if (!usageCheck.allowed) {
+      toast.error('Daily limit reached. Upgrade to continue fixing TypeScript errors.');
       return;
     }
 
+    setIsFixing(true);
+    setStep('fixing');
+
+    try {
+      const fixer = new TypeScriptFixer();
+      const results = [];
+      let totalErrors = 0;
+
+      for (const file of files) {
+        const fixResult = await fixer.fixTypeScriptErrors(file.content);
+        results.push({
+          path: file.path,
+          originalCode: fixResult.originalCode,
+          fixedCode: fixResult.fixedCode,
+          errorsFixed: fixResult.errorsFixed,
+          description: fixResult.description
+        });
+        totalErrors += fixResult.errorsFixed;
+      }
+
+      setMultiResult({
+        files: results,
+        totalErrorsFixed: totalErrors
+      });
+      
+      setStep('results');
+      await incrementUsage('basic');
+      toast.success(`Fixed ${totalErrors} TypeScript errors across ${files.length} files!`);
+    } catch (error) {
+      console.error('TypeScript fixing error:', error);
+      toast.error('Failed to fix TypeScript errors. Please try again.');
+      setStep('input');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  const handleSingleCodeInput = async (code: string) => {
     // Check usage limit
     const usageCheck = await checkUsageLimit('basic');
     if (!usageCheck.allowed) {
@@ -45,32 +97,50 @@ const LaunchApp = () => {
       const fixResult = await fixer.fixTypeScriptErrors(code);
       
       if (fixResult.errorsFixed > 0) {
-        setResult(fixResult);
+        setSingleResult(fixResult);
         setStep('results');
         await incrementUsage('basic');
         toast.success(`Fixed ${fixResult.errorsFixed} TypeScript errors!`);
       } else {
         toast.success('No TypeScript errors found - your code is ready to deploy!');
-        setStep('upload');
+        setStep('input');
       }
     } catch (error) {
       console.error('TypeScript fixing error:', error);
       toast.error('Failed to fix TypeScript errors. Please try again.');
-      setStep('upload');
+      setStep('input');
     } finally {
       setIsFixing(false);
     }
   };
 
   const handleStartOver = () => {
-    setCode('');
-    setResult(null);
-    setStep('upload');
+    setSingleResult(null);
+    setMultiResult(null);
+    setStep('input');
+  };
+
+  const downloadAllFiles = () => {
+    if (!multiResult) return;
+
+    multiResult.files.forEach(file => {
+      const blob = new Blob([file.fixedCode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.path;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    toast.success('All fixed files downloaded!');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
+      <div className="container mx-auto px-4 max-w-5xl">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -86,35 +156,22 @@ const LaunchApp = () => {
         </div>
 
         {/* Main Content */}
-        {step === 'upload' && (
+        {step === 'input' && (
           <Card className="mb-8">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl flex items-center justify-center gap-2">
                 <AlertCircle className="h-6 w-6 text-orange-500" />
-                Upload Your TypeScript Code
+                Connect Your Lovable Project
               </CardTitle>
               <p className="text-gray-600">
-                Paste your code or upload files with TypeScript errors
+                Choose the easiest way to import your TypeScript files
               </p>
             </CardHeader>
             <CardContent>
-              <SimpleUpload
-                code={code}
-                onCodeChange={setCode}
-                onFileUpload={setCode}
+              <SeamlessFileInput
+                onFilesDetected={handleFilesDetected}
+                onSingleCodeInput={handleSingleCodeInput}
               />
-              
-              <div className="mt-8 text-center">
-                <Button
-                  onClick={handleFixTypeScript}
-                  disabled={!code.trim() || isFixing}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 text-xl font-semibold rounded-lg shadow-lg"
-                >
-                  <Zap className="h-6 w-6 mr-2" />
-                  Fix My TypeScript Errors
-                </Button>
-              </div>
             </CardContent>
           </Card>
         )}
@@ -123,13 +180,14 @@ const LaunchApp = () => {
           <SimpleProgress />
         )}
 
-        {step === 'results' && result && (
+        {step === 'results' && (singleResult || multiResult) && (
           <div className="space-y-6">
             <Card className="border-green-200 bg-green-50">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl flex items-center justify-center gap-2 text-green-800">
                   <CheckCircle className="h-6 w-6" />
-                  Success! Fixed {result.errorsFixed} Errors
+                  Success! Fixed {singleResult?.errorsFixed || multiResult?.totalErrorsFixed} Errors
+                  {multiResult && ` Across ${multiResult.files.length} Files`}
                 </CardTitle>
                 <p className="text-green-700">
                   Your TypeScript code is now ready to deploy
@@ -137,7 +195,37 @@ const LaunchApp = () => {
               </CardHeader>
             </Card>
 
-            <SimpleResults result={result} />
+            {singleResult && <SimpleResults result={singleResult} />}
+
+            {multiResult && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Fixed Files Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {multiResult.files.map((file, index) => (
+                      <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-medium font-mono text-sm">{file.path}</h4>
+                          <Badge variant="outline" className="bg-green-100 text-green-800">
+                            {file.errorsFixed} errors fixed
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {file.description.map((desc, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <CheckCircle className="h-3 w-3 text-green-500" />
+                              {desc}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="flex gap-4 justify-center">
               <Button
@@ -146,8 +234,19 @@ const LaunchApp = () => {
                 size="lg"
                 className="px-8"
               >
-                Fix Another File
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                Fix More Files
               </Button>
+              {multiResult && (
+                <Button
+                  onClick={downloadAllFiles}
+                  variant="outline"
+                  size="lg"
+                  className="px-8"
+                >
+                  Download All Fixed Files
+                </Button>
+              )}
               <Button
                 onClick={() => window.open('https://lovable.app', '_blank')}
                 size="lg"
@@ -157,6 +256,21 @@ const LaunchApp = () => {
                 Deploy Now in Lovable
               </Button>
             </div>
+
+            {/* Instructions for copying back to Lovable */}
+            <Card className="bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-blue-800">How to Apply These Fixes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ol className="list-decimal list-inside space-y-2 text-blue-700">
+                  <li>Download the fixed files using the button above</li>
+                  <li>Open your Lovable project and enable Dev Mode</li>
+                  <li>Replace the original files with the fixed versions</li>
+                  <li>Your project should now deploy without TypeScript errors!</li>
+                </ol>
+              </CardContent>
+            </Card>
           </div>
         )}
 
