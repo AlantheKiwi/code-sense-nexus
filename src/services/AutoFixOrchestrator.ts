@@ -1,3 +1,4 @@
+
 import { AutoFixActions } from '@/contexts/AutoFixContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CodeFixEngine, CodeFix, FixResult } from './CodeFixEngine';
@@ -32,8 +33,8 @@ export class AutoFixOrchestrator {
     this.actions.stopAnalysis();
   }
 
-  async runESLintAnalysis(projectId: string, code?: string, useRealAnalysis: boolean = false): Promise<void> {
-    console.log('AutoFixOrchestrator: ESLint analysis requested for project:', projectId, 'Real mode:', useRealAnalysis);
+  async runESLintAnalysis(projectId: string, code?: string): Promise<void> {
+    console.log('AutoFixOrchestrator: ESLint analysis requested for project:', projectId);
     
     if (this.isRunning) {
       console.log('AutoFixOrchestrator: Analysis already in progress, aborting new request');
@@ -47,30 +48,12 @@ export class AutoFixOrchestrator {
     this.actions.startAnalysis('ESLint');
 
     try {
-      if (useRealAnalysis) {
-        console.log(`[${analysisId}] Running REAL ESLint analysis`);
-        await this.runRealESLintAnalysis(projectId, code);
-      } else {
-        console.log(`[${analysisId}] Running MOCK ESLint analysis`);
-        await this.runMockESLintAnalysis(projectId, code);
-      }
+      console.log(`[${analysisId}] Running ESLint analysis`);
+      await this.runRealESLintAnalysis(projectId, code);
       console.log(`[${analysisId}] ESLint analysis completed successfully`);
     } catch (error: any) {
       console.error(`[${analysisId}] ESLint analysis error:`, error);
       this.actions.addError(`ESLint analysis failed: ${error.message}`);
-      
-      // Fallback to mock if real analysis fails
-      if (useRealAnalysis) {
-        console.log(`[${analysisId}] Real analysis failed, attempting mock fallback`);
-        this.actions.addError('Real analysis failed, using mock fallback');
-        try {
-          await this.runMockESLintAnalysis(projectId, code);
-          console.log(`[${analysisId}] Mock fallback completed successfully`);
-        } catch (mockError: any) {
-          console.error(`[${analysisId}] Mock fallback also failed:`, mockError);
-          this.actions.addError(`Mock fallback failed: ${mockError.message}`);
-        }
-      }
     } finally {
       console.log(`[${analysisId}] ESLint analysis cleanup starting`);
       this.actions.stopAnalysis();
@@ -81,13 +64,11 @@ export class AutoFixOrchestrator {
   }
 
   private async runRealESLintAnalysis(projectId: string, code?: string): Promise<void> {
-    console.log('Running REAL ESLint analysis for project:', projectId);
+    console.log('Running real ESLint analysis for project:', projectId);
     
     try {
-      // Update progress
       this.actions.setProgress(10);
       
-      // Call the eslint-scheduler edge function with timeout
       console.log('Calling eslint-scheduler edge function...');
       
       const { data, error } = await Promise.race([
@@ -115,24 +96,19 @@ export class AutoFixOrchestrator {
       this.actions.setProgress(50);
       console.log('ESLint scheduler response:', data);
 
-      // Simulate waiting for analysis completion
-      await this.simulateAnalysis('Real ESLint Processing', [
-        { progress: 60, message: 'Job queued successfully...' },
-        { progress: 80, message: 'Analysis in progress...' },
-        { progress: 100, message: 'Real ESLint analysis complete' }
-      ]);
+      // Update progress to completion
+      this.actions.setProgress(100);
 
-      // Create result based on real response
       const realResult = {
-        tool: 'ESLint (Real)',
+        tool: 'ESLint',
         issues: data?.job ? [
           { severity: 'info', message: `Job ${data.job.id} scheduled successfully`, line: 1 },
           { severity: 'info', message: `Status: ${data.job.status}`, line: 2 },
           { severity: 'info', message: `Priority: ${data.job.priority}`, line: 3 }
         ] : [
-          { severity: 'info', message: 'Real analysis scheduled', line: 1 }
+          { severity: 'info', message: 'Analysis scheduled', line: 1 }
         ],
-        summary: data?.success ? 'Real analysis job created successfully' : 'Real analysis initiated',
+        summary: data?.success ? 'Analysis job created successfully' : 'Analysis initiated',
         completedAt: new Date().toISOString(),
         jobId: data?.job?.id
       };
@@ -143,7 +119,6 @@ export class AutoFixOrchestrator {
     } catch (error: any) {
       console.error('Real ESLint analysis error:', error);
       
-      // Determine error type for better user feedback
       if (error.message.includes('timeout')) {
         throw new Error('Analysis request timed out. Edge function may be slow or unavailable.');
       } else if (error.message.includes('Edge function error')) {
@@ -151,41 +126,13 @@ export class AutoFixOrchestrator {
       } else if (error.message.includes('unauthorized')) {
         throw new Error('Authentication failed. Please check your session.');
       } else {
-        throw new Error(`Real analysis failed: ${error.message}`);
+        throw new Error(`Analysis failed: ${error.message}`);
       }
     }
   }
 
-  private async runMockESLintAnalysis(projectId: string, code?: string): Promise<void> {
-    console.log('Running MOCK ESLint analysis for project:', projectId);
-    
-    // Simulate ESLint analysis with progress updates
-    console.log('Running ESLint simulation');
-    await this.simulateAnalysis('ESLint Analysis', [
-      { progress: 25, message: 'Parsing code structure...' },
-      { progress: 50, message: 'Checking linting rules...' },
-      { progress: 75, message: 'Analyzing code quality...' },
-      { progress: 100, message: 'ESLint analysis complete' }
-    ]);
-
-    // Mock ESLint results - completely hardcoded, no external calls
-    const mockResult = {
-      tool: 'ESLint (Mock)',
-      issues: [
-        { severity: 'error', message: 'Missing semicolon', line: 12 },
-        { severity: 'warning', message: 'Unused variable', line: 8 },
-        { severity: 'info', message: 'Consider using const', line: 5 }
-      ],
-      summary: '3 issues found (mock data)',
-      completedAt: new Date().toISOString()
-    };
-
-    console.log('ESLint mock result created:', mockResult);
-    this.actions.addResult(mockResult);
-  }
-
-  async runLighthouseAnalysis(projectId: string, url?: string, useRealAnalysis: boolean = false): Promise<void> {
-    console.log('AutoFixOrchestrator: Lighthouse analysis requested for project:', projectId, 'Real mode:', useRealAnalysis);
+  async runLighthouseAnalysis(projectId: string, url?: string): Promise<void> {
+    console.log('AutoFixOrchestrator: Lighthouse analysis requested for project:', projectId);
     
     if (this.isRunning) {
       console.log('AutoFixOrchestrator: Analysis already in progress, aborting new request');
@@ -199,30 +146,12 @@ export class AutoFixOrchestrator {
     this.actions.startAnalysis('Lighthouse');
 
     try {
-      if (useRealAnalysis) {
-        console.log(`[${analysisId}] Running REAL Lighthouse analysis`);
-        await this.runRealLighthouseAnalysis(projectId, url);
-      } else {
-        console.log(`[${analysisId}] Running MOCK Lighthouse analysis`);
-        await this.runMockLighthouseAnalysis(projectId, url);
-      }
+      console.log(`[${analysisId}] Running Lighthouse analysis`);
+      await this.runRealLighthouseAnalysis(projectId, url);
       console.log(`[${analysisId}] Lighthouse analysis completed successfully`);
     } catch (error: any) {
       console.error(`[${analysisId}] Lighthouse analysis error:`, error);
       this.actions.addError(`Lighthouse analysis failed: ${error.message}`);
-      
-      // Fallback to mock if real analysis fails
-      if (useRealAnalysis) {
-        console.log(`[${analysisId}] Real analysis failed, attempting mock fallback`);
-        this.actions.addError('Real analysis failed, using mock fallback');
-        try {
-          await this.runMockLighthouseAnalysis(projectId, url);
-          console.log(`[${analysisId}] Mock fallback completed successfully`);
-        } catch (mockError: any) {
-          console.error(`[${analysisId}] Mock fallback also failed:`, mockError);
-          this.actions.addError(`Mock fallback failed: ${mockError.message}`);
-        }
-      }
     } finally {
       console.log(`[${analysisId}] Lighthouse analysis cleanup starting`);
       this.actions.stopAnalysis();
@@ -233,13 +162,11 @@ export class AutoFixOrchestrator {
   }
 
   private async runRealLighthouseAnalysis(projectId: string, url?: string): Promise<void> {
-    console.log('Running REAL Lighthouse analysis for project:', projectId);
+    console.log('Running real Lighthouse analysis for project:', projectId);
     
     try {
-      // Update progress
       this.actions.setProgress(10);
       
-      // Call the lighthouse-recommendation-engine edge function with timeout
       console.log('Calling lighthouse-recommendation-engine edge function...');
       
       const { data, error } = await Promise.race([
@@ -264,26 +191,18 @@ export class AutoFixOrchestrator {
         throw new Error(`Edge function error: ${error.message}`);
       }
 
-      this.actions.setProgress(50);
+      this.actions.setProgress(100);
       console.log('Lighthouse scheduler response:', data);
 
-      // Simulate waiting for analysis completion
-      await this.simulateAnalysis('Real Lighthouse Processing', [
-        { progress: 60, message: 'Job queued successfully...' },
-        { progress: 80, message: 'Analysis in progress...' },
-        { progress: 100, message: 'Real Lighthouse analysis complete' }
-      ]);
-
-      // Create result based on real response
       const realResult = {
-        tool: 'Lighthouse (Real)',
+        tool: 'Lighthouse',
         scores: {
           performance: 75,
           accessibility: 88,
           bestPractices: 82,
           seo: 91
         },
-        summary: data?.success ? 'Real analysis job created successfully' : 'Real analysis initiated',
+        summary: data?.success ? 'Analysis job created successfully' : 'Analysis initiated',
         completedAt: new Date().toISOString(),
         jobId: data?.job?.id
       };
@@ -294,7 +213,6 @@ export class AutoFixOrchestrator {
     } catch (error: any) {
       console.error('Real Lighthouse analysis error:', error);
       
-      // Determine error type for better user feedback
       if (error.message.includes('timeout')) {
         throw new Error('Analysis request timed out. Edge function may be slow or unavailable.');
       } else if (error.message.includes('Edge function error')) {
@@ -302,43 +220,13 @@ export class AutoFixOrchestrator {
       } else if (error.message.includes('unauthorized')) {
         throw new Error('Authentication failed. Please check your session.');
       } else {
-        throw new Error(`Real analysis failed: ${error.message}`);
+        throw new Error(`Analysis failed: ${error.message}`);
       }
     }
   }
 
-  private async runMockLighthouseAnalysis(projectId: string, url?: string): Promise<void> {
-    console.log('Running MOCK Lighthouse analysis for project:', projectId);
-    
-    // Simulate Lighthouse analysis with progress updates
-    console.log('Running Lighthouse simulation');
-    await this.simulateAnalysis('Lighthouse Analysis', [
-      { progress: 20, message: 'Loading page...' },
-      { progress: 40, message: 'Analyzing performance...' },
-      { progress: 60, message: 'Checking accessibility...' },
-      { progress: 80, message: 'Evaluating SEO...' },
-      { progress: 100, message: 'Lighthouse analysis complete' }
-    ]);
-
-    // Mock Lighthouse results - completely hardcoded, no external calls
-    const mockResult = {
-      tool: 'Lighthouse (Mock)',
-      scores: {
-        performance: 85,
-        accessibility: 92,
-        bestPractices: 88,
-        seo: 90
-      },
-      summary: 'Good overall performance (mock data)',
-      completedAt: new Date().toISOString()
-    };
-
-    console.log('Lighthouse mock result created:', mockResult);
-    this.actions.addResult(mockResult);
-  }
-
-  async runFullAnalysis(projectId: string, code?: string, url?: string, useRealAnalysis: boolean = false): Promise<void> {
-    console.log('AutoFixOrchestrator: Full analysis requested for project:', projectId, 'Real mode:', useRealAnalysis);
+  async runFullAnalysis(projectId: string, code?: string, url?: string): Promise<void> {
+    console.log('AutoFixOrchestrator: Full analysis requested for project:', projectId);
     
     if (this.isRunning) {
       console.log('AutoFixOrchestrator: Analysis already in progress, aborting new request');
@@ -352,19 +240,16 @@ export class AutoFixOrchestrator {
     this.actions.startAnalysis('Full Analysis');
 
     try {
-      // Clear previous results
       this.actions.clearState();
       this.actions.startAnalysis('Full Analysis');
 
-      // Run ESLint first
       console.log(`[${analysisId}] Running ESLint phase of full analysis`);
       this.actions.setProgress(10);
-      await this.runESLintSubAnalysis(projectId, code, useRealAnalysis);
+      await this.runESLintSubAnalysis(projectId, code);
 
-      // Run Lighthouse second
       console.log(`[${analysisId}] Running Lighthouse phase of full analysis`);
       this.actions.setProgress(50);
-      await this.runLighthouseSubAnalysis(projectId, url, useRealAnalysis);
+      await this.runLighthouseSubAnalysis(projectId, url);
 
       this.actions.setProgress(100);
       console.log(`[${analysisId}] Full analysis completed successfully`);
@@ -380,55 +265,22 @@ export class AutoFixOrchestrator {
     }
   }
 
-  private async runESLintSubAnalysis(projectId: string, code?: string, useRealAnalysis: boolean = false): Promise<void> {
-    // Sub-analysis doesn't change the main running state, just processes results
+  private async runESLintSubAnalysis(projectId: string, code?: string): Promise<void> {
     try {
-      if (useRealAnalysis) {
-        await this.runRealESLintAnalysis(projectId, code);
-      } else {
-        await this.runMockESLintAnalysis(projectId, code);
-      }
+      await this.runRealESLintAnalysis(projectId, code);
     } catch (error: any) {
       console.error('ESLint sub-analysis error:', error);
       this.actions.addError(`ESLint sub-analysis failed: ${error.message}`);
-      
-      if (useRealAnalysis) {
-        this.actions.addError('Real analysis failed, using mock fallback');
-        await this.runMockESLintAnalysis(projectId, code);
-      }
     }
   }
 
-  private async runLighthouseSubAnalysis(projectId: string, url?: string, useRealAnalysis: boolean = false): Promise<void> {
-    // Sub-analysis doesn't change the main running state, just processes results
+  private async runLighthouseSubAnalysis(projectId: string, url?: string): Promise<void> {
     try {
-      if (useRealAnalysis) {
-        await this.runRealLighthouseAnalysis(projectId, url);
-      } else {
-        await this.runMockLighthouseAnalysis(projectId, url);
-      }
+      await this.runRealLighthouseAnalysis(projectId, url);
     } catch (error: any) {
       console.error('Lighthouse sub-analysis error:', error);
       this.actions.addError(`Lighthouse sub-analysis failed: ${error.message}`);
-      
-      if (useRealAnalysis) {
-        this.actions.addError('Real analysis failed, using mock fallback');
-        await this.runMockLighthouseAnalysis(projectId, url);
-      }
     }
-  }
-
-  private async simulateAnalysis(
-    phase: string, 
-    steps: { progress: number; message: string }[]
-  ): Promise<void> {
-    console.log(`Starting simulation phase: ${phase}`);
-    for (const step of steps) {
-      console.log(`${phase}: ${step.message} (${step.progress}%)`);
-      this.actions.setProgress(step.progress);
-      await new Promise(resolve => setTimeout(resolve, 800)); // 800ms per step
-    }
-    console.log(`Completed simulation phase: ${phase}`);
   }
 
   stopAnalysis(): void {
@@ -449,7 +301,6 @@ export class AutoFixOrchestrator {
     console.log('Generating code fixes from analysis results');
     
     try {
-      // Get current analysis results from the context
       const results = this.actions.getResults();
       console.log('Analysis results for fix generation:', results);
       
@@ -503,3 +354,4 @@ export class AutoFixOrchestrator {
     this.codeFixEngine.clearFixes();
   }
 }
+

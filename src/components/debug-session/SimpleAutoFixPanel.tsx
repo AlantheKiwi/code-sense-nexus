@@ -1,10 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { AlertCircle, CheckCircle, Play, Square, Settings, RotateCcw, Wrench } from 'lucide-react';
+import { AlertCircle, CheckCircle, Play, Square, RotateCcw, Wrench } from 'lucide-react';
 import { useAutoFix } from '@/hooks/useAutoFix';
 import { AutoFixOrchestrator } from '@/services/AutoFixOrchestrator';
 import { FixReviewPanel } from './FixReviewPanel';
@@ -22,15 +22,11 @@ export const SimpleAutoFixPanel: React.FC<SimpleAutoFixPanelProps> = ({
 }) => {
   console.log('SimpleAutoFixPanel rendering, props:', { projectId, sessionId });
 
-  // Error boundary state
   const [hasError, setHasError] = useState(false);
-  
-  // Code fixes state
   const [fixes, setFixes] = useState<CodeFix[]>([]);
   const [isGeneratingFixes, setIsGeneratingFixes] = useState(false);
   const [isApplyingFixes, setIsApplyingFixes] = useState(false);
 
-  // Mock code for Lovable analysis
   const [currentCode] = useState(`// Sample Lovable-generated code
 import React from 'react';
 
@@ -49,7 +45,6 @@ export default MyComponent;`);
 
   try {
     const { state, actions } = useAutoFix();
-    const [useRealAnalysis, setUseRealAnalysis] = useState(false);
     const orchestrator = React.useMemo(() => new AutoFixOrchestrator(actions), [actions]);
 
     console.log('SimpleAutoFixPanel state:', state);
@@ -61,10 +56,8 @@ export default MyComponent;`);
           actions.addError('Project ID is required');
           return;
         }
-        console.log('Starting ESLint analysis, real mode:', useRealAnalysis);
-        await orchestrator.runESLintAnalysis(projectId, undefined, useRealAnalysis);
-        
-        // After analysis, automatically generate fixes
+        console.log('Starting ESLint analysis');
+        await orchestrator.runESLintAnalysis(projectId);
         await handleGenerateFixes();
       } catch (error: any) {
         console.error('Error running ESLint:', error);
@@ -78,10 +71,8 @@ export default MyComponent;`);
           actions.addError('Project ID is required');
           return;
         }
-        console.log('Starting Lighthouse analysis, real mode:', useRealAnalysis);
-        await orchestrator.runLighthouseAnalysis(projectId, undefined, useRealAnalysis);
-        
-        // After analysis, automatically generate fixes
+        console.log('Starting Lighthouse analysis');
+        await orchestrator.runLighthouseAnalysis(projectId);
         await handleGenerateFixes();
       } catch (error: any) {
         console.error('Error running Lighthouse:', error);
@@ -95,10 +86,8 @@ export default MyComponent;`);
           actions.addError('Project ID is required');
           return;
         }
-        console.log('Starting Full analysis, real mode:', useRealAnalysis);
-        await orchestrator.runFullAnalysis(projectId, undefined, undefined, useRealAnalysis);
-        
-        // After analysis, automatically generate fixes
+        console.log('Starting Full analysis');
+        await orchestrator.runFullAnalysis(projectId);
         await handleGenerateFixes();
       } catch (error: any) {
         console.error('Error running full analysis:', error);
@@ -136,7 +125,6 @@ export default MyComponent;`);
         
         const successCount = results.filter(r => r.success).length;
         if (successCount > 0) {
-          // You could add a success message to the actions here
           console.log(`Successfully applied ${successCount} fixes`);
         }
         
@@ -185,8 +173,6 @@ export default MyComponent;`);
 
     const handleLovableFixes = (lovableFixes: any[]) => {
       console.log('Received Lovable fixes:', lovableFixes);
-      // Convert Lovable fixes to CodeFix format if needed
-      // This is where you'd integrate with actual fix application
     };
 
     if (hasError) {
@@ -212,7 +198,6 @@ export default MyComponent;`);
 
     return (
       <div className="space-y-4">
-        {/* Lovable Assistant - Now with smart fixes and guidance */}
         <LovableAssistant 
           code={currentCode}
           onFixIssues={handleLovableFixes}
@@ -222,35 +207,10 @@ export default MyComponent;`);
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Play className="h-5 w-5" />
-              Smart Auto-Fix Analysis System
+              Real-Time Analysis System
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Analysis Mode Settings */}
-            <Card className="p-3 bg-blue-50">
-              <div className="flex items-center gap-2 mb-2">
-                <Settings className="h-4 w-4" />
-                <span className="text-sm font-medium">Analysis Mode</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="useReal"
-                  checked={useRealAnalysis}
-                  onCheckedChange={(checked) => setUseRealAnalysis(checked as boolean)}
-                  disabled={state.isRunning}
-                />
-                <label htmlFor="useReal" className="text-sm">
-                  Use Real Analysis (requires edge functions)
-                </label>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {useRealAnalysis 
-                  ? "Will call real edge functions and database. May take longer and can fail." 
-                  : "Uses mock analysis for testing. Always works and responds quickly."}
-              </p>
-            </Card>
-
-            {/* Control Buttons */}
             <div className="flex gap-2 flex-wrap">
               <Button
                 onClick={handleRunESLint}
@@ -258,7 +218,7 @@ export default MyComponent;`);
                 variant="outline"
                 size="sm"
               >
-                Run ESLint {useRealAnalysis ? '(Real)' : '(Mock)'}
+                Run ESLint Analysis
               </Button>
               <Button
                 onClick={handleRunLighthouse}
@@ -266,17 +226,16 @@ export default MyComponent;`);
                 variant="outline"
                 size="sm"
               >
-                Run Lighthouse {useRealAnalysis ? '(Real)' : '(Mock)'}
+                Run Lighthouse Analysis
               </Button>
               <Button
                 onClick={handleRunAll}
                 disabled={state.isRunning}
                 size="sm"
               >
-                Run All Analysis {useRealAnalysis ? '(Real)' : '(Mock)'}
+                Run Full Analysis
               </Button>
               
-              {/* Fix Generation Button */}
               {state.results.length > 0 && (
                 <Button
                   onClick={handleGenerateFixes}
@@ -290,7 +249,6 @@ export default MyComponent;`);
                 </Button>
               )}
               
-              {/* Analysis Control Buttons */}
               {state.isRunning && (
                 <Button
                   onClick={handleStop}
@@ -302,7 +260,6 @@ export default MyComponent;`);
                 </Button>
               )}
               
-              {/* Reset Button - always available */}
               <Button
                 onClick={handleForceReset}
                 variant="outline"
@@ -325,7 +282,6 @@ export default MyComponent;`);
               )}
             </div>
 
-            {/* Status Display */}
             {state.isRunning && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -335,20 +291,14 @@ export default MyComponent;`);
                   <span className="text-sm text-muted-foreground">
                     {state.progress}%
                   </span>
-                  {useRealAnalysis && (
-                    <Badge variant="outline" className="text-xs">
-                      Real Mode
-                    </Badge>
-                  )}
                 </div>
                 <Progress value={state.progress} className="w-full" />
                 <p className="text-xs text-muted-foreground">
-                  If analysis appears stuck, use the "Force Reset" button above.
+                  Analysis in progress. Real edge functions are being called.
                 </p>
               </div>
             )}
 
-            {/* Fix Generation Status */}
             {isGeneratingFixes && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -363,7 +313,6 @@ export default MyComponent;`);
               </div>
             )}
 
-            {/* Error Display */}
             {state.errors.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-red-600 flex items-center gap-1">
@@ -388,7 +337,6 @@ export default MyComponent;`);
               </div>
             )}
 
-            {/* Results Display */}
             {state.results.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-green-600 flex items-center gap-1">
@@ -410,14 +358,12 @@ export default MyComponent;`);
                         {result.summary}
                       </p>
                       
-                      {/* Job ID for Real Analysis */}
                       {result.jobId && (
                         <div className="text-xs text-blue-600 mb-2">
                           Job ID: {result.jobId}
                         </div>
                       )}
                       
-                      {/* ESLint Results */}
                       {result.issues && (
                         <div className="space-y-1">
                           {result.issues.map((issue: any, issueIndex: number) => (
@@ -434,7 +380,6 @@ export default MyComponent;`);
                         </div>
                       )}
 
-                      {/* Lighthouse Results */}
                       {result.scores && (
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>Performance: {result.scores.performance}/100</div>
@@ -451,7 +396,6 @@ export default MyComponent;`);
           </CardContent>
         </Card>
 
-        {/* Code Fixes Panel */}
         <FixReviewPanel
           fixes={fixes}
           isApplying={isApplyingFixes}
@@ -485,3 +429,4 @@ export default MyComponent;`);
     );
   }
 };
+
