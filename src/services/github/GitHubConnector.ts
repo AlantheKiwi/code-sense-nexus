@@ -1,4 +1,3 @@
-
 export interface GitHubFile {
   path: string;
   name: string;
@@ -24,6 +23,12 @@ export interface RepositoryContent {
   files: GitHubFile[];
   totalFiles: number;
   filteredFiles: number;
+}
+
+export interface GitHubError {
+  code: 'NOT_FOUND' | 'FORBIDDEN' | 'RATE_LIMITED' | 'INVALID_URL' | 'NETWORK_ERROR' | 'UNKNOWN';
+  message: string;
+  suggestion?: string;
 }
 
 export class GitHubConnector {
@@ -58,7 +63,44 @@ export class GitHubConnector {
     '.idea/'
   ];
 
+  async verifyRepository(repoUrl: string, token?: string): Promise<{ exists: boolean; error?: GitHubError }> {
+    try {
+      const { owner, repo } = this.parseGitHubUrl(repoUrl);
+      const headers = this.buildHeaders(token);
+      
+      const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}`, { 
+        method: 'HEAD',
+        headers 
+      });
+      
+      this.updateRateLimits(response);
+      
+      if (response.ok) {
+        return { exists: true };
+      }
+      
+      const error = this.createErrorFromResponse(response, owner, repo);
+      return { exists: false, error };
+    } catch (error) {
+      console.error('Repository verification failed:', error);
+      return { 
+        exists: false, 
+        error: {
+          code: 'INVALID_URL',
+          message: 'Invalid repository URL format',
+          suggestion: 'Please check the URL format. Example: https://github.com/username/repository-name'
+        }
+      };
+    }
+  }
+
   async fetchRepository(repoUrl: string, token?: string): Promise<RepositoryContent> {
+    // First verify the repository exists
+    const verification = await this.verifyRepository(repoUrl, token);
+    if (!verification.exists && verification.error) {
+      throw new Error(`${verification.error.message}${verification.error.suggestion ? ` ${verification.error.suggestion}` : ''}`);
+    }
+
     const { owner, repo } = this.parseGitHubUrl(repoUrl);
     
     console.log(`🔍 Fetching repository: ${owner}/${repo}`);
@@ -81,23 +123,79 @@ export class GitHubConnector {
   }
 
   private parseGitHubUrl(url: string): { owner: string; repo: string } {
+    // Clean the URL
+    const cleanUrl = url.trim().toLowerCase();
+    
     // Handle various GitHub URL formats
     const patterns = [
-      /github\.com\/([^\/]+)\/([^\/]+)(?:\/|\.git|$)/,
-      /^([^\/]+)\/([^\/]+)$/
+      // Standard GitHub URLs
+      /(?:https?:\/\/)?(?:www\.)?github\.com\/([^\/\s]+)\/([^\/\s]+)(?:\/.*)?(?:\.git)?$/,
+      // SSH URLs
+      /git@github\.com:([^\/\s]+)\/([^\/\s]+)(?:\.git)?$/,
+      // Short format (owner/repo)
+      /^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/
     ];
 
     for (const pattern of patterns) {
       const match = url.match(pattern);
       if (match) {
-        return {
-          owner: match[1],
-          repo: match[2].replace(/\.git$/, '')
-        };
+        const owner = match[1];
+        const repo = match[2].replace(/\.git$/, '');
+        
+        // Validate owner and repo names
+        if (this.isValidGitHubName(owner) && this.isValidGitHubName(repo)) {
+          return { owner, repo };
+        }
       }
     }
 
-    throw new Error('Invalid GitHub repository URL format');
+    throw new Error(`Invalid GitHub repository URL format. Please use formats like:
+- https://github.com/username/repository-name
+- github.com/username/repository-name
+- username/repository-name`);
+  }
+
+  private isValidGitHubName(name: string): boolean {
+    // GitHub usernames and repository names can contain alphanumeric characters, hyphens, and underscores
+    // They cannot start or end with hyphens, and cannot contain consecutive hyphens
+    const githubNamePattern = /^[a-zA-Z0-9]([a-zA-Z0-9._-]*[a-zA-Z0-9])?$/;
+    return githubNamePattern.test(name) && name.length <= 39;
+  }
+
+  private createErrorFromResponse(response: Response, owner: string, repo: string): GitHubError {
+    switch (response.status) {
+      case 404:
+        return {
+          code: 'NOT_FOUND',
+          message: `Repository ${owner}/${repo} not found`,
+          suggestion: 'Please check that the repository name is correct and that it exists. If it\'s a private repository, you may need to provide a GitHub token.'
+        };
+      case 403:
+        if (response.headers.get('X-RateLimit-Remaining') === '0') {
+          return {
+            code: 'RATE_LIMITED',
+            message: 'GitHub API rate limit exceeded',
+            suggestion: 'Please try again later or provide a GitHub personal access token to increase the rate limit.'
+          };
+        }
+        return {
+          code: 'FORBIDDEN',
+          message: 'Access denied to repository',
+          suggestion: 'This repository may be private. Try providing a GitHub personal access token with repository access.'
+        };
+      case 401:
+        return {
+          code: 'FORBIDDEN',
+          message: 'Authentication failed',
+          suggestion: 'Please check your GitHub personal access token and ensure it has the necessary permissions.'
+        };
+      default:
+        return {
+          code: 'UNKNOWN',
+          message: `GitHub API error: ${response.status}`,
+          suggestion: 'Please try again later or contact support if the problem persists.'
+        };
+    }
   }
 
   private async getRepositoryInfo(owner: string, repo: string, token?: string): Promise<GitHubRepository> {
@@ -109,13 +207,8 @@ export class GitHubConnector {
       this.updateRateLimits(response);
       
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Repository not found or not accessible');
-        }
-        if (response.status === 403) {
-          throw new Error('Access denied - check permissions or provide GitHub token');
-        }
-        throw new Error(`GitHub API error: ${response.status}`);
+        const error = this.createErrorFromResponse(response, owner, repo);
+        throw new Error(`${error.message}${error.suggestion ? ` ${error.suggestion}` : ''}`);
       }
 
       const data = await response.json();
@@ -150,7 +243,8 @@ export class GitHubConnector {
       this.updateRateLimits(treeResponse);
       
       if (!treeResponse.ok) {
-        throw new Error(`Failed to fetch repository tree: ${treeResponse.status}`);
+        const error = this.createErrorFromResponse(treeResponse, owner, repo);
+        throw new Error(`${error.message}${error.suggestion ? ` ${error.suggestion}` : ''}`);
       }
 
       const treeData = await treeResponse.json();

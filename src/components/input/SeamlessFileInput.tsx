@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Github, 
   Upload, 
@@ -13,7 +14,10 @@ import {
   Zap, 
   CheckCircle,
   AlertTriangle,
-  Loader2 
+  Loader2,
+  Key,
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { gitHubConnector, GitHubFile } from '@/services/github/GitHubConnector';
@@ -28,9 +32,12 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
   onSingleCodeInput
 }) => {
   const [githubUrl, setGithubUrl] = useState('');
+  const [githubToken, setGithubToken] = useState('');
+  const [showTokenInput, setShowTokenInput] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [detectedFiles, setDetectedFiles] = useState<GitHubFile[]>([]);
   const [singleCode, setSingleCode] = useState('');
+  const [scanError, setScanError] = useState<string | null>(null);
 
   const handleGitHubScan = async () => {
     if (!githubUrl.trim()) {
@@ -39,8 +46,23 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
     }
 
     setIsScanning(true);
+    setScanError(null);
+    
     try {
-      const repoContent = await gitHubConnector.fetchRepository(githubUrl);
+      // First verify the repository
+      const verification = await gitHubConnector.verifyRepository(githubUrl, githubToken || undefined);
+      
+      if (!verification.exists && verification.error) {
+        setScanError(verification.error.message + (verification.error.suggestion ? ` ${verification.error.suggestion}` : ''));
+        
+        // If it's a forbidden error, suggest using a token
+        if (verification.error.code === 'FORBIDDEN' || verification.error.code === 'NOT_FOUND') {
+          setShowTokenInput(true);
+        }
+        return;
+      }
+
+      const repoContent = await gitHubConnector.fetchRepository(githubUrl, githubToken || undefined);
       
       // Filter for TypeScript files
       const tsFiles = repoContent.files.filter(file => 
@@ -49,14 +71,18 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
 
       if (tsFiles.length === 0) {
         toast.warning('No TypeScript files found in this repository');
+        setScanError('No TypeScript files found. Make sure this is a TypeScript/React project.');
         return;
       }
 
       setDetectedFiles(tsFiles);
+      setScanError(null);
       toast.success(`Found ${tsFiles.length} TypeScript files!`);
     } catch (error) {
       console.error('GitHub scan error:', error);
-      toast.error('Failed to scan repository. Please check the URL and try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to scan repository';
+      setScanError(errorMessage);
+      toast.error('Failed to scan repository. Please check the details below.');
     } finally {
       setIsScanning(false);
     }
@@ -87,6 +113,7 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
           if (filesProcessed === files.length) {
             if (tsFiles.length > 0) {
               setDetectedFiles(tsFiles);
+              setScanError(null);
               toast.success(`Uploaded ${tsFiles.length} TypeScript files`);
             } else {
               toast.error('No TypeScript files found in upload');
@@ -112,6 +139,10 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
       return;
     }
     onSingleCodeInput(singleCode);
+  };
+
+  const clearError = () => {
+    setScanError(null);
   };
 
   return (
@@ -148,7 +179,10 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
                 <Input
                   placeholder="https://github.com/username/your-lovable-project"
                   value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
+                  onChange={(e) => {
+                    setGithubUrl(e.target.value);
+                    if (scanError) clearError();
+                  }}
                   className="flex-1"
                 />
                 <Button 
@@ -170,13 +204,71 @@ export const SeamlessFileInput: React.FC<SeamlessFileInputProps> = ({
                 </Button>
               </div>
 
+              {/* GitHub Token Input */}
+              {showTokenInput && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Key className="h-4 w-4 text-gray-500" />
+                    <label className="text-sm font-medium">GitHub Personal Access Token (Optional)</label>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs"
+                      onClick={() => window.open('https://github.com/settings/tokens', '_blank')}
+                    >
+                      Get Token <ExternalLink className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
+                  <Input
+                    type="password"
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                    value={githubToken}
+                    onChange={(e) => setGithubToken(e.target.value)}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Required for private repositories or to avoid rate limits
+                  </p>
+                </div>
+              )}
+
+              {/* Error Display */}
+              {scanError && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    {scanError}
+                    {!showTokenInput && scanError.includes('private') && (
+                      <Button
+                        variant="link"
+                        className="h-auto p-0 ml-2 text-red-600"
+                        onClick={() => setShowTokenInput(true)}
+                      >
+                        Add GitHub Token
+                      </Button>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">How to find your GitHub link:</h4>
+                <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                  <Info className="h-4 w-4" />
+                  How to find your GitHub link:
+                </h4>
                 <ol className="text-sm text-blue-700 space-y-1">
                   <li>1. Open your Lovable project</li>
                   <li>2. Click the "GitHub" button in the top right</li>
                   <li>3. Copy the repository URL and paste it above</li>
                 </ol>
+                <div className="mt-3 text-xs text-blue-600">
+                  <p className="font-medium">Supported URL formats:</p>
+                  <ul className="mt-1 space-y-1 font-mono">
+                    <li>• https://github.com/username/repository</li>
+                    <li>• github.com/username/repository</li>
+                    <li>• username/repository</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>
