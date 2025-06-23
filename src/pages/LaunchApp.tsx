@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -333,20 +332,6 @@ const LaunchApp = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
-
-        {/* Why It Works Section */}
-        {step === 'input' && (
-          <div className="mt-16 mb-16">
-            <WhyItWorks />
-          </div>
-        )}
-
-        {/* FAQ Section */}
-        {step === 'input' && (
-          <div className="mt-16 mb-16">
-            <FAQ />
           </div>
         )}
 
