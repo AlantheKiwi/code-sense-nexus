@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +35,8 @@ import UserManagement from '@/pages/admin/UserManagement';
 import LegalPagesManagement from '@/pages/admin/LegalPagesManagement';
 import SystemSettings from '@/pages/admin/SystemSettings';
 import ReportsPage from '@/pages/reports/ReportsPage';
+import LaunchApp from '@/pages/LaunchApp';
+import ComingSoon from '@/pages/ComingSoon';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +57,8 @@ function App() {
           <Router>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/launch-app" element={<LaunchApp />} />
+              <Route path="/coming-soon" element={<ComingSoon />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/how-it-works" element={<HowItWorksPage />} />
               <Route path="/instructions" element={<InstructionsPage />} />
