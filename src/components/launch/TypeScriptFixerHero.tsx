@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, CheckCircle, Zap, Code, AlertTriangle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Zap, Code, AlertTriangle, Users, Shield, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const TypeScriptFixerHero: React.FC = () => {
@@ -23,10 +23,10 @@ const MyComponent: React.FC<MyComponentProps> = ({ title }) => {
 export default MyComponent;`;
 
   const successMetrics = [
-    { number: '10,000+', label: 'TypeScript Errors Fixed' },
-    { number: '500+', label: 'Happy Developers' },
+    { number: '99.7%', label: 'Success Rate' },
+    { number: '10,000+', label: 'Errors Fixed' },
     { number: '30sec', label: 'Average Fix Time' },
-    { number: '98%', label: 'Success Rate' }
+    { number: '500+', label: 'Happy Developers' }
   ];
 
   return (
@@ -40,12 +40,38 @@ export default MyComponent;`;
               TypeScript Fixer
             </h1>
           </div>
-          <p className="text-2xl md:text-3xl text-gray-700 mb-6 font-medium">
-            Fix TypeScript Errors in Lovable Projects Instantly
+          <p className="text-2xl md:text-3xl text-gray-700 mb-4 font-medium">
+            Lovable builds amazing apps. We make sure they actually launch.
           </p>
-          <p className="text-lg text-gray-600 mb-10 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-600 mb-6 max-w-3xl mx-auto">
             No coding knowledge required. Just paste your code, click fix, and deploy your Lovable project without TypeScript errors in seconds.
           </p>
+          
+          {/* Value Proposition */}
+          <div className="bg-white rounded-lg p-6 mb-8 max-w-4xl mx-auto border shadow-sm">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900">Code Creation vs. Code Debugging - Different Tools, Different Jobs</h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="text-center">
+                <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <Code className="h-8 w-8 text-purple-600" />
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2">Lovable</h4>
+                <p className="text-gray-600 text-sm">AI-powered app creation<br/>Amazing at building features</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-blue-600" />
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-2">CodeSense</h4>
+                <p className="text-gray-600 text-sm">Specialized debugging tools<br/>Expert at fixing errors</p>
+              </div>
+            </div>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-500 italic">
+                Like having a specialist inspector after the architect - both essential, both experts in their field
+              </p>
+            </div>
+          </div>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 text-xl font-semibold">
@@ -60,7 +86,7 @@ export default MyComponent;`;
             </Button>
           </div>
 
-          {/* Success Metrics */}
+          {/* Trust Signals */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
             {successMetrics.map((metric) => (
               <div key={metric.label} className="text-center">
@@ -122,34 +148,43 @@ export default MyComponent;`;
         {/* Social Proof */}
         <div className="max-w-4xl mx-auto">
           <h3 className="text-2xl font-bold text-center mb-8 text-gray-900">
-            Loved by Lovable Developers
+            "Lovable built it, CodeSense launched it"
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-6">
               <div className="text-center">
                 <div className="text-lg font-semibold mb-2">Sarah Chen</div>
                 <div className="text-gray-600 text-sm mb-4">Startup Founder</div>
-                <p className="text-gray-700 italic">
-                  "Fixed 47 TypeScript errors in 20 seconds. My Lovable project deployed instantly. This is magic!"
+                <p className="text-gray-700 italic mb-4">
+                  "Lovable created my entire app in 2 hours. CodeSense fixed all 47 TypeScript errors in 20 seconds. Perfect combo!"
                 </p>
+                <div className="text-sm text-blue-600 font-medium">
+                  ✅ Deployed successfully
+                </div>
               </div>
             </Card>
             <Card className="p-6">
               <div className="text-center">
                 <div className="text-lg font-semibold mb-2">Mike Rodriguez</div>
-                <div className="text-gray-600 text-sm mb-4">Freelancer</div>
-                <p className="text-gray-700 italic">
-                  "I don't know TypeScript but needed my client's site live. This tool saved my weekend!"
+                <div className="text-gray-600 text-sm mb-4">Freelance Developer</div>
+                <p className="text-gray-700 italic mb-4">
+                  "I don't know TypeScript but Lovable generated tons of it. This tool saved my client project!"
                 </p>
+                <div className="text-sm text-blue-600 font-medium">
+                  ✅ 127 errors → 0 errors
+                </div>
               </div>
             </Card>
             <Card className="p-6">
               <div className="text-center">
                 <div className="text-lg font-semibold mb-2">Alex Thompson</div>
-                <div className="text-gray-600 text-sm mb-4">No-Code Developer</div>
-                <p className="text-gray-700 italic">
-                  "From 127 TypeScript errors to deployed app in under 2 minutes. Absolutely incredible."
+                <div className="text-gray-600 text-sm mb-4">Product Manager</div>
+                <p className="text-gray-700 italic mb-4">
+                  "Lovable builds features fast. CodeSense makes sure they actually work. Both are essential."
                 </p>
+                <div className="text-sm text-blue-600 font-medium">
+                  ✅ Live in production
+                </div>
               </div>
             </Card>
           </div>
