@@ -8,6 +8,7 @@ import { PromptGenerationTab } from './tabs/PromptGenerationTab';
 import { ChatInterfaceTab } from './tabs/ChatInterfaceTab';
 import { CodeReviewTab } from './tabs/CodeReviewTab';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AIAssistantPanelProps {
   code: string;
@@ -24,6 +25,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   userTier = 'free',
   onApplyPrompt
 }) => {
+  const isMobile = useIsMobile();
   const {
     activeTab,
     setActiveTab,
@@ -52,23 +54,37 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
 
   return (
     <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-blue-800">
+      <CardHeader className={isMobile ? 'pb-3' : undefined}>
+        <CardTitle className={`flex items-center gap-2 text-blue-800 ${isMobile ? 'text-lg' : ''}`}>
           <Brain className="h-5 w-5" />
           CodeSense AI Assistant
           {userTier !== 'free' && <Crown className="h-4 w-4 text-gold-500" />}
         </CardTitle>
-        <p className="text-sm text-blue-600">
+        <p className={`text-blue-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
           Powered by advanced AI for intelligent code analysis and optimization
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className={isMobile ? 'px-3' : undefined}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="smart">Smart Analysis</TabsTrigger>
-            <TabsTrigger value="prompts">Lovable Prompts</TabsTrigger>
-            <TabsTrigger value="chat">Ask AI</TabsTrigger>
-            <TabsTrigger value="review">Code Review</TabsTrigger>
+          <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 h-20' : 'grid-cols-4'}`}>
+            <TabsTrigger 
+              value="smart" 
+              className={isMobile ? 'text-xs flex-col gap-1 py-2' : ''}
+            >
+              <span>Smart Analysis</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="prompts"
+              className={isMobile ? 'text-xs flex-col gap-1 py-2' : ''}
+            >
+              <span>Lovable Prompts</span>
+            </TabsTrigger>
+            {!isMobile && (
+              <>
+                <TabsTrigger value="chat">Ask AI</TabsTrigger>
+                <TabsTrigger value="review">Code Review</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="smart" className="space-y-4">
@@ -90,23 +106,47 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             />
           </TabsContent>
 
-          <TabsContent value="chat" className="space-y-4">
-            <ChatInterfaceTab
-              chatMessage={chatMessage}
-              chatHistory={chatHistory}
-              canUseFeature={canUseFeature}
-              onChatMessageChange={setChatMessage}
-              onSendMessage={handleChatMessage}
-            />
-          </TabsContent>
+          {!isMobile && (
+            <>
+              <TabsContent value="chat" className="space-y-4">
+                <ChatInterfaceTab
+                  chatMessage={chatMessage}
+                  chatHistory={chatHistory}
+                  canUseFeature={canUseFeature}
+                  onChatMessageChange={setChatMessage}
+                  onSendMessage={handleChatMessage}
+                />
+              </TabsContent>
 
-          <TabsContent value="review" className="space-y-4">
-            <CodeReviewTab
-              canUseFeature={canUseFeature}
-              onStartReview={handleSmartAnalysis}
-            />
-          </TabsContent>
+              <TabsContent value="review" className="space-y-4">
+                <CodeReviewTab
+                  canUseFeature={canUseFeature}
+                  onStartReview={handleSmartAnalysis}
+                />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
+        
+        {/* Mobile-specific chat and review in separate cards */}
+        {isMobile && (
+          <div className="mt-4 space-y-3">
+            <Card className="border-gray-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Quick Chat</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ChatInterfaceTab
+                  chatMessage={chatMessage}
+                  chatHistory={chatHistory}
+                  canUseFeature={canUseFeature}
+                  onChatMessageChange={setChatMessage}
+                  onSendMessage={handleChatMessage}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

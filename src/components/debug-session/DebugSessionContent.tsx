@@ -5,19 +5,18 @@ import { useDebugSession } from '@/hooks/useDebugSession';
 import { useEffect, useState, useCallback } from 'react';
 import { LoadingSkeleton } from '@/components/debug-session/LoadingSkeleton';
 import { SessionHeader } from '@/components/debug-session/SessionHeader';
-import { CodeEditor } from '@/components/debug-session/CodeEditor';
-import { AnalysisResult } from '@/components/debug-session/AnalysisResult';
-import { CollaboratorsList } from '@/components/debug-session/CollaboratorsList';
-import { CursorOverlay } from '@/components/debug-session/CursorOverlay';
 import { DebugSessionInstructions } from '@/components/debug-session/DebugSessionInstructions';
 import { useDebugSessionAnalysis } from '@/hooks/useDebugSessionAnalysis';
 import { useDebugSessionCursor } from '@/hooks/useDebugSessionCursor';
 import { SystemStatusNotice } from './SystemStatusNotice';
 import { DebugSessionMainGrid } from './DebugSessionMainGrid';
+import { MobileDebugSession } from './MobileDebugSession';
 import { SimpleAutoFixPanel } from '@/components/debug-session/SimpleAutoFixPanel';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
 import { BillingWrapper } from '@/components/billing/BillingWrapper';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { CursorOverlay } from '@/components/debug-session/CursorOverlay';
 
 export interface AutomationSettings {
   allAutomatic: boolean;
@@ -30,6 +29,7 @@ const DebugSessionContent = () => {
   const { sessionId, projectId } = useParams<{ sessionId: string; projectId: string }>();
   const { user } = useAuth();
   const { loadUsageData } = useUsageTracking();
+  const isMobile = useIsMobile();
   
   // Early return if missing required params
   if (!sessionId || !projectId) {
@@ -129,11 +129,6 @@ sayHello('World')`);
     }
   }, [broadcastEvent]);
 
-  const handleAutomationSettingsChange = useCallback((settings: AutomationSettings) => {
-    setAutomationSettings(settings);
-    console.log('Automation settings updated:', settings);
-  }, []);
-
   const onAnalyze = useCallback((selectedTools: string[]) => {
     try {
       handleAnalyzeCode(selectedTools, code, broadcastEvent);
@@ -191,7 +186,7 @@ sayHello('World')`);
   console.log('Rendering debug session page content');
   
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8 relative" onMouseMove={onMouseMove}>
+    <div className={`${isMobile ? 'px-2 py-4' : 'container mx-auto p-4 md:p-8'} space-y-8 relative`} onMouseMove={onMouseMove}>
       <SessionHeader sessionId={session?.id} />
       
       {/* Usage Meter at the top */}
@@ -204,34 +199,50 @@ sayHello('World')`);
         <div></div>
       </BillingWrapper>
       
-      {/* Instructions immediately followed by Code Editor for better workflow */}
-      <DebugSessionInstructions />
+      {/* Instructions for desktop only */}
+      {!isMobile && <DebugSessionInstructions />}
       
-      <DebugSessionMainGrid
-        code={code}
-        onCodeChange={handleCodeChange}
-        onAnalyze={onAnalyze}
-        isAnalyzing={isAnalyzing}
-        result={result}
-        collaborators={collaborators}
-      />
+      {/* Mobile vs Desktop Layout */}
+      {isMobile ? (
+        <MobileDebugSession
+          code={code}
+          onCodeChange={handleCodeChange}
+          onAnalyze={onAnalyze}
+          isAnalyzing={isAnalyzing}
+          result={result}
+          collaborators={collaborators}
+          projectId={projectId}
+          sessionId={sessionId}
+        />
+      ) : (
+        <>
+          <DebugSessionMainGrid
+            code={code}
+            onCodeChange={handleCodeChange}
+            onAnalyze={onAnalyze}
+            isAnalyzing={isAnalyzing}
+            result={result}
+            collaborators={collaborators}
+          />
 
-      <SystemStatusNotice />
+          <SystemStatusNotice />
 
-      {/* AI Assistant Panel */}
-      <AIAssistantPanel 
-        code={code}
-        filePath="debug-session.tsx"
-        projectType="lovable"
-        userTier="premium"
-        onApplyPrompt={handleAIPromptApply}
-      />
+          {/* AI Assistant Panel */}
+          <AIAssistantPanel 
+            code={code}
+            filePath="debug-session.tsx"
+            projectType="lovable"
+            userTier="premium"
+            onApplyPrompt={handleAIPromptApply}
+          />
 
-      {/* Auto-Fix Panel */}
-      <SimpleAutoFixPanel 
-        projectId={projectId} 
-        sessionId={sessionId}
-      />
+          {/* Auto-Fix Panel */}
+          <SimpleAutoFixPanel 
+            projectId={projectId} 
+            sessionId={sessionId}
+          />
+        </>
+      )}
 
       <CursorOverlay cursors={cursors} currentUserId={user?.id} />
     </div>
