@@ -42,8 +42,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ lines, title, code, hoveredChange
   };
 
   return (
-    <div className="flex-1 border rounded-lg">
-      <div className="flex items-center justify-between p-3 border-b bg-gray-50">
+    <div className="flex-1 border rounded-lg flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b bg-gray-50 flex-shrink-0">
         <h4 className="font-medium text-sm">{title}</h4>
         <Button
           variant="outline"
@@ -55,7 +55,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ lines, title, code, hoveredChange
           Copy
         </Button>
       </div>
-      <ScrollArea className="h-96">
+      <div className="flex-1 overflow-auto max-h-[60vh]">
         <div className="font-mono text-sm">
           {lines.map((line, index) => {
             const colorClasses = line.changeColor ? DiffGenerator.getColorClasses(line.changeColor) : null;
@@ -78,7 +78,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ lines, title, code, hoveredChange
                 onMouseEnter={() => line.changeId && onLineHover(line.changeId)}
                 onMouseLeave={() => line.changeId && onLineHover(null)}
               >
-                <div className="flex items-center w-12 text-gray-400 text-xs mr-3">
+                <div className="flex items-center w-12 text-gray-400 text-xs mr-3 flex-shrink-0">
                   {line.type === 'added' && (
                     <Plus className="h-3 w-3 text-green-600 mr-1" />
                   )}
@@ -96,7 +96,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ lines, title, code, hoveredChange
             );
           })}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
@@ -147,8 +147,8 @@ export const CodeDiffDialog: React.FC<CodeDiffDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] p-0">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent className="max-w-7xl w-[95vw] h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <DialogTitle className="font-mono text-lg">
@@ -204,10 +204,10 @@ export const CodeDiffDialog: React.FC<CodeDiffDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="px-6 pb-6 space-y-4">
+        <div className="px-6 pb-6 flex-1 flex flex-col overflow-hidden">
           {showLegend && <ChangeLegend changeDescriptions={diffResult.changeDescriptions} />}
 
-          <div className="flex gap-4 h-full">
+          <div className="flex gap-4 flex-1 min-h-0">
             <CodeBlock
               lines={diffResult.beforeLines}
               title="Before (Original with Errors)"

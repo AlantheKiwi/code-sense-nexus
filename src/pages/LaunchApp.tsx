@@ -134,8 +134,8 @@ const LaunchApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
-      <div className="container mx-auto px-4 max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 max-w-5xl py-8">
         {step === 'input' && (
           <>
             <TypeScriptFixerHeader
@@ -158,12 +158,14 @@ const LaunchApp = () => {
         {step === 'fixing' && <FixingProgress />}
 
         {step === 'results' && (singleResult || multiResult) && (
-          <ResultsSection
-            singleResult={singleResult}
-            multiResult={multiResult}
-            onStartOver={handleStartOver}
-            onOpenDiffDialog={openDiffDialog}
-          />
+          <div className="space-y-6">
+            <ResultsSection
+              singleResult={singleResult}
+              multiResult={multiResult}
+              onStartOver={handleStartOver}
+              onOpenDiffDialog={openDiffDialog}
+            />
+          </div>
         )}
 
         <PricingSection />

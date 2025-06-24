@@ -57,7 +57,7 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <Card className="border-green-200 bg-green-50">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl flex items-center justify-center gap-2 text-green-800">
@@ -85,12 +85,12 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
               {multiResult.files.map((file, index) => (
                 <div key={index} className="border rounded-lg p-4 bg-gray-50">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium font-mono text-sm">{file.path}</h4>
-                    <div className="flex items-center gap-2">
+                    <h4 className="font-medium font-mono text-sm break-all pr-4">{file.path}</h4>
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <Badge variant="outline" className="bg-green-100 text-green-800">
                         {file.errorsFixed} errors fixed
                       </Badge>
@@ -108,19 +108,25 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
                   <div className="text-sm text-gray-600">
                     {file.description.map((desc, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                        {desc}
+                        <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                        <span>{desc}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
+            
+            {multiResult.files.length > 10 && (
+              <div className="mt-4 text-center text-sm text-gray-600">
+                Showing all {multiResult.files.length} fixed files. Scroll up to see more.
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      <div className="flex gap-4 justify-center">
+      <div className="flex flex-wrap gap-4 justify-center">
         <Button
           onClick={onStartOver}
           variant="outline"
