@@ -1,21 +1,25 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Github, 
   Loader2, 
   AlertCircle, 
   CheckCircle, 
-  Key
+  Key,
+  Trash2,
+  Shield
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { gitHubConnector, GitHubFile } from '@/services/github/GitHubConnector';
 import { RepositoryStatistics, GitHubProgress } from '@/services/github/types';
+import { CredentialsStorage } from '@/utils/storage';
 
 interface GitHubRepoTabProps {
   onFilesDetected: (files: GitHubFile[], repositoryName?: string, statistics?: RepositoryStatistics) => void;
@@ -30,6 +34,41 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
   const [progress, setProgress] = useState<GitHubProgress | null>(null);
+  const [rememberCredentials, setRememberCredentials] = useState(false);
+  const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
+
+  // Load stored credentials and preferences on mount
+  useEffect(() => {
+    const shouldRemember = CredentialsStorage.shouldRememberCredentials();
+    setRememberCredentials(shouldRemember);
+
+    if (shouldRemember) {
+      const stored = CredentialsStorage.getStoredCredentials();
+      if (stored) {
+        setRepoUrl(stored.repoUrl);
+        setGithubToken(stored.githubToken);
+        setHasStoredCredentials(true);
+      }
+    }
+  }, []);
+
+  const handleRememberChange = (checked: boolean) => {
+    setRememberCredentials(checked);
+    CredentialsStorage.setRememberPreference(checked);
+    
+    if (!checked) {
+      setHasStoredCredentials(false);
+      toast.success('Stored credentials cleared');
+    }
+  };
+
+  const handleClearCredentials = () => {
+    CredentialsStorage.clearCredentials();
+    setRepoUrl('');
+    setGithubToken('');
+    setHasStoredCredentials(false);
+    toast.success('Credentials cleared');
+  };
 
   const handleConnect = async () => {
     if (!repoUrl.trim()) {
@@ -57,6 +96,13 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
       }
 
       setIsVerified(true);
+      
+      // Save credentials if user opted to remember them
+      if (rememberCredentials && repoUrl.trim() && githubToken.trim()) {
+        CredentialsStorage.saveCredentials(repoUrl.trim(), githubToken.trim());
+        setHasStoredCredentials(true);
+      }
+
       onFilesDetected(
         repositoryContent.files, 
         repositoryContent.repository.fullName,
@@ -116,6 +162,46 @@ export const GitHubRepoTab: React.FC<GitHubRepoTabProps> = ({
             Required for private repositories. Get your token from GitHub Settings → Developer settings → Personal access tokens
           </p>
         </div>
+
+        {/* Remember Credentials Option */}
+        {CredentialsStorage.isStorageAvailable() && (
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember-credentials"
+                checked={rememberCredentials}
+                onCheckedChange={handleRememberChange}
+                disabled={isLoading}
+              />
+              <Label htmlFor="remember-credentials" className="flex items-center gap-2 text-sm">
+                <Shield className="h-4 w-4 text-green-600" />
+                Remember my credentials for future use
+              </Label>
+            </div>
+            
+            {hasStoredCredentials && (
+              <Alert className="border-green-200 bg-green-50">
+                <Shield className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800 text-sm">
+                  Using stored credentials from previous session.
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearCredentials}
+                    className="ml-2 h-6 px-2 text-green-700 hover:text-green-900"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <p className="text-xs text-gray-500">
+              Credentials are stored locally in your browser and automatically expire after 30 days.
+            </p>
+          </div>
+        )}
 
         {/* Progress Section */}
         {isLoading && progress && (
